@@ -14,10 +14,16 @@ HXAPIGate基于Netty+Shiro开发的一款高性能API网关，对基于REST服�
 |“/user/list”| POST |
 |“/user/list”| DELETE |
 |“/user/list”| PUT |
+
 传统授权模式下，这四个接口会被当做一个接口（因为接口路径一致）授权给第三方，而通过HXAPIGate可分别对每个资源进行授权，当仅仅授权“/user/list”+“GET”给第三方平台时，被授权放无法访问同一资源的POST、DELETE、PUT请求当时的接口！
-### ![授权流程](https://images.gitee.com/uploads/images/2019/1112/113303_d06bcb01_1038477.jpeg "授权流程.jpg")
 
+### 授权认证时序图
 
+![授权流程](https://images.gitee.com/uploads/images/2019/1112/113303_d06bcb01_1038477.jpeg "授权流程.jpg")
+
+### 性能
+2000并发事务压测报告（jdk1.8，jvm堆内存512M）
+![API网关2000并发压测图（jvm=512M）](https://images.gitee.com/uploads/images/2019/1112/113504_8b9b126e_1038477.png "API网关2000并发压测图（jvm=512M）.png")
 
 ## 感谢
 bootshiro 项目及作者，bootshiro项目路径：https://gitee.com/tomsun28/bootshiro](https://gitee.com/tomsun28/bootshiro 
