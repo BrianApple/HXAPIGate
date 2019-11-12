@@ -2,6 +2,7 @@
 
 HXAPIGate（中文名：浩心API网关）由HXAPIGate、bootshiroPro组成。
 HXAPIGate基于Netty+Shiro开发的一款高性能API网关，对基于REST服务的细粒度API资源的权限管理平台，bootshiroPro是开源项目bootshiro的定制化版本，前端工程则继续使用bootshiro的usthe即可（usthe是基于angular开发的前端项目 https://gitee.com/tomsun28/usthe  ）。
+![输入图片说明](https://images.gitee.com/uploads/images/2019/1112/152324_e14eb0c7_1038477.png "屏幕截图.png")
 ### 特色
 
 目前多数授权管理平台都只单单对api路径资源本身授权，而不能做到更细粒度的权限控制，HXAPIGate通过组合bootshiroPro实现了对“api资源+请求方式”的授权模式。
