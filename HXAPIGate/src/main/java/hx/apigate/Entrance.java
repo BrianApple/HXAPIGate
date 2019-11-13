@@ -205,10 +205,15 @@ package hx.apigate;
 
 import java.util.Set;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.PosixParser;
 import org.reflections.Reflections;
 
+import hx.apigate.base.HXAPIGateConext;
 import hx.apigate.base.IProcessor;
 import hx.apigate.util.LocalCache;
+import hx.apigate.util.MixAll;
 
 /**
  * <p>Description: 浩心API网关入口程序</p>
@@ -220,7 +225,7 @@ import hx.apigate.util.LocalCache;
  */
 public class Entrance {
 	public static void main(String[] args) {
-		
+		suitCommonLine(args);
 		Reflections reflections = new Reflections("hx.apigate");
 		Set<Class<? extends IProcessor>> subTypes = reflections.getSubTypesOf(IProcessor.class);
 		IProcessor[] array = new IProcessor[subTypes.size()];
@@ -247,5 +252,20 @@ public class Entrance {
 				e.printStackTrace();
 			}
 		}
+	}
+	
+	public static void suitCommonLine(String[] args){
+		
+		CommandLine commandLine =
+				 MixAll.parseCmdLine("iotGateServer", args, MixAll.buildCommandlineOptions(new Options()),
+                    new PosixParser());
+        if (null == commandLine) {
+            System.exit(-1);
+        }
+        HXAPIGateConext.NUM = commandLine.getOptionValue("n");
+        if(commandLine.hasOption("p")){
+        	
+        	HXAPIGateConext.PORT = Integer.parseInt(commandLine.getOptionValue("p"));
+        }
 	}
 }

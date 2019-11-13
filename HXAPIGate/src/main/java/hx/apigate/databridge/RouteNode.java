@@ -205,8 +205,8 @@ package hx.apigate.databridge;
 
 import java.io.Serializable;
 
+import hx.apigate.base.HXAPIGateConext;
 import hx.apigate.socket.BackendHandlerInitializer;
-import hx.apigate.util.HXAPIGateConext;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;

@@ -222,6 +222,13 @@ import java.util.Map;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
+import org.apache.commons.cli.CommandLine;
+import org.apache.commons.cli.CommandLineParser;
+import org.apache.commons.cli.HelpFormatter;
+import org.apache.commons.cli.Option;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
+
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 
@@ -630,5 +637,56 @@ public class MixAll {
     	 heads.add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
     	 return response;
 	 }
+	 
+	/**
+	 * 
+	 * @param options
+	 * @return
+	 */
+	public static Options buildCommandlineOptions(final Options options) {
+		
+		Option opt = new Option("n", true, "HXAPIGate number,defualt is '1'");
+        opt.setRequired(false);
+        options.addOption(opt);
+		
+
+        
+        opt = new Option("p", true, "HXAPIGate port,defualt is 8081");
+        opt.setRequired(false);
+        options.addOption(opt);
+        
+        opt = new Option("h", false, "help info");
+        opt.setRequired(false);
+        options.addOption(opt);
+        
+
+        return options;
+    }
+		/**
+		 * Reference from RocketMQ
+		 * @param appName
+		 * @param args
+		 * @param options
+		 * @param parser
+		 * @return
+		 */
+		 public static CommandLine parseCmdLine(final String appName, String[] args, Options options,
+		            CommandLineParser parser) {
+		        HelpFormatter hf = new HelpFormatter();
+		        hf.setWidth(110);
+		        CommandLine commandLine = null;
+		        try {
+		            commandLine = parser.parse(options, args);
+		            if (commandLine.hasOption('h')) {
+		                hf.printHelp(appName, options, true);
+		                return null;
+		            }
+		        }
+		        catch (ParseException e) {
+		            hf.printHelp(appName, options, true);
+		        }
+
+		        return commandLine;
+		 }
 	
 }

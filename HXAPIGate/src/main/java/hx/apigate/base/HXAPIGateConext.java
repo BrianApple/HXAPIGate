@@ -201,7 +201,7 @@
    See the License for the specific language governing permissions and
    limitations under the License.
  */
-package hx.apigate.util;
+package hx.apigate.base;
 /**
  * <p>Description: 浩心API网关上下文</p>
 　 * <p>Copyright: Copyright (c) 2019</p>
@@ -221,9 +221,10 @@ import io.netty.channel.nio.NioEventLoopGroup;
  * @version 1.0
  */
 public class HXAPIGateConext {
-	public static int PORT = 8081;//HXAPIGate默认端口为8080，通过启动参数可修改
+	public static int PORT = 8081;//HXAPIGate默认端口为8081，通过启动参数可修改
 	private static String VERSION = "1.0.0";
 	public static NioEventLoopGroup boss = new NioEventLoopGroup(1);
+	public static String NUM ="1";
 	
 
 }
