@@ -220,6 +220,7 @@ import hx.apigate.databridge.RouteNode;
 public class RouteSelectUtil {
 
 	public static String CIRCLE  = "circle";
+	public static String WEIGHT  = "weight";
     public static String pathSeparator  = "/";
 	public static Object[] selectOneRoute(String sourceUrl){
 		sourceUrl = sourceUrl.contains("?") ? sourceUrl.split("\\?")[0] :  sourceUrl;
@@ -236,7 +237,14 @@ public class RouteSelectUtil {
 		}
 		Route route = LocalCache.routeCache.get(pattern);
 		int routeNum = route.getRouteNodes().size();
-		if(RouteSelectUtil.CIRCLE.equals(route.getStratege()) || route.getStratege() == null){
+		if(RouteSelectUtil.WEIGHT.equals(route.getStratege()) || route.getStratege() == null){
+			RouteNode nodes = route.nextNodeByWeight();
+//			System.out.println("当前获取的微服务端口:"+nodes.getPort());;
+			//权重
+			return nodes;
+			
+		}else{
+			//轮寻策略
 			if(routeNum > 0){
 				int nextIndex = route.getIndex().addAndGet(1) % routeNum;
 				route.getIndex().set(nextIndex);

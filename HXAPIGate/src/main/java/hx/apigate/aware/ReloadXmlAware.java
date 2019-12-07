@@ -259,6 +259,7 @@ public class ReloadXmlAware implements IProcessor{
 		RouteAll routeAll = (RouteAll) xStream.fromXML(Entrance.class.getClassLoader().getResourceAsStream("RouteInfo.xml"));
 		List<Route> routeAllList = routeAll.getRouteAll();
 		for (Route route : routeAllList) {
+			route.init();
 			LocalCache.routeCache.put(route.getMatchUrl(), route);
 		}
 	}

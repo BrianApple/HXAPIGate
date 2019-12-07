@@ -24,7 +24,7 @@
     </Route>
     <Route>
       <matchUrl>/account/register</matchUrl>
-      <stratege>circle</stratege>
+      <stratege>weight</stratege>
       <needAuth>true</needAuth>
       <routeNodes>
         <RouteNode>

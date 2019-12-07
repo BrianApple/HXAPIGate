@@ -204,7 +204,9 @@
 package hx.apigate.databridge;
 
 import java.io.Serializable;
+import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
 /**
@@ -233,6 +235,12 @@ public class Route implements Serializable{
 	 */
 	private List<RouteNode> routeNodes;
 	private AtomicInteger index;//轮寻策略下标值
+	
+	private int[] nodeWeight ;
+	private CopyOnWriteArrayList<Integer> current_weight;
+	private CopyOnWriteArrayList<Integer> temp_weight;
+	private int totalWeight = 0;
+	
 	public List<RouteNode> getRouteNodes() {
 		return routeNodes;
 	}
@@ -265,4 +273,42 @@ public class Route implements Serializable{
 		this.index = index;
 	}
 	
+	public void init() {
+		nodeWeight = new int[routeNodes.size()];
+		current_weight = new CopyOnWriteArrayList<Integer>();
+		temp_weight = new CopyOnWriteArrayList<Integer>();
+		int size = routeNodes.size();
+		for (int i = 0 ; i < size ; i++) {
+			int curNodeWeight =  1;
+			if(routeNodes.get(i).getWeight() >10) {
+				curNodeWeight = 10;
+			}else if(routeNodes.get(i).getWeight() < 1) {
+				curNodeWeight = 1;
+			}else {
+				curNodeWeight = routeNodes.get(i).getWeight();
+			}
+			totalWeight += curNodeWeight;
+			nodeWeight[i] = curNodeWeight;
+			temp_weight.add(curNodeWeight);
+			current_weight.add(0);//默认当前全部为0
+		}
+	}
+	public RouteNode nextNodeByWeight() {
+		int maxIndex=-1;
+        for(int i=0;i<temp_weight.size();i++){
+            if(maxIndex==-1)
+                maxIndex=i;
+            else{
+                if(current_weight.get(i)>current_weight.get(maxIndex))
+                    maxIndex=i;
+            }
+        }
+        temp_weight.set(maxIndex, (temp_weight.get(maxIndex)- totalWeight));
+        for(int i=0;i<current_weight.size();i++){
+            current_weight.set(i, temp_weight.get(i)+nodeWeight[i]);
+        }
+        Collections.copy(temp_weight, current_weight);
+        return  routeNodes.get(maxIndex);
+
+	}
 }
