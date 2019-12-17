@@ -29,8 +29,13 @@ HXAPIGate基于Netty+Shiro开发的一款高性能API网关，对基于REST服�
 2000并发事务压测报告（jdk1.8，jvm堆内存512M）
 ![API网关2000并发压测图（jvm=512M）](https://images.gitee.com/uploads/images/2019/1112/113504_8b9b126e_1038477.png "API网关2000并发压测图（jvm=512M）.png")
 
+### 目前已实现功能
+1. 授权管理
+2. 路由配置
+3. 路由负载（轮寻和赋权值）
+
 ## 感谢
-bootshiro 项目及作者，bootshiro项目路径：https://gitee.com/tomsun28/bootshiro](https://gitee.com/tomsun28/bootshiro 
+bootshiro 项目及作者，bootshiro项目路径：https://gitee.com/tomsun28/bootshiro 
 ## 参与贡献
 
 1. Fork项目到自己的repo
