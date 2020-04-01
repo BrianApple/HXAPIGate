@@ -34,6 +34,12 @@ HXAPIGate基于Netty+Shiro开发的一款高性能API网关，对基于REST服�
 2. 路由配置
 3. 路由负载（轮寻和赋权值）
 
+### 相关博文
+《netty整合shiro,报There is no session with id [xxxxxx]问题定位及解决》
+
+https://blog.csdn.net/sinat_28771747/article/details/105245229
+
+
 ## 感谢
 bootshiro 项目及作者，bootshiro项目路径：https://gitee.com/tomsun28/bootshiro 
 ## 参与贡献
