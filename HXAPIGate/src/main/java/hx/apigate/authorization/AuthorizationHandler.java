@@ -220,6 +220,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
+import org.apache.shiro.subject.support.DefaultSubjectContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -251,7 +252,7 @@ public class AuthorizationHandler extends SimpleChannelInboundHandler<FullHttpRe
     	 String localHost = msg.headers().get("Host");
     	 String url = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
     	 if(isJwtSubmission(msg)) {
-    		 Subject sub = SecurityUtils.getSubject();
+    		 Subject sub = SecurityUtils.getSecurityManager().createSubject(new DefaultSubjectContext());
     		 try {
     			 AuthenticationToken token = createJwtToken( ctx, msg);
         		 sub.login(token);
@@ -270,10 +271,11 @@ public class AuthorizationHandler extends SimpleChannelInboundHandler<FullHttpRe
     			 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse(1008, "Current path does not have access !"));
     		 }
     	 }else {
-    		 if(url.contains(Constance.LOGINREGISTER)) {
+//    		 if(url.contains(Constance.LOGINREGISTER)) {
+    		 //默认继续向下执行
     			 msg.retain();
                  ctx.fireChannelRead(msg);
-    		 }
+//    		 }
     	 }
     	 
         

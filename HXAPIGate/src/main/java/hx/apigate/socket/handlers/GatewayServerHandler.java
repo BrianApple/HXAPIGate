@@ -242,7 +242,8 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
     	 msg.headers().set("x-forwarded-for",localHost.split("\\:")[0] /*m2.group(2)*/);
          Object[] ret = matchUrl(msg.uri());
          if(ret[1] != null && ret[1] instanceof RouteNode){
-        	 
+        	 RouteNode routeNode = (RouteNode)ret[1];
+        	 msg.headers().set("Host",new StringBuilder(routeNode.getIp()).append(":").append(routeNode.getPort()));
         	 webChannel.attr(MixAll.ATTRIBUTEKEY_URL).set(ret[0].toString());
         	 webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).set((RouteNode)ret[1]);
         	 msg.retain();
