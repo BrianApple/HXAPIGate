@@ -3,47 +3,51 @@
   <routes>
   	<!-- 一个Route节点中包含同一个matchUrl的所有微服务信息 -->
     <Route>
-      <matchUrl>/account/login</matchUrl>
-      <stratege>circle</stratege>
-      <needAuth>true</needAuth>
+      <matchUrl>/account/*</matchUrl>
+      <stratege>circle</stratege><!-- circle/weight -->
+      <protocal>http</protocal><!-- http/dubbo -->
+      <needAuth>false</needAuth>
       <routeNodes>
         <RouteNode>
           <ip>127.0.0.1</ip>
-          <port>8080</port>
+          <port>18080</port>
           <order>0</order>
           <weight>1</weight>
         </RouteNode>
-        <!-- <RouteNode>
-          <ip>127.0.0.1</ip>
-          <port>80</port>
-          <order>1</order>
-          <weight>1</weight>
-        </RouteNode> -->
       </routeNodes>
-      
     </Route>
+    <!-- 获取授权资源接口 -->
     <Route>
-      <matchUrl>/account/register</matchUrl>
-      <stratege>weight</stratege>
-      <needAuth>true</needAuth>
+      <matchUrl>/resource/**</matchUrl>
+      <stratege>circle</stratege><!-- circle/weight -->
+      <protocal>http</protocal><!-- http/dubbo -->
+      <needAuth>false</needAuth>
       <routeNodes>
         <RouteNode>
           <ip>127.0.0.1</ip>
-          <port>8080</port>
+          <port>18080</port>
           <order>0</order>
           <weight>1</weight>
         </RouteNode>
-        <!-- <RouteNode>
-          <ip>127.0.0.1</ip>
-          <port>80</port>
-          <order>1</order>
-          <weight>1</weight>
-        </RouteNode> -->
-      </routeNodes> 
-      
+      </routeNodes>
     </Route>
+    <!-- 授权平台日志相关接口 -->
     <Route>
-      <matchUrl>/user/role/*</matchUrl>
+      <matchUrl>/log/**</matchUrl>
+      <stratege>circle</stratege><!-- circle/weight -->
+      <protocal>http</protocal><!-- http/dubbo -->
+      <needAuth>false</needAuth>
+      <routeNodes>
+        <RouteNode>
+          <ip>127.0.0.1</ip>
+          <port>18080</port>
+          <order>0</order>
+          <weight>1</weight>
+        </RouteNode>
+      </routeNodes>
+    </Route>
+    <!-- <Route>
+      <matchUrl>/account/register</matchUrl>
       <stratege>circle</stratege>
       <needAuth>true</needAuth>
       <routeNodes>
@@ -53,13 +57,70 @@
           <order>0</order>
           <weight>1</weight>
         </RouteNode>
-        <!-- <RouteNode>
+        <RouteNode>
           <ip>127.0.0.1</ip>
           <port>80</port>
           <order>1</order>
           <weight>1</weight>
-        </RouteNode> -->
+        </RouteNode>
+      </routeNodes> 
+      
+    </Route> -->
+    <Route>
+      <matchUrl>/role/**</matchUrl>
+      <stratege>weight</stratege>
+      <protocal>http</protocal><!-- http/dubbo -->
+      <needAuth>false</needAuth>
+      <routeNodes>
+        <RouteNode>
+          <ip>127.0.0.1</ip>
+          <port>18080</port>
+          <order>0</order>
+          <weight>6</weight>
+        </RouteNode>
       </routeNodes> 
     </Route>
+    <Route>
+      <matchUrl>/user/accountupdate</matchUrl>
+      <stratege>weight</stratege>
+      <protocal>http</protocal><!-- http/dubbo -->
+      <needAuth>true</needAuth>
+      <routeNodes>
+        <RouteNode>
+          <ip>127.0.0.1</ip>
+          <port>18080</port>
+          <order>0</order>
+          <weight>6</weight>
+        </RouteNode>
+      </routeNodes> 
+    </Route>
+    <Route>
+      <matchUrl>/user</matchUrl>
+      <stratege>weight</stratege>
+      <protocal>http</protocal><!-- http/dubbo -->
+      <needAuth>true</needAuth>
+      <routeNodes>
+        <RouteNode>
+          <ip>127.0.0.1</ip>
+          <port>18080</port>
+          <order>0</order>
+          <weight>6</weight>
+        </RouteNode>
+      </routeNodes> 
+    </Route>
+    
+    <!-- dubbo接口    /接口名/方法名 -->
+    <Route>
+      <matchUrl>/commonService/*</matchUrl>
+      <stratege>weight</stratege>
+      <protocal>dubbo</protocal><!-- http/dubbo -->
+      <needAuth>true</needAuth>
+      <routeNodes>
+        <RouteNode>
+           <interfaceName>commonService</interfaceName>
+        </RouteNode>
+      </routeNodes> 
+    </Route>
+    
   </routes>
 </RouteAll>

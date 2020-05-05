@@ -210,16 +210,13 @@ import io.netty.handler.codec.http.FullHttpResponse;
 /**
  * <p>Description: 响应http</p>
 　 * <p>Copyright: Copyright (c) 2019</p>
-　 * <p>Company: www.uiotcp.com</p>
+　 * <p>Company: www.xianglong.work</p>
 　 * @author yangcheng
 　 * @date 2019年10月30日
 　 * @version 1.0
  */
 public class HttpBackendHandler extends SimpleChannelInboundHandler<FullHttpResponse> {
 
-	/**
-	 * web端channel
-	 */
     private final Channel inboundChannel;
 
     public HttpBackendHandler(Channel inboundChannel) {
@@ -231,9 +228,6 @@ public class HttpBackendHandler extends SimpleChannelInboundHandler<FullHttpResp
         System.out.println("toMaster Handler is Active!");
         super.channelActive(ctx);
     }
-    /**
-     * 获取到微服务响应
-     */
     @Override
     public void channelRead0(final ChannelHandlerContext ctx, FullHttpResponse msg) throws Exception {
         inboundChannel.writeAndFlush(msg.retain()).addListener(new ChannelFutureListener() {
