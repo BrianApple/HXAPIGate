@@ -12,7 +12,7 @@ import io.netty.channel.Channel;
  * 本地缓存
  * <p>Description: </p>
 　 * <p>Copyright: Copyright (c) 2019</p>
-　 * <p>Company: www.xianglong.work</p>
+　 * <p>Company: www.uiotp.com</p>
 　 * @author yangcheng
 　 * @date 2019年10月29日
 　 * @version 1.0

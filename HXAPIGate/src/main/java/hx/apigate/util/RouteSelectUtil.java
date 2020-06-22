@@ -11,7 +11,7 @@ import hx.apigate.databridge.xmlBean.RouteNode;
 /**
  * <p>Description: 路由选择工具类</p>
 　 * <p>Copyright: Copyright (c) 2019</p>
-　 * <p>Company: www.xianglong.work</p>
+　 * <p>Company: www.uiotp.com</p>
 　 * @author yangcheng
 　 * @date 2019年10月29日
 　 * @version 1.0

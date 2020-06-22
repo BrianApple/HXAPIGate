@@ -14,7 +14,7 @@ import hx.apigate.util.MixAll;
  * 分布式缓存入口类
  * @Description: 
  * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.xianglong.work</p>
+ * <p>Company: www.uiotp.com</p>
  * @author  yangcheng
  * @date:   2019年6月24日
  */

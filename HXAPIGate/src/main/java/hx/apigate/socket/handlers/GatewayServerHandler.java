@@ -34,7 +34,7 @@ import hx.apigate.util.RouteSelectUtil;
 /**
  * <p>Description: 处理第三方http客户端handler，判断url是否存在</p>
 　 * <p>Copyright: Copyright (c) 2019</p>
-　 * <p>Company: www.xianglong.work</p>
+　 * <p>Company: www.uiotp.com</p>
 　 * @author yangcheng
 　 * @date 2019年10月31日
 　 * @version 1.0

@@ -15,7 +15,7 @@ import redis.clients.jedis.JedisPoolConfig;
  * 分布式缓存--封装对redis得基本操作
  * @Description: 
  * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.xianglong.work</p>
+ * <p>Company: www.uiotp.com</p>
  * @author  yangcheng
  * @date:   2019年6月24日
  */

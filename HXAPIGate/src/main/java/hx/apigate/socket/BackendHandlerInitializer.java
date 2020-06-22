@@ -12,7 +12,7 @@ import io.netty.handler.codec.http.HttpObjectAggregator;
  * 响应http请求的socket初始化时pipeline初始化工具类
 　 * <p>Description: </p>
 　 * <p>Copyright: Copyright (c) 2019</p>
-　 * <p>Company: www.xianglong.work</p>
+　 * <p>Company: www.uiotp.com</p>
 　 * @author yangcheng
 　 * @date 2019年10月29日
 　 * @version 1.0

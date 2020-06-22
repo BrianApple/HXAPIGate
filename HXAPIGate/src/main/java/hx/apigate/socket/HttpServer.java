@@ -225,7 +225,7 @@ import io.netty.handler.logging.LoggingHandler;
  * 网关获取终端报文
  * @Description: 
  * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.xianglong.work</p>
+ * <p>Company: www.uiotp.com</p>
  * @author  yangcheng
  * @date:   2019年3月30日
  */

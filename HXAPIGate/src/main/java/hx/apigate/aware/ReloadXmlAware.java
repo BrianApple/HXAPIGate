@@ -22,7 +22,7 @@ import hx.apigate.util.LocalCache;
 /**
  * <p>Description: 加载xml配置文件</p>
 　 * <p>Copyright: Copyright (c) 2019</p>
-　 * <p>Company: www.xianglong.work</p>
+　 * <p>Company: www.uiotp.com</p>
 　 * @author yangcheng
 　 * @date 2019年10月29日
 　 * @version 1.0

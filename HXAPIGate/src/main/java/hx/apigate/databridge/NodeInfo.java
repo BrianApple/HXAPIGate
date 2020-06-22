@@ -7,7 +7,7 @@ import hx.apigate.databridge.xmlBean.RouteNode;
 /**
  * <p>Description: 存放当前url选择的路由的信息</p>
 　 * <p>Copyright: Copyright (c) 2019</p>
-　 * <p>Company: www.xianglong.work</p>
+　 * <p>Company: www.uiotp.com</p>
 　 * @author yangcheng
 　 * @date 2019年12月6日
 　 * @version 1.0
