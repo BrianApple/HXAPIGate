@@ -17,7 +17,7 @@ HXAPIGate基于Netty+Shiro开发的一款高性能API网关，对基于REST服�
 布式组件特性（典型如spring cloud全家桶），当一个业务微服务单元发布之后，浩心网关会直接赋予该服务所有分
 布式组件特性。当然大家如果了解过service mesh，就会发现与其有神似之处，未来将浩心网关打造成一款工业级sidecar,
 也是我希望的能够达到的目标之一。
-![输入图片说明](https://images.gitee.com/uploads/images/2020/0904/204537_7327db31_1038477.png "HXAPIGate.png")
+![输入图片说明](https://images.gitee.com/uploads/images/2020/0904/210700_8e44eac7_1038477.png "HXAPIGate.png")
 
 
 ### 为什么不选择springCloud or dubbo
