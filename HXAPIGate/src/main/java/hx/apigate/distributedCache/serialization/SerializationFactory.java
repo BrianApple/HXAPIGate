@@ -7,9 +7,7 @@ import hx.apigate.distributedCache.serialization.json.FastJsonSerialize;
 
 /**
  * 序列化器工厂
- * @Description:
- * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.uiotp.com</p> 
+ * @Description: 
  * @author  yangcheng
  * @date:   2019年6月25日
  */

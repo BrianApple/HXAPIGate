@@ -5,6 +5,7 @@ import com.github.pagehelper.PageInfo;
 import com.usthe.bootshiro.domain.bo.AuthUser;
 import com.usthe.bootshiro.domain.vo.Account;
 import com.usthe.bootshiro.domain.vo.Message;
+import com.usthe.bootshiro.ignite.IgniteAutoConfig;
 import com.usthe.bootshiro.service.UserService;
 import com.usthe.bootshiro.shiro.provider.AccountProvider;
 import com.usthe.bootshiro.support.factory.LogTaskFactory;
@@ -46,6 +47,8 @@ public class UserController extends BaseAction {
 
     @Autowired
     private StringRedisTemplate redisTemplate;
+    @Autowired
+    private IgniteAutoConfig igniteAutoConfig;
     
     @Autowired
     private AccountProvider accountProvider;
@@ -132,11 +135,13 @@ public class UserController extends BaseAction {
         if (StringUtils.isEmpty(userId)) {
             return new Message().error(1111, "用户未登录无法登出");
         }
-        String jwt = redisTemplate.opsForValue().get("JWT-SESSION-"+userId);
+        Object jwt = igniteAutoConfig.getCommonData("JWT-SESSION-"+userId);
+//        String jwt = redisTemplate.opsForValue().get("JWT-SESSION-"+userId);
         if (StringUtils.isEmpty(jwt)) {
             return new Message().error(1111, "用户未登录无法登出");
         }
-        redisTemplate.opsForValue().getOperations().delete("JWT-SESSION-"+userId);
+        igniteAutoConfig.removeCommonData("JWT-SESSION-"+userId);
+//        redisTemplate.opsForValue().getOperations().delete("JWT-SESSION-"+userId);
         LogExeManager.getInstance().executeLogTask(LogTaskFactory.exitLog(userId,request.getRemoteAddr(),(short)1,""));
 
         return new Message().ok(6666, "用户退出成功");

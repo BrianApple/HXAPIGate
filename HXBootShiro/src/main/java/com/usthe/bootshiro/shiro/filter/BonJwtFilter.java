@@ -2,6 +2,7 @@ package com.usthe.bootshiro.shiro.filter;
 
 import com.alibaba.fastjson.JSON;
 import com.usthe.bootshiro.domain.vo.Message;
+import com.usthe.bootshiro.ignite.IgniteAutoConfig;
 import com.usthe.bootshiro.service.AccountService;
 import com.usthe.bootshiro.shiro.token.JwtToken;
 import com.usthe.bootshiro.support.factory.LogTaskFactory;
@@ -39,6 +40,8 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
 
 
     private StringRedisTemplate redisTemplate;
+    
+    private IgniteAutoConfig igniteAutoConfig;
     private AccountService accountService;
 
     @Override
@@ -60,14 +63,13 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
 
                 // 如果是JWT过期
                 if (STR_EXPIRED.equals(e.getMessage())) {
-                    // 这里初始方案先抛出令牌过期，之后设计为在Redis中查询当前userId对应令牌，其设置的过期时间是JWT的两倍，此作为JWT的refresh时间
-                    // 当JWT的有效时间过期后，查询其refresh时间，refresh时间有效即重新派发新的JWT给客户端，
-                    // refresh也过期则告知客户端JWT时间过期重新认证
 
                     // 当存储在redis的JWT没有过期，即refresh time 没有过期
                     String userId = WebUtils.toHttp(servletRequest).getHeader("userId");
                     String jwt = WebUtils.toHttp(servletRequest).getHeader("authorization");
-                    String refreshJwt = redisTemplate.opsForValue().get("JWT-SESSION-"+userId);
+                    
+                    Object refreshJwt = igniteAutoConfig.getCommonData("JWT-SESSION-"+userId);
+//                    String refreshJwt = redisTemplate.opsForValue().get("JWT-SESSION-"+userId);
                     if (null != refreshJwt && refreshJwt.equals(jwt)) {
                         // 重新申请新的JWT
                         // 根据userId获取其对应所拥有的角色(这里设计为角色对应资源，没有权限对应资源)
@@ -77,7 +79,8 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
                         String newJwt = JsonWebTokenUtil.issueJWT(UUID.randomUUID().toString(),userId,
                                 "token-server",refreshPeriodTime >> 1,roles,null, SignatureAlgorithm.HS512);
                         // 将签发的JWT存储到Redis： {JWT-SESSION-{userId} , jwt}
-                        redisTemplate.opsForValue().set("JWT-SESSION-"+userId,newJwt,refreshPeriodTime, TimeUnit.SECONDS);
+                        igniteAutoConfig.cacheCommonData(refreshPeriodTime, "JWT-SESSION-"+userId, newJwt);
+//                        redisTemplate.opsForValue().set("JWT-SESSION-"+userId,newJwt,refreshPeriodTime, TimeUnit.SECONDS);
                         Message message = new Message().ok(1005,"new jwt").addData("jwt",newJwt);
                         RequestResponseUtil.responseWrite(JSON.toJSONString(message),servletResponse);
                         return false;
@@ -166,4 +169,11 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
     public void setAccountService(AccountService accountService) {
         this.accountService = accountService;
     }
+
+
+	public void setIgniteAutoConfig(IgniteAutoConfig igniteAutoConfig) {
+		this.igniteAutoConfig = igniteAutoConfig;
+	}
+    
+    
 }

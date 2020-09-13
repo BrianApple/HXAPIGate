@@ -1,23 +1,15 @@
 package hx.apigate.aware;
 
-import java.util.List;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.thoughtworks.xstream.XStream;
-import com.thoughtworks.xstream.io.xml.DomDriver;
-import com.thoughtworks.xstream.io.xml.XmlFriendlyReplacer;
 
-import hx.apigate.Entrance;
 import hx.apigate.base.IProcessor;
-import hx.apigate.databridge.xmlBean.Route;
-import hx.apigate.databridge.xmlBean.RouteAll;
-import hx.apigate.databridge.xmlBean.RouteNode;
-import hx.apigate.distributedCache.config.DistributedCachingProperties;
-import hx.apigate.distributedCache.config.DistributedCachingProperties.RedisNodes;
-import hx.apigate.distributedCache.config.PropertiesFactory;
+import hx.apigate.socket.Server4Terminal;
+import hx.apigate.util.HXAPIGateConext;
 import hx.apigate.util.LocalCache;
+import hx.apigate.util.MixAll;
 
 /**
  * <p>Description: 加载xml配置文件</p>
@@ -28,10 +20,12 @@ import hx.apigate.util.LocalCache;
 　 * @version 1.0
  */
 public class ReloadXmlAware implements IProcessor{
-	Logger logger = LoggerFactory.getLogger(ReloadXmlAware.class);
+	Logger logger = LoggerFactory.getLogger(Server4Terminal.class);
 
 	@Override
 	public void start() throws Exception {
+		
+		//Font: roman
 		logger.info("===================================================================");
 		logger.info("===================================================================");
 		logger.info("oooo oooo      .o      .ooooo.   ooooo   oooo oooo oooo   ooo ");
@@ -44,35 +38,22 @@ public class ReloadXmlAware implements IProcessor{
 		logger.info("===================================================================");
 		logger.info("----------------------------------------------powered by yangcheng-");
 		logger.info("===================================================================");
-		logger.info("xml is loaded............................................");
-		XStream xStream = new XStream(new DomDriver("utf-8",new XmlFriendlyReplacer("_-", "_")));
-		xStream.alias("RouteAll", RouteAll.class);
-		xStream.alias("Route", Route.class);
-		xStream.alias("RouteNode", RouteNode.class);
-		xStream.alias("DistributedCachingProperties", DistributedCachingProperties.class);
-		xStream.alias("RedisNodes", RedisNodes.class);
-		PropertiesFactory.distributedCachingProperties = (DistributedCachingProperties) xStream.fromXML(DistributedCachingProperties.class.getClassLoader().getResourceAsStream("DistributeCacheInfo.xml"));
-		RouteAll routeAll = (RouteAll) xStream.fromXML(Entrance.class.getClassLoader().getResourceAsStream("RouteInfo.xml"));
-		List<Route> routeAllList = routeAll.getRouteAll();
-		for (Route route : routeAllList) {
-			route.init();
-			LocalCache.routeCache.put(route.getMatchUrl(), route);
-		}
+		logger.info(MixAll.LOG_INFO_PRIFEX+String.format("HTTPServer is started ! Server port is %s", HXAPIGateConext.PORT));
+		
 	}
 
 	@Override
 	public void stop() throws Exception {
-		LocalCache.routeCache.clear();
 	}
 
 	@Override
 	public int getStartOrder() {
-		return 0;
+		return 5;
 	}
 
 	@Override
 	public int getStopOrder() {
-		return 0;
+		return 5;
 	}
 	
 

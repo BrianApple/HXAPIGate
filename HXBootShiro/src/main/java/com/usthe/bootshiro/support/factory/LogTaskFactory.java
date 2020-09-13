@@ -61,6 +61,7 @@ public class LogTaskFactory {
                     AuthAccountLog accountLog = LogFactory.createAccountLog(userId, "用户注册日志", ip, succeed, message);
                     accountLogMapper.insertSelective(accountLog);
                 } catch (Exception e) {
+                	System.err.println("写入用户注册日志异常"+e.getCause().getMessage());
                     LOGGER.error("写入用户注册日志异常", e.getCause().getMessage());
                 }
             }
@@ -75,6 +76,7 @@ public class LogTaskFactory {
                     AuthOperationLog operationLog = LogFactory.createOperationLog(userId, "业务操作日志", api, method, succeed, message);
                     operationLogMapper.insertSelective(operationLog);
                 } catch (Exception e) {
+                	System.err.println("写入用户注册日志异常"+e.getCause().getMessage());
                     LOGGER.error("写入业务操作日志异常", e.getCause().getMessage());
                 }
             }

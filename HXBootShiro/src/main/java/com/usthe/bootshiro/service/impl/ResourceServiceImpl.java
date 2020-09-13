@@ -86,4 +86,10 @@ public class ResourceServiceImpl implements ResourceService {
         return authResourceMapper.selectNotAuthorityMenusByRoleId(roleId);
     }
 
+	@Override
+	public AuthResource getApiInfoByapiId(Integer apiId) {
+		// TODO Auto-generated method stub
+		return authResourceMapper.selectByPrimaryKey(apiId);
+	}
+
 }

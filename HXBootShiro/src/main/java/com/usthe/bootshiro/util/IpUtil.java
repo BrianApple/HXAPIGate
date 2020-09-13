@@ -69,5 +69,14 @@ public class IpUtil {
         }
         return ip;
     }
+    /**
+     * 获取完整客户端Ip，包含代理ip信息
+     * @param request
+     * @return
+     */
+    public static String getAllIpFromRequest(HttpServletRequest request) {
+    	String ip = request.getHeader(X_FORWARDED_FOR);
+    	return ip;
+    }
 }
 

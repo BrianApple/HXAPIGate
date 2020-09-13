@@ -14,27 +14,24 @@ import hx.apigate.databridge.xmlBean.RouteNode;
  */
 public class NodeInfo implements Serializable{
 	private static final long serialVersionUID = 7278672338145125207L;
+	private String interfaceVserion;
 	private String protocalTemp;
 	private String methodName;
 	private RouteNode routeNode;
 	private boolean needAuth;
 	private String requestUrl;
 	
-	/**
-	 * 构造
-	 * @param protocalTemp
-	 * @param routeNode
-	 * @param needAuth
-	 */
-	public NodeInfo(String protocalTemp, RouteNode routeNode,boolean needAuth) {
+	public NodeInfo(String interfaceVserion, String protocalTemp, RouteNode routeNode,boolean needAuth) {
 		super();
+		this.interfaceVserion = interfaceVserion;
 		this.protocalTemp = protocalTemp;
 		this.routeNode = routeNode;
 		this.needAuth = needAuth;
 	}
 	
-	public NodeInfo(String protocalTemp, String methodName, RouteNode routeNode,String requestUrl,boolean needAuth) {
+	public NodeInfo(String interfaceVserion, String protocalTemp, String methodName, RouteNode routeNode,String requestUrl,boolean needAuth) {
 		super();
+		this.interfaceVserion = interfaceVserion;
 		this.protocalTemp = protocalTemp;
 		this.methodName = methodName;
 		this.routeNode = routeNode;
@@ -42,6 +39,13 @@ public class NodeInfo implements Serializable{
 		this.needAuth = needAuth;
 	}
 
+	public String getInterfaceVserion() {
+		return interfaceVserion;
+	}
+
+	public void setInterfaceVserion(String interfaceVserion) {
+		this.interfaceVserion = interfaceVserion;
+	}
 
 	public String getProtocalTemp() {
 		return protocalTemp;

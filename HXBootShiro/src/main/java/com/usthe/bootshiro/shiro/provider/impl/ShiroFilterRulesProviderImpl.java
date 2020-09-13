@@ -37,4 +37,13 @@ public class ShiroFilterRulesProviderImpl implements ShiroFilterRulesProvider {
         return authResourceMapper.selectRoleRules();
     }
 
+    /**
+     * 获取当前资源id对应的授权信息
+     */
+	@Override
+	public RolePermRule loadRolePermRulesByResourceId(int resourceId) {
+		// TODO Auto-generated method stub
+		return authResourceMapper.selectRoleRulesByResouceId(String.valueOf(resourceId));
+	}
+
 }

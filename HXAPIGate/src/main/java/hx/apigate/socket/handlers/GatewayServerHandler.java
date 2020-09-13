@@ -27,15 +27,18 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import hx.apigate.databridge.NodeInfo;
+import hx.apigate.databridge.SemphareException;
 import hx.apigate.databridge.xmlBean.RouteNode;
+import hx.apigate.util.HXAPIGateConext;
+import hx.apigate.util.HttpResponseUtil;
 import hx.apigate.util.MixAll;
 import hx.apigate.util.RouteSelectUtil;
 
 /**
- * <p>Description: 处理第三方http客户端handler，判断url是否存在</p>
+ * <p>Description: </p>
 　 * <p>Copyright: Copyright (c) 2019</p>
 　 * <p>Company: www.uiotp.com</p>
-　 * @author yangcheng
+　 * @author yangcheng,hjj
 　 * @date 2019年10月31日
 　 * @version 1.0
  */
@@ -51,39 +54,53 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, final FullHttpRequest msg) {
     	 final Channel webChannel = ctx.channel();
-    	 String localHost = msg.headers().get(hx.apigate.socket.Constance.HOST);
-    	 InetSocketAddress webAddress = (InetSocketAddress)webChannel.remoteAddress();
-    	 StringBuilder sb ;
-    	 if( msg.headers().get(hx.apigate.socket.Constance.X_FORWARDED_FOR) != null) {
-    		 sb = new StringBuilder( msg.headers().get(hx.apigate.socket.Constance.X_FORWARDED_FOR));
-    		 sb.append(hx.apigate.socket.Constance.DELIMER).append(localHost.split("\\:")[0]);
+    	 if(msg.method().equals(HttpMethod.OPTIONS)) {
+    		 HttpResponseUtil.responseMsg(webChannel, null);
     	 }else {
-    		 sb = new StringBuilder(webAddress.getHostName());
-        	 sb.append(hx.apigate.socket.Constance.DELIMER).append(localHost.split("\\:")[0]);
+    		 String localHost = msg.headers().get(hx.apigate.socket.Constance.HOST);
+    		 InetSocketAddress webAddress = (InetSocketAddress)webChannel.remoteAddress();
+    		 StringBuilder sb ;
+    		 if( msg.headers().get(hx.apigate.socket.Constance.X_FORWARDED_FOR) != null) {
+    			 sb = new StringBuilder( msg.headers().get(hx.apigate.socket.Constance.X_FORWARDED_FOR));
+    			 sb.append(hx.apigate.socket.Constance.DELIMER).append(localHost.split("\\:")[0]);
+    		 }else {
+    			 sb = new StringBuilder(webAddress.getAddress().getHostAddress());
+    			 sb.append(hx.apigate.socket.Constance.DELIMER).append(localHost.split("\\:")[0]);
+    		 }
+    		 msg.headers().set(hx.apigate.socket.Constance.X_FORWARDED_FOR, sb.toString());
+    		 msg.headers().set(hx.apigate.socket.Constance.HXAPIGate_SOURCE_ID,webChannel.id().asLongText() );
+    		 
+    		 Object[] ret = null;
+    		 try {
+    			 ret = matchUrl(msg.uri(),msg.method());
+    			 if(ret != null && ret.length == 2 && ret[1] instanceof NodeInfo){
+    				 NodeInfo node = (NodeInfo)ret[1];
+    				 if("http".equals(node.getProtocalTemp())) {
+    					 msg.headers().set(hx.apigate.socket.Constance.HOST,new StringBuilder(node.getRouteNode().getIp())
+    							 .append(hx.apigate.socket.Constance.COLON).append(node.getRouteNode().getPort()));
+    				 }
+    				 webChannel.attr(MixAll.ATTRIBUTEKEY_URL).set(ret[0].toString());
+    				 webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).set(node);
+    				 msg.retain();
+    				 ctx.fireChannelRead(msg);
+    			 }else {
+    				 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(404, "The path you accessed does not exist !"));
+    			 }
+    		 } catch (SemphareException e) {
+    			 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(400, e.getMsg()));
+    		 }
     	 }
-    	 msg.headers().set(hx.apigate.socket.Constance.X_FORWARDED_FOR, sb.toString());
-    	 msg.headers().set(hx.apigate.socket.Constance.HXAPIGate_SOURCE_ID,webChannel.id().asLongText() );
-    	 
-         Object[] ret = matchUrl(msg.uri());
-         
-         if(ret[1] != null && ret[1] instanceof NodeInfo){
-        	 NodeInfo node = (NodeInfo)ret[1];
-        	 if("http".equals(node.getProtocalTemp())) {
-        		 msg.headers().set(hx.apigate.socket.Constance.HOST,new StringBuilder(node.getRouteNode().getIp())
-        				 .append(hx.apigate.socket.Constance.COLON).append(node.getRouteNode().getPort()));
-        	 }
-        	 webChannel.attr(MixAll.ATTRIBUTEKEY_URL).set(ret[0].toString());
-        	 webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).set(node);
-        	 msg.retain();
-        	 ctx.fireChannelRead(msg);
-         }else {
-        	 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse(404, "The path you accessed does not exist !"));
-         }
     }
 
     @Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
-		super.channelActive(ctx);
+    	if(HXAPIGateConext.rateLimiter.tryAcquire()) {
+    		super.channelActive(ctx);
+    	}else {
+    		ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(500, "service is busy, please try again later"));
+    		ctx.deregister();
+    		ctx.close();
+    	}
 		logger.debug("web channel active");
 	}
 
@@ -98,9 +115,15 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
         cause.printStackTrace();
         ctx.close();
     }
-	
-    private Object[] matchUrl(String sourceUrl) {
-    	Object[] ret = RouteSelectUtil.selectOneRoute(sourceUrl);
+
+    /**
+     * @param sourceUrl web端访问的url
+     * @param httpMethod 
+     * @return 
+     * @throws Exception 
+     */
+    private Object[] matchUrl(String sourceUrl, HttpMethod httpMethod) throws SemphareException  {
+    	Object[] ret = RouteSelectUtil.selectOneNode(sourceUrl,httpMethod);
 		return ret;
         
     }

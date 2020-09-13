@@ -103,8 +103,8 @@ public class RoleController extends BaseAction {
         PageInfo pageInfo = new PageInfo(authResources);
         return new Message().ok(6666, "return api success").addData("data", pageInfo);
     }
-
-    @ApiOperation(value = "授权资源给角色",httpMethod = "POST")
+//----------------------------------------------------------------------------
+    @ApiOperation(value = "授权资源(API和菜单)给角色",httpMethod = "POST")
     @PostMapping("/authority/resource")
     public Message authorityRoleResource(HttpServletRequest request) {
         Map<String,String> map = getRequestBody(request);
@@ -112,17 +112,39 @@ public class RoleController extends BaseAction {
         int roleId = Integer.parseInt(data.toString());
         int resourceId = Integer.parseInt(((Object)map.get("resourceId")).toString());
         boolean flag = roleService.authorityRoleResource(roleId,resourceId);
-        shiroFilterChainManager.reloadFilterChain();
+        shiroFilterChainManager.reloadFilterChain(resourceId);
         return flag ? new Message().ok(6666,"authority success") : new Message().error(1111,"authority error");
     }
 
-    @ApiOperation(value = "删除对应的角色的授权资源",httpMethod = "DELETE")
+    @ApiOperation(value = "删除对应的角色的授权资源(API和菜单)",httpMethod = "DELETE")
     @DeleteMapping("/authority/resource/{roleId}/{resourceId}")
     public Message deleteAuthorityRoleResource(@PathVariable Integer roleId, @PathVariable Integer resourceId ) {
         boolean flag = roleService.deleteAuthorityRoleResource(roleId,resourceId);
-        shiroFilterChainManager.reloadFilterChain();
+        shiroFilterChainManager.reloadFilterChain(resourceId);
         return flag ? new Message().ok(6666,"authority success") : new Message().error(1111,"authority error");
     }
+    //-----------------------------------------
+    @ApiOperation(value = "关联制定用户给角色",httpMethod = "POST")
+    @PostMapping("/authority/user")
+    public Message authorityRoleUser(HttpServletRequest request) {
+    	Map<String,String> map = getRequestBody(request);
+    	Object data = map.get("roleId");
+    	int roleId = Integer.parseInt(data.toString());
+    	String resourceId = map.get("resourceId").toString();
+    	boolean flag = roleService.authorityRoleUser(roleId,resourceId);
+//    	shiroFilterChainManager.reloadFilterChain(resourceId);
+    	return flag ? new Message().ok(6666,"authority success") : new Message().error(1111,"authority error");
+    }
+    
+    @ApiOperation(value = "删除角色对应的指定用户",httpMethod = "DELETE")
+    @DeleteMapping("/authority/user/{roleId}/{resourceId}")
+    public Message deleteAuthorityRoleUser(@PathVariable Integer roleId, @PathVariable String resourceId ) {
+    	boolean flag = roleService.deleteAuthorityRoleUser(roleId,resourceId);
+//    	shiroFilterChainManager.reloadFilterChain(resourceId);
+    	return flag ? new Message().ok(6666,"authority success") : new Message().error(1111,"authority error");
+    }
+    
+    
 
     @SuppressWarnings("unchecked")
     @ApiOperation(value = "获取角色LIST", httpMethod = "GET")
@@ -169,6 +191,13 @@ public class RoleController extends BaseAction {
         } else {
             return new Message().error(1111, "delete fail");
         }
+    }
+    
+    @ApiOperation(value = "根据角色ID获取角色", httpMethod = "GET")
+    @GetMapping("{roleId}")
+    public Message getRoleByRoleId(@PathVariable Integer roleId) {
+    	AuthRole roleInfo=roleService.getRoleInfoById(roleId);
+    	return new Message().ok(6666,"return apis success").addData("apiData",roleInfo);
     }
 
 

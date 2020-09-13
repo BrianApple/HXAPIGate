@@ -1,28 +1,38 @@
 package hx.apigate;
 
-import java.lang.reflect.Method;
 import java.util.Set;
 
 
 import org.reflections.Reflections;
-import org.springframework.boot.SpringApplication;
-import org.springframework.boot.autoconfigure.SpringBootApplication;
-import org.springframework.context.annotation.ImportResource;
 
 import hx.apigate.base.IProcessor;
 import hx.apigate.util.LocalCache;
 
 /**
  * 浩心API网关入口程序
- * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.uiotp.com</p>
- * @author yangcheng
+ * 基于springboot
+ * 
+ * 网关统一响应格式为：
+	{ 
+		"code": xxx,
+		"data": {...}, //微服务返回数据
+		"msg" : xxx,//异常信息
+		"timestamp": xxx 
+	} 
+ * code = 200  微服务调用成功，data为微服务值
+ * code = 400  jwt鉴权异常
+ * code = 403  无权限
+ * code = 404  当前接口路径不存在
+ * code = 500  微服务访问超限或其他服务异常
+ * @author yangcheng,hjj
  * @date
  */
-@SpringBootApplication
 public class Entrance {
+	public static int gateNum = 1;//默认为1
+	public static boolean isCluster;
+	public static String nodeName = null;
+	public static String zkAddr = null;
 	public static void main(String[] args) {
-		SpringApplication.run(Entrance.class, args);
 		
 		Reflections reflections = new Reflections("hx.apigate");
 		Set<Class<? extends IProcessor>> subTypes = reflections.getSubTypesOf(IProcessor.class);

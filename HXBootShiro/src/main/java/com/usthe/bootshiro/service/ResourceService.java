@@ -103,4 +103,11 @@ public interface ResourceService {
      * @return java.util.List<com.usthe.bootshiro.domain.bo.AuthResource>
      */
     List<AuthResource> getNotAuthorityMenusByRoleId(Integer roleId);
+
+    /**
+     * 根据apiId获取api信息
+     * @param apiId
+     * @return
+     */
+	AuthResource getApiInfoByapiId(Integer apiId);
 }

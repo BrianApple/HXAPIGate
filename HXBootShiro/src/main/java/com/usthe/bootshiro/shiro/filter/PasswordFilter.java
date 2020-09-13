@@ -3,10 +3,14 @@ package com.usthe.bootshiro.shiro.filter;
 
 import com.alibaba.fastjson.JSON;
 import com.usthe.bootshiro.domain.vo.Message;
+import com.usthe.bootshiro.ignite.Constance;
+import com.usthe.bootshiro.ignite.IgniteAutoConfig;
 import com.usthe.bootshiro.shiro.token.PasswordToken;
 import com.usthe.bootshiro.util.CommonUtil;
 import com.usthe.bootshiro.util.IpUtil;
 import com.usthe.bootshiro.util.RequestResponseUtil;
+
+import org.apache.ignite.IgniteCache;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
@@ -15,6 +19,10 @@ import org.apache.shiro.web.util.WebUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
+
+import javax.cache.expiry.CreatedExpiryPolicy;
+import javax.cache.expiry.Duration;
+import javax.cache.expiry.ExpiryPolicy;
 import javax.servlet.ServletRequest;
 import javax.servlet.ServletResponse;
 import javax.servlet.http.HttpServletRequest;
@@ -31,7 +39,7 @@ public class PasswordFilter extends AccessControlFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(PasswordFilter.class);
 
     private StringRedisTemplate redisTemplate;
-
+    private IgniteAutoConfig igniteAutoConfig;
     @Override
     protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
 
@@ -44,15 +52,6 @@ public class PasswordFilter extends AccessControlFilter {
     @Override
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
 
-        /**
-                 * 登录注册的动态加密密钥在此过滤器中判断并直接返回密钥
-                 *  判断若为获取登录注册加密动态秘钥请求
-                 *  
-                 *  判断为获取秘钥则生成16随机码默认AES加密秘钥为约定16位，小于16位会报错，
-                 *  将秘钥以<远程IP，秘钥>的<key,value>形式存储到redis，
-                 *  设置其有效时间为5秒5秒看自己情况不要太大也不要太短，
-                 *  设置有效期是为了防止被其他人截取到加密密码冒充用户的情况，把风险降更低。
-         */
         if (isPasswordTokenGet(request)) {
             //动态生成秘钥，redis存储秘钥供之后秘钥验证使用，设置有效期5秒用完即丢弃
             String tokenKey = CommonUtil.getRandomString(16);//动态秘钥
@@ -60,7 +59,8 @@ public class PasswordFilter extends AccessControlFilter {
             try {
             	String str = request.getRemoteHost();
                 //将密钥存储进redis
-                redisTemplate.opsForValue().set("TOKEN_KEY_"+ IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey.toUpperCase(),tokenKey,500, TimeUnit.SECONDS);
+            	igniteAutoConfig.cacheTOKEN_KAY(500,"TOKEN_KEY_"+ IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey.toUpperCase(),tokenKey);
+//                redisTemplate.opsForValue().set("TOKEN_KEY_"+ IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey.toUpperCase(),tokenKey,500, TimeUnit.SECONDS);
                 // 动态秘钥response返回给前端
                 Message message = new Message();
                 message.ok(1000,"issued tokenKey success")
@@ -183,12 +183,17 @@ public class PasswordFilter extends AccessControlFilter {
         //获取动态密钥时服务端生成的随机数
         String userKey = map.get("userKey");
         //动态密钥
-        String tokenKey = redisTemplate.opsForValue().get("TOKEN_KEY_"+host.toUpperCase()+userKey);
+        String tokenKey = igniteAutoConfig.getTOKEN_KAY("TOKEN_KEY_"+host.toUpperCase()+userKey);
+//        String tokenKey = redisTemplate.opsForValue().get("TOKEN_KEY_"+host.toUpperCase()+userKey);
         return new PasswordToken(appId,password,timestamp,host,tokenKey);
     }
 
     public void setRedisTemplate(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
+
+	public void setIgniteAutoConfig(IgniteAutoConfig igniteAutoConfig) {
+		this.igniteAutoConfig = igniteAutoConfig;
+	}
 
 }

@@ -1,0 +1,581 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>角色管理</title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+		<link rel="stylesheet" href="../../../css/font.css">
+		<link rel="stylesheet" href="../../../css/weadmin.css">
+		<!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+		<!--[if lt IE 9]>
+	      <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+	      <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+	    <![endif]-->
+		<style type="text/css">
+			.layui-form-switch {
+				width: 55px;
+			}			
+			.layui-form-switch em {
+				width: 40px;
+			}			
+			.layui-form-onswitch i {
+				left: 45px;
+			}
+			body{overflow-y: scroll;}
+		</style>
+		<script src="../../../js/jquery-3.1.1.js"></script>
+	</head>
+
+	<body>
+		<div class="weadmin-nav">
+			<span class="layui-breadcrumb">
+        <a href="">规约管理</a>
+        <a>
+          <cite>规约维护</cite></a>
+      </span>
+			<a class="layui-btn layui-btn-sm" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);" title="刷新">
+				<i class="layui-icon" style="line-height:30px">&#x1002;</i></a>
+		</div>
+		<div class="weadmin-body">
+			
+			<div>
+				<div style="width: 48%;float: left;">
+						<div class="layui-row">
+							<button class="layui-btn" onclick="WeAdminShow('添加角色','./add.html',500,370)"><i class="layui-icon"></i>添加</button>
+							<form class="layui-form layui-col-md12 we-search">
+							      
+							     <div class="layui-input-inline ">
+									<select name="role_Relation_Source" id = "role_Relation_Source">
+										<option value = "api" >授权API</option>
+										<option value = "menue">授权菜单</option>
+										<option value = "user">关联用户</option>
+									</select>
+								</div>
+								
+							</form>
+						</div>
+						<div class="weadmin-block">
+							
+							<span class="fr" style="line-height:40px" id="role_Relation_Source_Num">角色总数：0 条</span>
+						</div>
+						<table class="layui-table">
+							<thead>
+								<tr>
+									<th>
+										<div class="layui-unselect header layui-form-checkbox" lay-skin="primary"><i class="layui-icon">&#xe605;</i></div>
+									</th>
+									<th>ID</th>
+									<th>角色名称</th>
+									<th>编码</th>
+									<th>状态</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody id ="table_role_list">
+								
+								<!-- <tr data-id="1">
+									<td>
+										<div class="layui-unselect layui-form-checkbox" lay-skin="primary" data-id="1"><i class="layui-icon">&#xe605;</i></div>
+									</td>
+									<td>1</td>
+									<td></td>
+									<td>0</td>
+									<td>2</td>
+									<td>1</td>
+									<td>0</td>
+									<td>0</td>
+									<td>9527</td>
+									<td class="td-manage">
+			
+										<a title="编辑" onclick="WeAdminEdit('编辑','./edit.html', 1, 600, 400)" href="javascript:;">
+											<i class="layui-icon">&#xe642;</i>
+										</a>
+										
+										
+										<a title="删除" onclick="del(11)" href="javascript:;">
+											<i class="layui-icon"></i>
+										</a>
+									</td>
+								</tr> -->
+							</tbody>
+						</table>
+				</div>
+				<div style="width: 48%;float: right;">
+						<div class="layui-row">
+							<form class="layui-form layui-col-md12 we-search">
+								
+								<div class="layui-inline">
+									<input type="text" name="keyword" placeholder="请输入规约编号" autocomplete="off" class="layui-input">
+								</div>
+								<button class="layui-btn" lay-submit="" lay-filter="sreach"><i class="layui-icon">&#xe615;</i></button>
+							</form>
+						</div>
+						<div class="weadmin-block">
+							<button class="layui-btn" onclick="addRight()"><i class="layui-icon"></i>添加</button>
+							<span class="fr" style="line-height:40px" id="sourceNum">资源总数：0 条</span>
+						</div>
+					<table class="layui-table" >
+							<thead id = "table_resource_header">
+								<tr>
+									<th>名称</th>
+									<th>url</th>
+									<th>状态</th>
+									<th>操作</th>
+								</tr>
+							</thead>
+							<tbody id ="table_resource_list">
+							</tbody>
+					</table>
+					<div id= "left_page">
+			
+					</div>
+				</div>
+			</div>
+			
+			
+			<script src="../../../lib/layui/layui.js" charset="utf-8"></script>
+			<script src="list.js" type="text/javascript" charset="utf-8"></script>
+		</div>
+	</body>
+	<script type="text/javascript">
+		//左侧模块
+		var sourceType="";
+		$(function(){
+			debugger
+			layui.use(['form', 'jquery','util','admin', 'layer'], function() {
+				var form = layui.form,
+					$ = layui.jquery,
+					util = layui.util,
+					admin = layui.admin,
+					layer = layui.layer;
+				form.on('select', function (data) {
+					//console.log(data.value);
+					if(curSelectRoleId != ""){
+						sourceType = data.value;
+						if(sourceType == "api"){
+							getAPIListByRoleId(curSelectRoleId,1,10,true)
+						}else if(sourceType == "menue"){
+							getMenueListByRoleId(curSelectRoleId,1,10,true)
+						}else if(sourceType == "user"){
+							getUserListByRoleId(curSelectRoleId,1,10,true)
+						}	
+					}
+					
+					
+				 });
+				//自定义验证规则
+				form.verify({
+					pid: [/^[0-9a-zA-Z]{4}$/, '必须为字母或数字且长度为4'],
+					intVal: [ /^[0-9]+[0-9]*]*$/, '必须为正整数'],
+					allIntVal: [ /^-?[1-9]\d*$/, '必须为整数']
+				});
+				//失去焦点时判断值为空不验证，一旦填写必须验证
+
+				//监听提交
+				form.on('submit(add)', function(data) {
+					console.log(data.field);
+					var f = data.field;
+					//console.log(f.username);
+					//console.log(f.sex);				
+					//var sex = $('input:radio[name="sex"]:checked').val();
+					debugger
+					//发异步，把数据提交给php
+					var jwt = localStorage.getItem("jwt")
+					$.post("/api/addApiResource", {"data":f,"jwt":jwt},
+						function(data){
+						if(data.retSig == 200){ // 201表示已经存在
+							
+							
+							var index = parent.layer.getFrameIndex(window.name);
+							
+	    					var _len = parent.$('#memberList tr').length;
+	    					//调用父页面的初始化方法
+							parent.getApiByItemId(curapiTypeId);
+							//关闭当前frame
+							parent.layer.close(index);
+							
+							
+						}else if(data.retSig == 201){
+							layer.msg("规约编号已经存在",{icon: 5,time: 2000});
+						}
+					});
+					
+					
+					return false;
+				});
+
+			});
+			getAllRoles();
+		})
+		function getAllRoles(){
+			var jwt = localStorage.getItem("jwt")
+			$.post("/role/initRole",{"jwt":jwt,"pageIndex":1,"pageSize":10},function(data){
+				if(data.retSig == 200){
+					debugger
+					var retData = data.httpRet.data.data.list;
+					var str = "";
+					for(var i=0;i<retData.length;i++){
+						var roleInfo = retData[i];
+						debugger
+						str +=
+						'<tr data-id="' + roleInfo.id + '">' +
+							'<td>'+
+								'<div class="layui-unselect layui-form-checkbox" onclick="selectThis(this,\'' + roleInfo.id + '\')" lay-skin="primary" data-id="' + roleInfo.id + '"><i class="layui-icon">&#xe605;</i></div>'+
+							'</td>'+
+							'<td>' + roleInfo.id + '</td>'+
+							'<td>'+roleInfo.name+'</td>'+
+							'<td>' + roleInfo.code + '</td>'+
+							
+							'<td>'+(roleInfo.status == 1 ? "正常" : "禁用")+'</td>'+
+							'<td class="td-manage">'+
+								'<a title="编辑" onclick="updateStrategy(this,\'' + roleInfo.id + '\')" href="javascript:;"  style="margin-right:10px;"><i class="layui-icon">&#xe642;</i></a>'+
+								'<a title="删除" onclick="delStrategy(this,\'' + roleInfo.id + '\')" href="javascript:;"><i class="layui-icon">&#xe640;</i></a>'+
+							'</td>'+
+						'</tr>'	;
+					}
+					$("#role_Relation_Source_Num").html("角色总数"+data.httpRet.data.data.total+"条")
+					$('#table_role_list').html(str);
+					layui.form.render();
+				}
+			});
+		}
+		function del(a){
+			alert(a);
+		}
+		//删除一行数据
+		function  delStrategy (obj, pid) {
+			layer.confirm('您确认要删除角色'+pid+'吗？', function(index) {
+				//发异步删除数据
+				$.post("/role/deleteRoleById",{"str":pid},function(data){
+					if(data.retSig == 200){
+						$(obj).parents("tr").remove();
+						layer.msg('已删除!', {
+							icon: 1,
+							time: 1000
+						});
+					}
+					
+				},"json");
+				
+			});
+		}
+		//选中的当前api，全局变量，用于子页面获取选中的id
+		var curEditAPIId;
+		function updateStrategy(obj, roleId) {
+			
+			curEditAPIId = roleId;
+			layer.open({
+		        type: 2 //此处以iframe举例
+		        ,title: '编辑角色'
+		        ,area: [($(window).width() * 0.9-500)+'px', ($(window).height() - 150)+'px']
+		        ,content: './edit.html'
+		        ,yes: function(index, layero){
+		        	
+	                var body = layer.getChildFrame('body', index);
+	                var iframeWin = window[layero.find('iframe')[0]['name']];//得到iframe页的窗口对象，执行iframe页的方法：
+	                iframeWin.getRoleInfo(pid);//调用子页面的方法，得到子页面返回的ids
+	                /* $("#mediaPath").val(ids); */
+	                layer.close(index);//需要手动关闭窗口
+	            }
+		        ,btn2: function(){
+		          layer.closeAll();
+		        }
+		        ,success: function(layero){
+		          layer.setTop(layero); //重点2
+		        }
+		      });
+			
+		}
+		var curSelectRoleId = "";//当前选中的角色Id
+		
+		function selectThis(th,roleId){
+			curSelectRoleId = roleId;
+			$(".layui-form-checkbox").removeClass('layui-form-checked');
+			if($(th).hasClass('layui-form-checked')) {
+				$(th).removeClass('layui-form-checked');
+				if($(th).hasClass('header')) {
+					$(".layui-form-checkbox").removeClass('layui-form-checked');
+				}
+			} else {
+				$(th).addClass('layui-form-checked');
+				if($(th).hasClass('header')) {
+					$(".layui-form-checkbox").addClass('layui-form-checked');
+				}
+			}
+			sourceType = $("#role_Relation_Source").val();
+			//刷新右侧显示列表
+			if(sourceType == "api"){
+				getAPIListByRoleId(roleId,1,10,true)
+			}else if(sourceType == "menue"){
+				getMenueListByRoleId(roleId,1,10,true)
+			}else if(sourceType == "user"){
+				getUserListByRoleId(roleId,1,10,true)
+			}
+			
+			
+		}
+		
+	</script>
+	<script type="text/javascript">
+		//右侧模块
+		function getAPIListByRoleId(roleId,pageIndex,pageSize,isFirstLoad){
+			//表头
+			var str1 = 
+				"<tr>"+
+					"<th>ID</th>"+
+					"<th>名称</th>"+
+					"<th>url</th>"+
+					"<th>访问方式</th>"+
+					"<th>状态</th>"+
+					"<th>操作</th>"+
+				"</tr>";
+			$('#table_resource_header').html(str1);
+			$('#table_resource_list').html("");
+			var jwt = localStorage.getItem("jwt")
+			$.post("/role/getRestApiExtendByRoleId",{"jwt":jwt,"str":roleId,"pageIndex":pageIndex,"pageSize":pageSize},function(data){
+				if(data.retSig == 200){
+					debugger
+					var retData = data.httpRet.data.data.list;
+					var str = "";
+					for(var i=0;i<retData.length;i++){
+						var roleInfo = retData[i];
+						debugger
+						str +=
+						'<tr data-id="' + roleInfo.id + '">' +
+							'<td>' + roleInfo.id + '</td>'+
+							'<td title="'+roleInfo.name+'">' + (roleInfo.name.length >5 ? roleInfo.name.substring(0,5)+"..." :  roleInfo.name) + '</td>'+
+							'<td>' + roleInfo.uri + '</td>'+
+							'<td>' + roleInfo.method + '</td>'+
+							'<td>'+(roleInfo.status == 1 ? "正常" : "禁用")+'</td>'+
+							'<td class="td-manage">'+
+								'<a title="删除'+roleInfo.id+'" onclick="delStrategyR(this,\'' + roleInfo.id + '\')" href="javascript:;"><i class="layui-icon">&#xe640;</i></a>'+
+							'</td>'+
+						'</tr>'	;
+					}
+					var total = 0 ;
+					total = data.httpRet.data.data.total;
+					$("#sourceNum").html("资源总数"+total+"条")
+					$('#table_resource_list').html(str);
+					if(isFirstLoad){
+						
+						layui.use('laypage', function(){
+							  var laypage = layui.laypage;
+							  
+							  //执行一个laypage实例
+							  laypage.render({
+							    elem: 'left_page' //注意，这里的 test1 是 ID，不用加 # 号
+							    ,count: total //数据总数，从服务端得到
+							    ,layout: [ 'prev', 'page', 'next', 'limit', 'refresh']
+							    ,jump: function(obj, first){
+							        //obj包含了当前分页的所有参数，比如：
+							        //console.log(obj.curr); //得到当前页，以便向服务端请求对应页的数据。
+							        //console.log(obj.limit); //得到每页显示的条数
+							        //首次不执行
+							        debugger
+							        if(!first){
+							        	getAPIListByRoleId(roleId,obj.curr,obj.limit,false);//翻页的时候不重新加载
+							        }else{
+							        	
+							        }
+							      }
+							  });
+						});
+					}
+					layui.form.render();
+				}
+			});
+		}
+		function getMenueListByRoleId(roleId,pageIndex,pageSize,isFirstLoad){
+			//表头
+			var str1 = 
+				"<tr>"+
+				"<th>ID</th>"+
+					"<th>名称</th>"+
+					"<th>编码</th>"+
+					"<th>url</th>"+
+					"<th>状态</th>"+
+					"<th>操作</th>"+
+				"</tr>";
+			$('#table_resource_header').html(str1);
+			$('#table_resource_list').html("");
+			var jwt = localStorage.getItem("jwt")
+			$.post("/role/getMenusByRoleId",{"jwt":jwt,"str":roleId,"pageIndex":pageIndex,"pageSize":pageSize},function(data){
+				if(data.retSig == 200){
+					debugger
+					var retData = data.httpRet.data.data.list;
+					var str = "";
+					for(var i=0;i<retData.length;i++){
+						var roleInfo = retData[i];
+						debugger
+						str +=
+						'<tr data-id="' + roleInfo.id + '">' +
+							'<td>'+roleInfo.id+'</td>'+
+							'<td>'+roleInfo.name+'</td>'+
+							'<td>'+roleInfo.code+'</td>'+
+							'<td>' + roleInfo.uri + '</td>'+
+							
+							'<td>'+(roleInfo.status == 1 ? "正常" : "禁用")+'</td>'+
+							'<td class="td-manage">'+
+								'<a title="删除'+roleInfo.id+'" onclick="delStrategyR(this,\'' + roleInfo.id + '\')" href="javascript:;"><i class="layui-icon">&#xe640;</i></a>'+
+							'</td>'+
+						'</tr>'	;
+					}
+					var total = 0 ;
+					total = data.httpRet.data.data.total;
+					$("#sourceNum").html("资源总数"+total+"条")
+					$('#table_resource_list').html(str);
+					if(isFirstLoad){
+						layui.use('laypage', function(){
+							  var laypage = layui.laypage;
+							  
+							  //执行一个laypage实例
+							  laypage.render({
+							    elem: 'left_page' //注意，这里的 test1 是 ID，不用加 # 号
+							    ,count: total //数据总数，从服务端得到
+							    ,layout: [ 'prev', 'page', 'next', 'limit', 'refresh']
+							    ,jump: function(obj, first){
+							        //obj包含了当前分页的所有参数，比如：
+							        //console.log(obj.curr); //得到当前页，以便向服务端请求对应页的数据。
+							        //console.log(obj.limit); //得到每页显示的条数
+							        //首次不执行
+							        debugger
+							        if(!first){
+							        	getMenueListByRoleId(roleId,obj.curr,obj.limit,false);//翻页的时候不重新加载
+							        }else{
+							        	
+							        }
+							      }
+							  });
+						});
+					}
+					layui.form.render();
+				}
+			});
+		}
+		function getUserListByRoleId(roleId,pageIndex,pageSize,isFirstLoad){
+			//表头
+			var str1 = 
+				"<tr>"+
+				"<th>UID</th>"+
+					"<th>名称</th>"+
+					"<th>电话</th>"+
+					"<th>邮箱</th>"+
+					"<th>状态</th>"+
+					"<th>操作</th>"+
+				"</tr>";
+			$('#table_resource_header').html(str1);
+			$('#table_resource_list').html("");
+			var jwt = localStorage.getItem("jwt")
+			$.post("/role/getUserListByRoleId",{"jwt":jwt,"str":roleId,"pageIndex":pageIndex,"pageSize":pageSize},function(data){
+				if(data.retSig == 200){
+					debugger
+					var retData = data.httpRet.data.data.list;
+					var str = "";
+					for(var i=0;i<retData.length;i++){
+						var roleInfo = retData[i];
+						debugger
+						str +=
+						'<tr data-id="' + roleInfo.uid + '">' +
+						'<td title="'+roleInfo.uid+'">' + (roleInfo.uid.length >5 ? roleInfo.uid.substring(0,5)+"..." :  roleInfo.uid) + '</td>'+
+							'<td>'+roleInfo.username+'</td>'+
+							'<td>'+roleInfo.phone+'</td>'+
+							'<td>'+roleInfo.email+'</td>'+
+							'<td>'+(roleInfo.status == 1 ? "正常" : "禁用")+'</td>'+
+							'<td class="td-manage">'+
+								'<a title="删除'+roleInfo.id+'" onclick="delStrategyR(this,\'' + roleInfo.uid + '\')" href="javascript:;"><i class="layui-icon">&#xe640;</i></a>'+
+							'</td>'+
+						'</tr>'	;
+					}
+					var total = 0 ;
+					total = data.httpRet.data.data.total;
+					$("#sourceNum").html("资源总数"+total+"条")
+					$('#table_resource_list').html(str);
+					if(isFirstLoad){
+						
+						layui.use('laypage', function(){
+							  var laypage = layui.laypage;
+							  
+							  //执行一个laypage实例
+							  laypage.render({
+							    elem: 'left_page' //注意，这里的 test1 是 ID，不用加 # 号
+							    ,count: total //数据总数，从服务端得到
+							    ,layout: [ 'prev', 'page', 'next', 'limit', 'refresh']
+							    ,jump: function(obj, first){
+							        //obj包含了当前分页的所有参数，比如：
+							        //console.log(obj.curr); //得到当前页，以便向服务端请求对应页的数据。
+							        //console.log(obj.limit); //得到每页显示的条数
+							        //首次不执行
+							        debugger
+							        if(!first){
+							        	getUserListByRoleId(roleId,obj.curr,obj.limit,false);//翻页的时候不重新加载
+							        }else{
+							        	
+							        }
+							      }
+							  });
+						});
+					}
+					layui.form.render();
+				}
+			});
+		}
+		function addRight() {
+			
+			if(curSelectRoleId==""){
+				layer.msg('请选择对应角色!', {
+					icon: 3,
+					time: 1000
+				});
+				return;
+			}
+			sourceType = $("#role_Relation_Source").val();
+			layer.open({
+		        type: 2 //此处以iframe举例
+		        ,title: '新增'
+		        ,area: [($(window).width() * 0.9-400)+'px', ($(window).height() - 150)+'px']
+		        ,content: './addRight.html'
+		        ,yes: function(index, layero){
+		        	
+	                var body = layer.getChildFrame('body', index);
+	                var iframeWin = window[layero.find('iframe')[0]['name']];//得到iframe页的窗口对象，执行iframe页的方法：
+	                //iframeWin.getRoleInfo(pid);//调用子页面的方法，得到子页面返回的ids
+	                /* $("#mediaPath").val(ids); */
+	                layer.close(index);//需要手动关闭窗口
+	            }
+		        ,btn2: function(){
+		          layer.closeAll();
+		        }
+		        ,success: function(layero){
+		          layer.setTop(layero); //重点2
+		        }
+		      });
+			
+		}
+		//删除一行数据
+		function  delStrategyR (obj, pid) {
+			var url;
+			if(sourceType == "api" || sourceType == "menue"){
+				url="/role/deleteAuthorityRoleResource";
+			}else if(sourceType == "user"){
+				url="/role/deleteAuthorityRoleUser";
+			}
+			layer.confirm('您确认要删除角色'+pid+'吗？', function(index) {
+				//发异步删除数据
+				$.post(url,{"data":{"roleId":curSelectRoleId,"resourceId":pid}},function(data){
+					if(data.retSig == 200){
+						$(obj).parents("tr").remove();
+						layer.msg('已删除!', {
+							icon: 1,
+							time: 1000
+						});
+					}
+					
+				},"json");
+				
+			});
+		}
+	</script>
+</html>

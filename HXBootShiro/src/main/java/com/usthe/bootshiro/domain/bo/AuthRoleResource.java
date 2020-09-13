@@ -11,14 +11,24 @@ public class AuthRoleResource {
     private Integer id;
 
     private Integer roleId;
-
+    //api和菜单id
     private Integer resourceId;
+    //用户id
+    private String userId;
 
     private Date createTime;
 
     private Date updateTime;
+    
+    public String getUserId() {
+		return userId;
+	}
 
-    public Integer getId() {
+	public void setUserId(String userId) {
+		this.userId = userId;
+	}
+
+	public Integer getId() {
         return id;
     }
 

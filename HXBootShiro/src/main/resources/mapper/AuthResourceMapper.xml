@@ -74,9 +74,7 @@
             <if test="status != null">
                 STATUS,
             </if>
-            <if test="createTime != null">
                 CREATE_TIME,
-            </if>
             <if test="updateTime != null">
                 UPDATE_TIME,
             </if>
@@ -181,6 +179,15 @@
     LEFT JOIN auth_role_resource ro on re.id = ro.RESOURCE_ID
     LEFT JOIN auth_role rol on ro.ROLE_ID = rol.ID
     where re.type = 2
+    GROUP BY
+    re.URI,re.ID
+  </select>
+    <select id="selectRoleRulesByResouceId" parameterType="java.lang.String" resultType="com.usthe.bootshiro.shiro.rule.RolePermRule">
+    select  CONCAT(re.URI, "==",UCASE(re.method)) as url,GROUP_CONCAT(rol.CODE ORDER BY re.URI) as needRoles
+    from auth_resource re
+    LEFT JOIN auth_role_resource ro on re.id = ro.RESOURCE_ID
+    LEFT JOIN auth_role rol on ro.ROLE_ID = rol.ID
+    where re.type = 2 and re.ID =  #{id,jdbcType=INTEGER}
     GROUP BY
     re.URI,re.ID
   </select>

@@ -43,7 +43,7 @@ public class JsonWebTokenUtil {
      */
     public static String issueJWT(String id,String subject, String issuer, Long period, String roles, String permissions, SignatureAlgorithm algorithm) {
         // 当前时间戳
-        Long currentTimeMillis = System.currentTimeMillis();
+        Long currentTimeMillis = SystemClockUtil.now();
         // 秘钥
         byte[] secreKeyBytes = DatatypeConverter.parseBase64Binary(SECRET_KEY);
         JwtBuilder jwtBuilder = Jwts.builder();

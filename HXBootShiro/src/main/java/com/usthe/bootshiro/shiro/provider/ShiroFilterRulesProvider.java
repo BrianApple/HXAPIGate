@@ -18,4 +18,11 @@ public interface ShiroFilterRulesProvider {
      * @return java.util.List
      */
     public List<RolePermRule> loadRolePermRules();
+    /**
+     * 通过API的资源id 获取其对应授权信息
+     * @return
+     */
+    public RolePermRule loadRolePermRulesByResourceId(int resourceId);
+    
+    
 }

@@ -6,6 +6,7 @@ import java.util.concurrent.ConcurrentHashMap;
 
 import hx.apigate.base.IProcessor;
 import hx.apigate.databridge.xmlBean.Route;
+import hx.apigate.databridge.xmlBean.RouteAll;
 import io.netty.channel.Channel;
 
 /**
@@ -19,12 +20,12 @@ import io.netty.channel.Channel;
  */
 public class LocalCache {
 	public static List<IProcessor> eventProcessorCache = null;
-	public static ConcurrentHashMap<String,Route> routeCache = null;
+	public static ConcurrentHashMap<String,RouteAll> intimeRouteCache = null;
 	public static ConcurrentHashMap<String,Channel> masterChannelCache = null;
 	public static ConcurrentHashMap<String,Channel> webChannelCache = null;
 	static{
 		eventProcessorCache = new ArrayList<>();
-		routeCache = new ConcurrentHashMap<>();
+		intimeRouteCache = new ConcurrentHashMap<>();
 		masterChannelCache = new ConcurrentHashMap<>();
 		webChannelCache = new ConcurrentHashMap<>();
 	}

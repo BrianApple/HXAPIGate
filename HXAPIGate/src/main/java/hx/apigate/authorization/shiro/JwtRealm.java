@@ -5,6 +5,7 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
 
+import org.apache.ignite.IgniteCache;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -14,12 +15,12 @@ import org.apache.shiro.authz.SimpleAuthorizationInfo;
 import org.apache.shiro.realm.AuthorizingRealm;
 import org.apache.shiro.subject.PrincipalCollection;
 
+import hx.apigate.authorization.Constance;
 import hx.apigate.authorization.shiro.databridge.JwtAccount;
 import hx.apigate.authorization.shiro.databridge.JwtToken;
-import hx.apigate.util.CacheUtil;
+import hx.apigate.util.IgniteUtil;
 import hx.apigate.util.JsonWebTokenUtil;
 
-import java.util.Map;
 import java.util.Set;
 
 /**
@@ -31,10 +32,6 @@ public class JwtRealm extends AuthorizingRealm {
      * jwt签发者标志
      */
     private static final String ISSUER  = "UIOTCP_BOOTSHIRO_PRO";
-    /**
-     * JWT-SESSION缓存前缀
-     */
-    private static final String JWT_SESSION  = "JWT-SESSION:";
     
     @Override
     public Class<?> getAuthenticationTokenClass() {
@@ -75,14 +72,21 @@ public class JwtRealm extends AuthorizingRealm {
             return null;
         }
         JwtToken jwtToken = (JwtToken)authenticationToken;
-        if(!CacheUtil.exist((new StringBuilder(JWT_SESSION).append(jwtToken.getUserId())).toString())) {
+        IgniteCache<String, String> cache = IgniteUtil.getJWTCache();
+        String cachedJwt =cache.get(new StringBuilder(Constance.JWT_SESSION_PREFIX_KEY).append(jwtToken.getUserId()).toString());
+        if(cachedJwt == null) {
         	 throw new AuthenticationException("expiredJwt");
         }
+//        if(!CacheUtil.exist((new StringBuilder(JWT_SESSION).append(jwtToken.getUserId())).toString())) {
+//        	throw new AuthenticationException("expiredJwt");
+//        }
         
         String jwt = (String)jwtToken.getCredentials();
+        JwtAccount jwtAccountCache = null;
         JwtAccount jwtAccount = null;
         try {
-        	jwtAccount = JsonWebTokenUtil.parseJwt(jwt, JsonWebTokenUtil.SECRET_KEY);
+        	jwtAccountCache = JsonWebTokenUtil.parseJwt(cachedJwt, JsonWebTokenUtil.SECRET_KEY);//服务端jwt
+        	jwtAccount = JsonWebTokenUtil.parseJwt(jwt, JsonWebTokenUtil.SECRET_KEY);//用户端jwt
 		} catch(SignatureException | UnsupportedJwtException | MalformedJwtException | IllegalArgumentException e){
             // 令牌错误
             throw new AuthenticationException("errJwt");
@@ -96,6 +100,10 @@ public class JwtRealm extends AuthorizingRealm {
             //令牌无效
             throw new AuthenticationException("errJwt");
         }
+        if(!jwtAccountCache.getTokenId().equals(jwtAccount.getTokenId())){
+            throw new AuthenticationException("您的账户已在其它地方登录，您已被强制离线！");
+        }
+        
         return new SimpleAuthenticationInfo(jwtAccount,jwt,this.getName());
     }
     

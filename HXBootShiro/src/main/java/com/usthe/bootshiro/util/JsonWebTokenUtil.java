@@ -38,7 +38,7 @@ public class JsonWebTokenUtil {
      * @param id 令牌ID
      * @param subject 用户ID
      * @param issuer 签发人
-     * @param period 有效时间(毫秒)
+     * @param period 有效时间(秒)
      * @param roles 访问主张-角色
      * @param permissions 访问主张-权限
      * @param algorithm 加密算法

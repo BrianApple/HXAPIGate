@@ -23,8 +23,8 @@ import java.util.jar.JarFile;
 import com.alibaba.fastjson.JSON;
 import com.alibaba.fastjson.serializer.SerializerFeature;
 
-import hx.apigate.base.Message;
 import hx.apigate.databridge.NodeInfo;
+import hx.apigate.databridge.RetMessage;
 import hx.apigate.databridge.xmlBean.RouteNode;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.HttpHeaderNames;
@@ -37,15 +37,13 @@ import io.netty.util.AttributeKey;
 /**
  * 
  * @Description: 
- * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.uiotp.com</p>
  * @author  yangcheng
  * @date:   2019年3月30日
  */
 public class MixAll {
 	public static final  String LOG_INFO_PRIFEX = "[HXAPIGate Info :] ";
-	public static final AttributeKey<String> WEB_SESSION_ID = AttributeKey.valueOf("web_seesion_id");
-	public static final AttributeKey<NodeInfo> ATTRIBUTEKEY_ROUTE_NODE = AttributeKey.valueOf("node");
+	public static final AttributeKey<String> WEB_SESSION_ID = AttributeKey.valueOf("web_seesion_id");//web（第三方客户端）http对应的唯一标识
+	public static final AttributeKey<NodeInfo> ATTRIBUTEKEY_ROUTE_NODE = AttributeKey.valueOf("node");//handler之间传递微服务Node节点信息
 	public static final AttributeKey<String> ATTRIBUTEKEY_URL = AttributeKey.valueOf("requestUrl");
 	private static final String CLASS_SUFFIX = ".class";
 	private static AsciiString contentType = HttpHeaderValues.APPLICATION_JSON;
@@ -97,7 +95,7 @@ public class MixAll {
 	    return 0;
 	}
 	/**
-	 * 获取本机的ip
+	 * 获取本机的ip--linux平台上获取的ip会存在问题，拿到的是127.0.0.1
 	 * @return
 	 */
 	public static String localhostName() {
@@ -171,7 +169,7 @@ public class MixAll {
 	
 	/**
 	 * 获取指定包下所有的class名称
-	 * reference from  https://blog.csdn.net/cckevincyh/article/details/81176155
+	 * reference from  
 	 * @param packageName
 	 * @param showChildPackageFlag
 	 * @return
@@ -210,9 +208,48 @@ public class MixAll {
 	        }
 
 	    } catch (IOException e) {
+
 	        e.printStackTrace();
+
 	    }
+
+	    
 	    return result;
+
+	}
+	
+	/**
+	 * 发布jar包中的rpc
+	 * @return
+	 * @throws IOException
+	 */
+	@SuppressWarnings("resource")
+	public static List<String> getClazzNameFromJar() throws IOException{
+		
+		List<String> result = new ArrayList<>();
+		
+		String path = MixAll.class.getProtectionDomain().getCodeSource().getLocation().getPath();
+        System.out.println("path: "+path); //"/opt/myprograms/Gate-0.0.1-SNAPSHOT.jar"
+        JarFile localJarFile = new JarFile(new File(path));
+
+        Enumeration<JarEntry> entries = localJarFile.entries();
+        while (entries.hasMoreElements()) {
+            JarEntry jarEntry = entries.nextElement();
+            String innerPath = jarEntry.getName();
+//            System.out.println("innerPath=="+innerPath);//  "gate/rpc/rpcService/"
+            if(innerPath.startsWith("gate/rpc/rpcService/") && innerPath.endsWith("class")){
+            		if(-1 == innerPath.indexOf("$")) {
+            			innerPath = innerPath.replace(CLASS_SUFFIX, "");
+            			innerPath = innerPath.replace(File.separator, PACKAGE_SEPARATOR);
+                		if(innerPath.endsWith("Impl")){
+                			System.out.println("找到Impl类=="+innerPath);
+                			result.add(innerPath);
+                		}
+
+    	            }
+            }
+        }
+        return result;
 	}
 
 	/**
@@ -277,6 +314,8 @@ public class MixAll {
 
 	                            path = path.replace(CLASS_SUFFIX, "");
 
+	                            // 从"/classes/"后面开始截取
+
 	                            String clazzName = path.substring(path.indexOf(CLASS_FILE_PREFIX) + CLASS_FILE_PREFIX.length())
 
 	                                    .replace(File.separator, PACKAGE_SEPARATOR);
@@ -307,14 +346,6 @@ public class MixAll {
 	 * @param data
 	 * @param classOfT
 	 * @return
-	 * 
-	 * {
-	 * "args":["你好rpc"],
-	 * "className":"IOTGateConsole.rpc.service.RPCExportService",
-	 * "methodName":"test",
-	 * "paramTyps":["java.lang.String"],
-	 * "requestNum":"540bbd93-06a6-4b77-a067-fbd8d0d38f2d"
-	 * }
 	 */
 	public static <T> T decode(final byte[] data, Class<T> classOfT) {
         final String json = new String(data, Charset.forName("UTF-8"));
@@ -373,21 +404,26 @@ public class MixAll {
 	            }
 	        }
 	        catch (Throwable e) {
+//	            result.append(RemotingHelper.exceptionSimpleDesc(e));
 	        }
 
 	        return result.toString();
 	    }
 	 
-	 public static DefaultFullHttpResponse getDefaultFullHttpResponse(int status , String msg) {
+	 public static DefaultFullHttpResponse getDefaultFullHttpResponse4Error(int status , String msg) {//"The path you accessed does not exist !"
 		DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
 		 
-		response.content().writeBytes(JSON.toJSONBytes(new Message().error(status, msg), SerializerFeature.EMPTY));
+		response.content().writeBytes(JSON.toJSONBytes(new RetMessage().error(status, msg), SerializerFeature.EMPTY));
 		HttpHeaders heads = response.headers();
+		// 返回内容的MIME类型
 		heads.add(HttpHeaderNames.CONTENT_TYPE, contentType + "; charset=UTF-8");
+		// 响应体的长度
 		heads.add(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
+		// 表示是否需要持久连接
 		heads.add(HttpHeaderNames.CONNECTION, HttpHeaderValues.KEEP_ALIVE);
+		//允许跨域访问
 		heads.add(HttpHeaderNames.ACCESS_CONTROL_ALLOW_ORIGIN,"*");
-		heads.add(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS,"*");
+		heads.add(HttpHeaderNames.ACCESS_CONTROL_ALLOW_HEADERS,"*");//允许headers自定义
 		heads.add(HttpHeaderNames.ACCESS_CONTROL_ALLOW_METHODS,"GET, POST, PUT,DELETE");
 		heads.add(HttpHeaderNames.ACCESS_CONTROL_ALLOW_CREDENTIALS,"true");
     	return response;

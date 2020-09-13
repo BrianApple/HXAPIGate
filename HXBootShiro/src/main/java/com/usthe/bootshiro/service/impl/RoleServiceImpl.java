@@ -33,6 +33,15 @@ public class RoleServiceImpl implements RoleService {
         authRoleResource.setUpdateTime(new Date());
         return authRoleResourceMapper.insert(authRoleResource) == 1? Boolean.TRUE : Boolean.FALSE;
     }
+    @Override
+	public boolean authorityRoleUser(int roleId, String resourceId) {
+    	 AuthRoleResource authRoleResource = new AuthRoleResource();
+         authRoleResource.setRoleId(roleId);
+         authRoleResource.setUserId(resourceId);
+         authRoleResource.setCreateTime(new Date());
+         authRoleResource.setUpdateTime(new Date());
+         return authRoleResourceMapper.insertRoleUser(authRoleResource) == 1? Boolean.TRUE : Boolean.FALSE;
+	}
 
     @Override
     public boolean addRole(AuthRole role) throws DataAccessException {
@@ -62,4 +71,18 @@ public class RoleServiceImpl implements RoleService {
     public List<AuthRole> getRoleList() throws DataAccessException {
         return authRoleMapper.selectRoles();
     }
+
+	@Override
+	public AuthRole getRoleInfoById(Integer roleId) {
+		// TODO Auto-generated method stub
+		return authRoleMapper.selectByPrimaryKey(roleId);
+	}
+
+	
+
+	@Override
+	public boolean deleteAuthorityRoleUser(Integer roleId, String resourceId) {
+		 int num = authRoleResourceMapper.deleteByUniqueKeyUser(roleId, resourceId);
+	     return num == 1? Boolean.TRUE : Boolean.FALSE;
+	}
 }

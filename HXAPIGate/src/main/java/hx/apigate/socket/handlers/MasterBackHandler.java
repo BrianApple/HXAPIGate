@@ -5,6 +5,7 @@ package hx.apigate.socket.handlers;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import hx.apigate.util.HttpResponseUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelFutureListener;
@@ -16,12 +17,15 @@ import io.netty.handler.codec.http.FullHttpResponse;
  * <p>Description: 响应http</p>
 　 * <p>Copyright: Copyright (c) 2019</p>
 　 * <p>Company: www.uiotp.com</p>
-　 * @author yangcheng
+　 * @author yangcheng,hjj
 　 * @date 2019年10月30日
 　 * @version 1.0
  */
 public class MasterBackHandler extends SimpleChannelInboundHandler<FullHttpResponse> {
 	Logger logger = LoggerFactory.getLogger(MasterBackHandler.class);
+	/**
+	 * web端channel
+	 */
     private final Channel inboundChannel;
 
     public MasterBackHandler(Channel inboundChannel) {
@@ -36,20 +40,14 @@ public class MasterBackHandler extends SimpleChannelInboundHandler<FullHttpRespo
      * 获取到微服务响应
      */
     @Override
-    public void channelRead0(final ChannelHandlerContext ctx, FullHttpResponse msg) throws Exception {
-    	inboundChannel.writeAndFlush(msg.retain()).addListener(new ChannelFutureListener() {
-            public void operationComplete(ChannelFuture future) throws Exception {
-                if (!future.isSuccess()) {
-                    future.channel().close();
-                }
-            }
-        });
+    public void channelRead0(final ChannelHandlerContext ctx, FullHttpResponse response) throws Exception {
+    	//获取第三方会话并响应数据
+    	HttpResponseUtil.responseMsg4Http(inboundChannel, response); 
     }
     
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
         	logger.debug("toMaster Handler destroyed!");
-//        }
         
     }
     

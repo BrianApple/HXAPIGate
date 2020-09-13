@@ -2,7 +2,11 @@ package com.usthe.bootshiro.controller;
 
 import com.usthe.bootshiro.domain.bo.AuthUser;
 import com.usthe.bootshiro.domain.vo.Account;
+import com.usthe.bootshiro.domain.vo.JwtAccount;
 import com.usthe.bootshiro.domain.vo.Message;
+import com.usthe.bootshiro.ignite.CommonCacheData;
+import com.usthe.bootshiro.ignite.Constance;
+import com.usthe.bootshiro.ignite.IgniteAutoConfig;
 import com.usthe.bootshiro.service.AccountService;
 import com.usthe.bootshiro.service.UserService;
 import com.usthe.bootshiro.shiro.provider.AccountProvider;
@@ -13,6 +17,7 @@ import com.usthe.bootshiro.util.*;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.swagger.annotations.ApiOperation;
 
+import org.apache.ignite.configuration.CacheConfiguration;
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.web.util.WebUtils;
 import org.slf4j.Logger;
@@ -21,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
@@ -68,6 +74,8 @@ public class AccountController extends BaseAction {
 
     @Autowired
     private UserService userService;
+    @Autowired
+    private IgniteAutoConfig igniteAutoConfig;
     
 
     /**
@@ -85,17 +93,43 @@ public class AccountController extends BaseAction {
         // 根据appId获取其对应所拥有的角色(这里设计为角色对应资源，没有权限对应资源)
         String roles = accountService.loadAccountRole(appId);
         // 时间以秒计算,token有效刷新时间是token有效过期时间的2倍
-        long refreshPeriodTime = 36000L;//refreshPeriodTime右移一位是jwt中的过期时间。
+        long refreshPeriodTime = 36000;//refreshPeriodTime右移一位是jwt中的过期时间。
         
-        String jwt = JsonWebTokenUtil.issueJWT(UUID.randomUUID().toString(), appId,
-        		ISSUER, refreshPeriodTime >> 1 , roles, null, SignatureAlgorithm.HS512);
-        // 将签发的JWT存储到Redis： {JWT-SESSION-{appID} , jwt}
-        redisTemplate.opsForValue().set(JWT_SESSION + appId, jwt, refreshPeriodTime, TimeUnit.SECONDS);
+        String jwt = null;
+        if(appId != null &&  appId.startsWith("guest0")) {
+        	/**
+        	 * 访客账户多端登录
+        	 */
+        	jwt =(String) igniteAutoConfig.getCommonData( JWT_SESSION + appId) ;
+        	if(jwt != null  && !"".equals(jwt)) {
+        		try {
+        			//已经登录，延长jwt失效时间即可
+            		JwtAccount account = JsonWebTokenUtil.parseJwt(jwt, JsonWebTokenUtil.SECRET_KEY);
+            		jwt = JsonWebTokenUtil.issueJWT(account.getTokenId(), account.getAppId(),
+                			ISSUER, refreshPeriodTime, roles, null, SignatureAlgorithm.HS512);
+				} catch (Exception e) {
+					//原有jwt已过期，则重新生成一个
+					jwt = JsonWebTokenUtil.issueJWT(UUID.randomUUID().toString(), appId,
+		        			ISSUER, refreshPeriodTime  , roles, null, SignatureAlgorithm.HS512);
+				}
+        		
+        	}else {
+        		//若guest账户首次登录，则生成jwt
+        		jwt = JsonWebTokenUtil.issueJWT(UUID.randomUUID().toString(), appId,
+            			ISSUER, refreshPeriodTime , roles, null, SignatureAlgorithm.HS512);
+        	}
+        }else {
+        	jwt = JsonWebTokenUtil.issueJWT(UUID.randomUUID().toString(), appId,
+        			ISSUER, refreshPeriodTime >> 1 , roles, null, SignatureAlgorithm.HS512);
+        }
+        //  {JWT-SESSION-{appID} , jwt}
+        igniteAutoConfig.cacheCommonData(refreshPeriodTime, JWT_SESSION + appId , jwt);
+//        redisTemplate.opsForValue().set(JWT_SESSION + appId, jwt, refreshPeriodTime, TimeUnit.SECONDS);
         AuthUser authUser = userService.getUserByAppId(appId);
         authUser.setPassword(null);
         authUser.setSalt(null);
 
-        LogExeManager.getInstance().executeLogTask(LogTaskFactory.loginLog(appId, IpUtil.getIpFromRequest(WebUtils.toHttp(request)), (short) 1, "登录成功"));
+        LogExeManager.getInstance().executeLogTask(LogTaskFactory.loginLog(appId, IpUtil.getAllIpFromRequest(WebUtils.toHttp(request)), (short) 1, "登录成功"));
 
         return new Message().ok(1003, "issue jwt success").addData("jwt", jwt).addData("user", authUser);
     }
@@ -126,8 +160,9 @@ public class AccountController extends BaseAction {
         authUser.setUid(uid);
 
         // 从Redis取出密码传输加密解密秘钥
-        String ss = IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase();
-        String tokenKey = redisTemplate.opsForValue().get("TOKEN_KEY_" + IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey);
+//        String ss = IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase();
+        String tokenKey = igniteAutoConfig.getTOKEN_KAY("TOKEN_KEY_" + IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey);
+//        String tokenKey = redisTemplate.opsForValue().get("TOKEN_KEY_" + IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey);
         String realPassword = AesUtil.aesDecode(password, tokenKey);
         String salt = CommonUtil.getRandomString(6);
         // 存储到数据库的密码为 MD5(原密码+盐值)

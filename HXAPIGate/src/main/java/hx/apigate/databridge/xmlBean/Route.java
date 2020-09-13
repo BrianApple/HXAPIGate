@@ -6,26 +6,38 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import org.apache.ignite.IgniteSemaphore;
+
 /**
 　 * <p>Description: 路由转发配置</p>
 　 * <p>Copyright: Copyright (c) 2019</p>
 　 * <p>Company: www.uiotp.com</p>
-　 * @author yangcheng
+　 * @author yangcheng,hjj
 　 * @date 2019年10月29日
 　 * @version 1.0
  */
 public class Route implements Serializable{
-	private String matchUrl;
+	private String matchUrl;//路由名称
+	
+	private String version;//版本
+	private int versionWeight;//版本权重
+	/**
+	 * 使用策略--circle/weight
+	 */
 	private String stratege;
+	/**
+	 * 通讯规约--http/dubbo
+	 */
 	private String protocal;
+	
 	private boolean needAuth;
 	private List<RouteNode> routeNodes;
 	private AtomicInteger index;
+	private IgniteSemaphore tps;
 	private int[] nodeWeight ;
 	private CopyOnWriteArrayList<Integer> current_weight;
 	private CopyOnWriteArrayList<Integer> temp_weight;
 	private int totalWeight = 0;
-	
 	public void init() {
 		nodeWeight = new int[routeNodes.size()];
 		current_weight = new CopyOnWriteArrayList<Integer>();
@@ -64,12 +76,33 @@ public class Route implements Serializable{
         return  routeNodes.get(maxIndex);
 
 	}
+	
+	
+	
+	
 	public List<RouteNode> getRouteNodes() {
 		return routeNodes;
 	}
 	public void setRouteNodes(List<RouteNode> routeNodes) {
 		this.routeNodes = routeNodes;
 	}
+	
+	public String getVersion() {
+		return version;
+	}
+
+	public void setVersion(String version) {
+		this.version = version;
+	}
+
+	public int getVersionWeight() {
+		return versionWeight;
+	}
+
+	public void setVersionWeight(int versionWeight) {
+		this.versionWeight = versionWeight;
+	}
+
 	public String getStratege() {
 		return stratege;
 	}
@@ -103,5 +136,15 @@ public class Route implements Serializable{
 	public void setProtocal(String protocal) {
 		this.protocal = protocal;
 	}
+
+	public IgniteSemaphore getTps() {
+		return tps;
+	}
+
+	public void setTps(IgniteSemaphore tps) {
+		this.tps = tps;
+	}
+
+
 	
 }

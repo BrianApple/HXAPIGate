@@ -2,6 +2,8 @@ package hx.apigate.databridge.xmlBean;
 
 import java.io.Serializable;
 
+import org.apache.ignite.IgniteSemaphore;
+
 import hx.apigate.socket.BackendHandlerInitializer;
 import hx.apigate.util.HXAPIGateConext;
 import io.netty.bootstrap.Bootstrap;
@@ -14,7 +16,7 @@ import io.netty.channel.socket.nio.NioSocketChannel;
  * <p>Description: 路由节点详情</p>
 　 * <p>Copyright: Copyright (c) 2019</p>
 　 * <p>Company: www.uiotp.com</p>
-　 * @author yangcheng
+　 * @author yangcheng，hjj
 　 * @date 2019年10月29日
 　 * @version 1.0
  */
@@ -22,11 +24,10 @@ public class RouteNode implements Serializable{
 	
 	private String ip;
 	private int port;
-	private int order;//多个节点时手动给出节点循序 default=0
+	private int order;// default=0
 	private int weight;//权重 default=1
+	private IgniteSemaphore tps;
 	private String interfaceName;
-	
-	
 	public String getIp() {
 		return ip;
 	}
@@ -50,6 +51,12 @@ public class RouteNode implements Serializable{
 	}
 	public void setWeight(int weight) {
 		this.weight = weight;
+	}
+	public IgniteSemaphore getTps() {
+		return tps;
+	}
+	public void setTps(IgniteSemaphore tps) {
+		this.tps = tps;
 	}
 	public String getInterfaceName() {
 		return interfaceName;

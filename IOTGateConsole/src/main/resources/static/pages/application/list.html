@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>角色/应用管理</title>
+		<meta name="Description" content="基于layUI数据表格操作"/>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+		<link rel="stylesheet" href="../../css/font.css">
+		<link rel="stylesheet" href="../../css/weadmin.css">
+		<!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+		<!--[if lt IE 9]>
+	      <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+	      <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+	    <![endif]-->
+		<style type="text/css">
+			.layui-form-switch {
+				width: 55px;
+			}			
+			.layui-form-switch em {
+				width: 40px;
+			}			
+			.layui-form-onswitch i {
+				left: 45px;
+			}
+			body{overflow-y: scroll;}
+		</style>
+		<script src="../../js/jquery-3.1.1.js"></script>
+	</head>
+
+	<body>
+		<div class="weadmin-nav">
+			<span class="layui-breadcrumb">
+		        <a href="">权限管理</a>
+		        <a>
+		          <cite>角色/应用管理</cite></a>
+		      </span>
+			<a class="layui-btn layui-btn-sm" style="line-height:1.6em;margin-top:3px;float:right" href="javascript:location.replace(location.href);" title="刷新">
+				<i class="layui-icon" style="line-height:30px">&#x1002;</i>
+			</a>
+		</div>
+		<div class="weadmin-body">
+			<div class="layui-row">
+				<form class="layui-form layui-col-md12 we-search">
+					<div class="layui-input-inline">
+						<select name="cateid">
+							<option>资源类别</option>
+							<option>账户类别</option>
+							<option>用户类别</option>
+							<option>牧羊犬API</option>
+						</select>
+					</div>
+					<div class="layui-inline">
+						<input type="text" name="keyword" placeholder="请输入名称" autocomplete="off" class="layui-input">
+					</div>
+					<button class="layui-btn" lay-submit="" lay-filter="sreach"><i class="layui-icon">&#xe615;</i></button>
+				</form>
+			</div>
+			<div class="weadmin-block">
+				<button class="layui-btn" onclick="WeAdminShow('添加规约','./add.html',600,400)"><i class="layui-icon"></i>添加</button>
+				
+				<span class="fr" style="line-height:40px" id="strategy_total">规约总数：0 条</span>
+			</div>
+			<table class="layui-table" id="memberList">
+				<thead>
+					<tr>
+						<th>
+							<div class="layui-unselect header layui-form-checkbox" lay-skin="primary"><i class="layui-icon">&#xe605;</i></div>
+						</th>
+						<th>名称</th>
+						<th>编码</th>
+						<th>URI</th>
+						<th>访问方式</th>
+						<th>状态</th>
+						<th>操作</th>
+					</tr>
+				</thead>
+				<tbody id ="table_brian">
+					
+					<!-- <tr data-id="1">
+						<td>
+							<div class="layui-unselect layui-form-checkbox" lay-skin="primary" data-id="1"><i class="layui-icon">&#xe605;</i></div>
+						</td>
+						<td>1</td>
+						<td></td>
+						<td>0</td>
+						<td>2</td>
+						<td>1</td>
+						<td>0</td>
+						<td>0</td>
+						<td>9527</td>
+						<td class="td-manage">
+
+							<a title="编辑" onclick="WeAdminEdit('编辑','./edit.html', 1, 600, 400)" href="javascript:;">
+								<i class="layui-icon">&#xe642;</i>
+							</a>
+							
+							
+							<a title="删除" onclick="del(11)" href="javascript:;">
+								<i class="layui-icon"></i>
+							</a>
+						</td>
+					</tr> -->
+				</tbody>
+			</table>
+			<script src="../../lib/layui/layui.js" charset="utf-8"></script>
+			<script src="list.js" type="text/javascript" charset="utf-8"></script>
+
+		</div>
+	</body>
+	<script type="text/javascript">
+		$(function(){
+			getAllStrategy();
+		})
+	
+		function getAllStrategy(){
+			$.post("/rpc/getAllStrategyAllInfo",function(data){
+				if(data.retSig == 200){
+					var retData = data.data[0];
+					var str = "";
+					for(var i=0;i<retData.length;i++){
+						var iotGateDB = retData[i];
+						str +=
+						'<tr data-id="' + iotGateDB.pId + '">' +
+							'<td>'+
+								'<div class="layui-unselect layui-form-checkbox" lay-skin="primary" data-id="' + iotGateDB.pId + '"><i class="layui-icon">&#xe605;</i></div>'+
+							'</td>'+
+							'<td>' + iotGateDB.pId + '</td>'+
+							'<td>' + iotGateDB.pName + '</td>'+
+							'<td>'+(iotGateDB.isBigEndian == 0 ? '否' : '是'  )+'</td>'+
+							'<td>'+ iotGateDB.beginHexVal +'</td>'+
+							'<td>'+iotGateDB.lengthFieldOffset+'</td>'+
+							'<td>'+iotGateDB.lengthFieldLength+'</td>'+
+							'<td>'+ (iotGateDB.isDataLenthIncludeLenthFieldLenth  == 0 ? '否' : '是'  ) +'</td>'+
+							'<td>'+iotGateDB.exceptDataLenth+'</td>'+
+							'<td>'+iotGateDB.port+'</td>'+
+							'<td>'+iotGateDB.heartbeat+'</td>'+
+							'<td class="td-manage">'+
+								'<a title="删除" onclick="delStrategy(this,\'' + iotGateDB.pId + '\')" href="javascript:;"><i class="layui-icon">&#xe640;</i></a>'+
+							'</td>'+
+						'</tr>'	;
+					}
+					$("#strategy_total").html("规约总数"+retData.length+"条")
+					$('#memberList').append(str);
+				}
+			});
+			
+		}
+		function del(a){
+			alert(a);
+		}
+		//删除一行数据
+		function  delStrategy (obj, pid) {
+			layer.confirm('该操作同时会停止并删除所有网关节点上当前规约的解析服务及数据，您确认要删除吗？', function(index) {
+				//发异步删除数据
+				$.post("/rpc/delOneStrategyByPID",{"str":pid},function(data){
+					if(data.retSig == 200){
+						$(obj).parents("tr").remove();
+						layer.msg('已删除!', {
+							icon: 1,
+							time: 1000
+						});
+					}
+					
+				},"json");
+				
+			});
+		}
+	</script>
+</html>

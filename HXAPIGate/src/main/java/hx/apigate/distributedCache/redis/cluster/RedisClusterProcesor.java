@@ -12,17 +12,15 @@ import hx.apigate.distributedCache.serialization.bytes.ProtobufSerialize;
 import redis.clients.jedis.JedisCluster;
 import redis.clients.jedis.JedisPoolConfig;
 /**
- * 分布式缓存--封装对redis得基本操作
+ * 分布式缓存
  * @Description: 
- * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.uiotp.com</p>
  * @author  yangcheng
  * @date:   2019年6月24日
  */
 public class RedisClusterProcesor implements DistributedCacheProcessor {
 	Logger logger = LoggerFactory.getLogger(RedisClusterProcesor.class);
 	private DistributedCachingProperties distributedCachingProperties;
-	private SerializationFactory serializationFactory;//序列化工厂类
+	private SerializationFactory serializationFactory;
 	
 	
 	RedisClusterFactory redisClusterFactory = new RedisClusterFactory();
@@ -96,9 +94,6 @@ public class RedisClusterProcesor implements DistributedCacheProcessor {
 	@Override
 	public void setStringObjWithExpire(String key, Object value, int second) {
 		try {
-			/**
-			 * 根据返回值类型决定何种方式写数据
-			 */
 			Object val = serializationFactory.getSerializationInstance().SerializeObject(value);
 			if(val instanceof String){
 				jedisCluster.setex(key, second, (String)val);
@@ -150,9 +145,6 @@ public class RedisClusterProcesor implements DistributedCacheProcessor {
 	@Override
 	public void setHashObj(String key, String field,  Object value) {
 		try {
-			/**
-			 * 根据返回值类型决定何种方式写数据
-			 */
 			Object val = serializationFactory.getSerializationInstance().SerializeObject(value);
 			if(val instanceof String){
 				jedisCluster.hset(key, field, (String)val);
@@ -205,5 +197,9 @@ public class RedisClusterProcesor implements DistributedCacheProcessor {
 		return jedisCluster.exists(bytesKey);
 	}
 
+	@Override
+	public Object excuteluaScript(String luaScriptStr,int keyCount,String... params ) {
+		return jedisCluster.eval(luaScriptStr, keyCount, params);
+	}
 
 }

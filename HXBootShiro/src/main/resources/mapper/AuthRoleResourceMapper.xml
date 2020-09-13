@@ -27,6 +27,12 @@
     values (#{roleId,jdbcType=INTEGER}, #{resourceId,jdbcType=INTEGER}, #{createTime,jdbcType=TIMESTAMP}, 
       #{updateTime,jdbcType=TIMESTAMP})
   </insert>
+  <insert id="insertRoleUser" keyColumn="ID" keyProperty="id" parameterType="com.usthe.bootshiro.domain.bo.AuthRoleResource" useGeneratedKeys="true">
+    insert into auth_user_role (ROLE_ID, USER_ID, CREATE_TIME, 
+      UPDATE_TIME)
+    values (#{roleId,jdbcType=INTEGER}, #{userId,jdbcType=VARCHAR}, #{createTime,jdbcType=TIMESTAMP}, 
+      #{updateTime,jdbcType=TIMESTAMP})
+  </insert>
   <insert id="insertSelective" keyColumn="ID" keyProperty="id" parameterType="com.usthe.bootshiro.domain.bo.AuthRoleResource" useGeneratedKeys="true">
     insert into auth_role_resource
     <trim prefix="(" suffix=")" suffixOverrides=",">
@@ -87,5 +93,9 @@
   <delete id="deleteByUniqueKey">
     delete from auth_role_resource
     where role_id = #{roleId,jdbcType=INTEGER} and resource_id = #{resourceId,jdbcType=INTEGER}
+  </delete>
+  <delete id="deleteByUniqueKeyUser">
+    delete from auth_user_role
+    where role_id = #{roleId,jdbcType=INTEGER} and user_id = #{resourceId,jdbcType=VARCHAR}
   </delete>
 </mapper>

@@ -3,13 +3,14 @@ package hx.apigate.util;
 import hx.apigate.distributedCache.DefualtDistributedCacheManager;
 
 /**
- * redis缓存工具类
  * 
- * @Description: 
+ * <p>Description: redis缓存工具类--基于spring配置
+ * 使用jeckson实现序列化</p>
  * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.uiotp.com</p>
- * @author  yangcheng
- * @date:   2018年12月3日
+ * <p>Company: www.uiotcp.com</p>
+ * @author yangcheng
+ * @date 2020年9月13日
+ * @version 1.0
  */
 public class CacheUtil {
 	

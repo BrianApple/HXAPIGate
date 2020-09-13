@@ -9,23 +9,21 @@ import java.util.List;
 /**
  * 分布式缓存
  * @Description: 
- * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.uiotp.com</p>
- * @author yangcheng
+ * @author  yangcheng
  * @date:   2019年6月23日
  */
 public class DistributedCachingProperties implements Serializable{
 	/**
 	 * single or cluster
 	 */
-	private String defualtCacheProcessorName = "single";  
+	private String defualtCacheProcessorName = "single";//默认使用cache得name  
 	/**
-	 * fastJsonSerialize/protobufSerialize
+	 * 取值为：fastJsonSerialize或protobufSerialize
 	 */
-	private String BASIC_SERIALIZATION = "fastJsonSerialize";
+	private String BASIC_SERIALIZATION = "fastJsonSerialize";//当前使用的序列化器
 	
-	//single
-	private RedisNodes redis_host = new RedisNodes("127.0.0.1",16379);
+	//单节点
+	private RedisNodes redis_host = new RedisNodes("127.0.0.1",16379);//节点
 	private String redis_password = "OFF";
 	private int redis_timeout = 10000;
 	private int redis_maxIdle =  299;
@@ -35,7 +33,7 @@ public class DistributedCachingProperties implements Serializable{
 	private boolean redis_testOnBorrow = true;
 	private boolean redis_testOnReturn = true;
 	
-	//cluster
+	//集群节点
 	private List<RedisNodes> redis_cluster_host = Arrays.asList(new RedisNodes("127.0.0.1",6379));//节点
 	private String redis_cluster_password = "root";
 	private int redis_cluster_timeout = 10000;

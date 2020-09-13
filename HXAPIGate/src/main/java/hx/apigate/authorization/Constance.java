@@ -15,7 +15,12 @@ public class Constance {
 	public static final String AUTHORIZATION = "authorization";
 	public static final String DEVICEINFO = "deviceInfo";
 	public static final String LOGINREGISTER = "account";
+	/**
+     * JWT-SESSION缓存前缀
+     */
+    public static final String JWT_SESSION_PREFIX_KEY  = "JWT-SESSION:";
 	
 	public static final String API_RESOURCE_ROLE = "API:";
+	
 	public static final String API_RESOURCE_ROLE_SPLIT = "==";
 }

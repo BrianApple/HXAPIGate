@@ -11,7 +11,7 @@ import java.util.List;
 public interface RoleService {
 
     /**
-     * description 授权资源给角色
+     * description 授权资源（菜单和api）给角色
      *
      * @param roleId 1
      * @param resourceId 2
@@ -19,6 +19,14 @@ public interface RoleService {
      */
     boolean authorityRoleResource(int roleId, int resourceId);
 
+    /**
+     * description 授权用户给角色
+     *
+     * @param roleId 1
+     * @param resourceId 2
+     * @return boolean
+     */
+    boolean authorityRoleUser(int roleId, String resourceId);
     /**
      * description TODO
      *
@@ -51,6 +59,14 @@ public interface RoleService {
      * @return boolean
      */
     boolean deleteAuthorityRoleResource(Integer roleId, Integer resourceId);
+    /**
+     * description TODO
+     *
+     * @param roleId 1
+     * @param resourceId 2
+     * @return boolean
+     */
+    boolean deleteAuthorityRoleUser(Integer roleId, String resourceId);
 
     /**
      * description TODO
@@ -58,4 +74,5 @@ public interface RoleService {
      * @return java.util.List<com.usthe.bootshiro.domain.bo.AuthRole>
      */
     List<AuthRole> getRoleList();
+    AuthRole getRoleInfoById(Integer roleId);
 }

@@ -27,6 +27,14 @@ public interface AuthRoleResourceMapper {
      * @throws DataAccessException when
      */
     int insert(AuthRoleResource record) throws DataAccessException;
+    /**
+     * description TODO
+     *
+     * @param record 1
+     * @return int
+     * @throws DataAccessException when
+     */
+    int insertRoleUser(AuthRoleResource record) throws DataAccessException;
 
     /**
      * description TODO
@@ -73,4 +81,13 @@ public interface AuthRoleResourceMapper {
      * @throws DataAccessException when
      */
     int deleteByUniqueKey(@Param("roleId") Integer roleId,@Param("resourceId") Integer resourceId) throws DataAccessException;
+    /**
+     * description TODO
+     *
+     * @param roleId 1
+     * @param resourceId 2
+     * @return int
+     * @throws DataAccessException when
+     */
+    int deleteByUniqueKeyUser(@Param("roleId") Integer roleId,@Param("resourceId") String resourceId) throws DataAccessException;
 }

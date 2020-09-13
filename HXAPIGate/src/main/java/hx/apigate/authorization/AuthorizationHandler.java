@@ -6,6 +6,7 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.http.*;
+import io.netty.util.ReferenceCountUtil;
 
 import java.net.InetSocketAddress;
 import java.net.SocketAddress;
@@ -15,7 +16,10 @@ import java.util.stream.Stream;
 import javax.servlet.ServletRequest;
 import javax.servlet.http.HttpServletRequest;
 
+import org.apache.ignite.IgniteCache;
+import org.apache.ignite.IgniteSemaphore;
 import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
 import org.apache.shiro.subject.support.DefaultSubjectContext;
@@ -28,14 +32,16 @@ import hx.apigate.authorization.shiro.databridge.JwtToken;
 import hx.apigate.databridge.NodeInfo;
 import hx.apigate.databridge.xmlBean.RouteNode;
 import hx.apigate.util.CacheUtil;
+import hx.apigate.util.IgniteUtil;
 import hx.apigate.util.MixAll;
+import hx.apigate.util.RouteSelectUtil;
 import hx.apigate.util.StringUtils;
 
 /**
  * <p>Description: 授权管理</p>
 　 * <p>Copyright: Copyright (c) 2019</p>
 　 * <p>Company: www.uiotp.com</p>
-　 * @author yangcheng
+　 * @author yangcheng，hejuanjuan
 　 * @date 2019年10月31日
 　 * @version 1.0
  */
@@ -59,19 +65,35 @@ public class AuthorizationHandler extends SimpleChannelInboundHandler<FullHttpRe
         		 sub.login(token);
         		 StringBuilder sb = new StringBuilder(Constance.API_RESOURCE_ROLE);
             	 sb.append(url);
-            	 sb.append(Constance.API_RESOURCE_ROLE_SPLIT);
-            	 sb.append(msg.method().toString());
-        		 String roles = CacheUtil.getString(sb.toString());
+            	 IgniteCache<String,String> cache =IgniteUtil.getAPIAuthCache();
+            	 String roles = cache.get(sb.toString());
+        		 /**
+        		  * 无权访问
+        		  */
         		 if(roles == null || !checkRoles(sub,roles)) {
-        			 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse(403, "对不起，您无权进行此操作 !"));
-        			 return;
+        			 String patternUri = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
+        			 IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
+					 if(semaphore != null) {
+						 semaphore.release();
+					 }
+					 webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode().getTps().release();
+        			 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(403, "对不起，您无权进行此操作 !"));
+        		 }else {
+        			 msg.retain();
+        			 ctx.fireChannelRead(msg);
         		 }
-        		 msg.retain();
-        		 ctx.fireChannelRead(msg);
-    		 }catch(Exception e) {
-    			 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse(400, e.getMessage()));
+    		 }catch(AuthenticationException e) {
+    			 e.printStackTrace();
+    			 String patternUri = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
+    			 IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
+				 if(semaphore != null) {
+					 semaphore.release();
+				 }
+				webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode().getTps().release();
+    			 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(400, e.getMessage()));
     		 }
     	 }else {
+			 //不鉴权
 			 msg.retain();
              ctx.fireChannelRead(msg);
     	 }
@@ -88,6 +110,7 @@ public class AuthorizationHandler extends SimpleChannelInboundHandler<FullHttpRe
                 && !StringUtils.isEmpty(userId);
     }
     /**
+     * 创建AuthenticationToken
      * @param ctx
      * @param request
      * @return
@@ -107,9 +130,10 @@ public class AuthorizationHandler extends SimpleChannelInboundHandler<FullHttpRe
     }
     
     /**
+     * description 验证当前用户是否属于mappedValue任意一个角色
      *
      * @param subject 1
-     * @param roles  该资源所需要的所有角色，“,”分隔的
+     * @param roles  
      * @return boolean
      */
     private boolean checkRoles(Subject subject, String roles){

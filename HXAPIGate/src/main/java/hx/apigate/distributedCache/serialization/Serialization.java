@@ -1,9 +1,8 @@
 package hx.apigate.distributedCache.serialization;
 
 /**
+ * 序列化器
  * @Description: 
- * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.uiotp.com</p>
  * @author  yangcheng
  * @date:   2019年6月25日
  */

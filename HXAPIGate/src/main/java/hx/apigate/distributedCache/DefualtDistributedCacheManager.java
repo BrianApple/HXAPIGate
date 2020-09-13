@@ -13,8 +13,6 @@ import hx.apigate.util.MixAll;
 /**
  * 分布式缓存入口类
  * @Description: 
- * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.uiotp.com</p>
  * @author  yangcheng
  * @date:   2019年6月24日
  */
@@ -38,6 +36,10 @@ public class DefualtDistributedCacheManager implements IProcessor{
 		distributedCacheProcessor.stop();
 	}
 
+	/**
+	 * 获取分布式缓存对象
+	 * @return
+	 */
 	public static DistributedCacheProcessor getInstance() {
 		if(DefualtDistributedCacheManager.distributedCacheProcessor == null) {
 			synchronized (DefualtDistributedCacheManager.class) {

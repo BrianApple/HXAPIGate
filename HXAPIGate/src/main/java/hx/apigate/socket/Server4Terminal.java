@@ -20,14 +20,8 @@ import io.netty.handler.logging.LoggingHandler;
 
 /**
  * 网关获取终端报文
- * @Description: 
- * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.uiotp.com</p>
- * @author  yangcheng
- * @date:   2019年3月30日
  */
 public class Server4Terminal implements IProcessor{
-	Logger logger = LoggerFactory.getLogger(Server4Terminal.class);
 	/**
 	 * 规约编号作为规约服务以及规约策略的唯一标识
 	 */
@@ -68,7 +62,6 @@ public class Server4Terminal implements IProcessor{
 				
 			}
 		}).start();
-		logger.info(MixAll.LOG_INFO_PRIFEX+String.format("HTTPServer is started ! Server port is %s", HXAPIGateConext.PORT));
 	}
 
 

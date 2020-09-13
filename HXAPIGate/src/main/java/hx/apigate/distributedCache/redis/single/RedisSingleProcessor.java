@@ -18,8 +18,6 @@ import redis.clients.jedis.JedisPoolConfig;
 /**
  * 单机版redis
  * @Description: 
- * <p>Copyright: Copyright (c) 2019</p>
- * <p>Company: www.uiotp.com</p>
  * @author  yangcheng
  * @date:   2019年6月24日
  */
@@ -51,7 +49,6 @@ public class RedisSingleProcessor implements DistributedCacheProcessor {
 			RedisNodes node = distributedCachingProperties.getRedis_host();
 			jedisPool = myJedisPoolFactory.getJedisClientWithPassword(config, node.getIp(), node.getPort(), distributedCachingProperties.getRedis_timeout(),distributedCachingProperties.getRedis_password());
 		}
-//		System.out.println("..................................."+jedisPool.getResource().get("RET$::1:1234562223:4"));;
 	}
 
 	@Override
@@ -103,9 +100,6 @@ public class RedisSingleProcessor implements DistributedCacheProcessor {
 	public void setStringObj(String key, Object value) {
 		Jedis jedis = null;
 		try {
-			/**
-			 * 根据返回值类型决定何种方式写数据
-			 */
 			Object val = serializationFactory.getSerializationInstance().SerializeObject(value);
 			
 			if(val instanceof String){
@@ -131,9 +125,6 @@ public class RedisSingleProcessor implements DistributedCacheProcessor {
 	public void setStringObjWithExpire(String key, Object value, int second) {
 		Jedis jedis = null;
 		try {
-			/**
-			 * 根据返回值类型决定何种方式写数据
-			 */
 			Object val = serializationFactory.getSerializationInstance().SerializeObject(value);
 			if(val instanceof String){
 				jedis = jedisPool.getResource();
@@ -222,9 +213,6 @@ public class RedisSingleProcessor implements DistributedCacheProcessor {
 	public void setHashObj(String key, String field, Object value) {
 		Jedis jedis = null;
 		try {
-			/**
-			 * 根据返回值类型决定何种方式写数据
-			 */
 			Object val = serializationFactory.getSerializationInstance().SerializeObject(value);
 			jedis = jedisPool.getResource();
 			if(val instanceof String){
@@ -316,6 +304,22 @@ public class RedisSingleProcessor implements DistributedCacheProcessor {
 		try {
 			jedis = jedisPool.getResource();
 			return jedis.exists(bytesKey);
+		}catch (Exception e) {
+			logger.error("数据从缓存中读取失败", e);
+			throw new RuntimeException("数据写入缓存失败",e);
+		}finally {
+			if(jedis != null) {
+				jedis.close();
+			}
+		}
+	}
+
+	@Override
+	public Object excuteluaScript(String luaScriptStr,int keyCount,String... params ) {
+		Jedis jedis = null;
+		try {
+			jedis = jedisPool.getResource();
+			return jedis.eval(luaScriptStr, keyCount, params);
 		}catch (Exception e) {
 			logger.error("数据从缓存中读取失败", e);
 			throw new RuntimeException("数据写入缓存失败",e);
