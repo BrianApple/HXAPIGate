@@ -22,7 +22,7 @@ layui.define(['jquery', 'form', 'layer', 'element'], function(exports) {
 		 */
 		tableCheck = {
 			init: function() {
-				$(".layui-form-checkbox").click(function(event) {
+				/*$(".layui-form-checkbox").click(function(event) {
 					debugger
 					if($(this).hasClass('layui-form-checked')) {
 						$(this).removeClass('layui-form-checked');
@@ -35,7 +35,7 @@ layui.define(['jquery', 'form', 'layer', 'element'], function(exports) {
 							$(".layui-form-checkbox").addClass('layui-form-checked');
 						}
 					}
-				});
+				});*/
 			},
 			getData: function() {
 				var obj = $(".layui-form-checked").not('.header');
