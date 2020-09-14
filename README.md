@@ -54,11 +54,25 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 2000并发事务压测报告（jdk1.8，jvm堆内存512M）
 ![API网关2000并发压测图（jvm=512M）](https://images.gitee.com/uploads/images/2019/1112/113504_8b9b126e_1038477.png "API网关2000并发压测图（jvm=512M）.png")
 
+## 操作演示
+
+### 登录
+![输入图片说明](https://images.gitee.com/uploads/images/2020/0914/122220_5765ed47_1038477.gif "登录.gif")
+### 新增接口类别
+![输入图片说明](https://images.gitee.com/uploads/images/2020/0914/122334_6e1cac3c_1038477.gif "新建API类别.gif")
+### 新增接口
+![输入图片说明](https://images.gitee.com/uploads/images/2020/0914/122348_628ecd93_1038477.gif "新建API接口.gif")
+### 接口授权
+![输入图片说明](https://images.gitee.com/uploads/images/2020/0914/122404_9b01e94b_1038477.gif "给用户角色授权ceshi接口.gif")
+
 ### 目前网关已实现功能
 1. 授权、鉴权管理
 2. 路由配置
 3. 路由负载（轮寻和赋权值）
 4. HTTP、dubbo多协议协议
+5. 接口分布式限流
+6. 金丝雀发布
+7. 接口降级
 
 ### 项目进度
  目前HXAPIGate仍在继续进行项目重构和功能完善中，目前HXAPIGate的分布式特性只完成了一部分，由于作者和团队的精力实在有限，因此开发进度会比较缓慢，希望大家谅解，同时请star并持续关注本项目！
