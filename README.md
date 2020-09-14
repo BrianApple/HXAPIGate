@@ -56,7 +56,7 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 
 ## 操作演示
 
-### 登录
+### 登录（用户名密码为：admin/admin）
 ![输入图片说明](https://images.gitee.com/uploads/images/2020/0914/122220_5765ed47_1038477.gif "登录.gif")
 ### 新增接口类别
 ![输入图片说明](https://images.gitee.com/uploads/images/2020/0914/122334_6e1cac3c_1038477.gif "新建API类别.gif")
