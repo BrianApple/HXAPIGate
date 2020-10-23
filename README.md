@@ -89,7 +89,11 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 https://blog.csdn.net/sinat_28771747/article/details/105245229
 
 ## 感谢
-bootshiro 项目及作者，bootshiro项目路径：https://gitee.com/tomsun28/bootshiro 
+Netty 项目及作者，项目地址：    https://github.com/netty/netty
+ignite 项目及作者，项目地址：   https://github.com/apache/ignite
+shiro 项目及作者，项目地址：    https://github.com/apache/shiro
+dubbo 项目及作者，项目地址：    https://github.com/apache/dubbo
+bootshiro 项目及作者，项目地址：https://gitee.com/tomsun28/bootshiro 
 
 ## 参与贡献
 
