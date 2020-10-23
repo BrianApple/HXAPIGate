@@ -57,6 +57,9 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 2000并发事务压测报告（jdk1.8，jvm堆内存512M）
 ![API网关2000并发压测图（jvm=512M）](https://images.gitee.com/uploads/images/2019/1112/113504_8b9b126e_1038477.png "API网关2000并发压测图（jvm=512M）.png")
 
+### 网关部署结构
+![输入图片说明](https://images.gitee.com/uploads/images/2020/1023/121327_3b9a4a3f_1038477.jpeg "HXAPIGate.jpg")
+
 ## 操作演示
 
 ### 登录（用户名密码为：admin/admin）
