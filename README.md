@@ -50,8 +50,7 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 传统授权模式下，这四个接口会被当做一个接口（因为接口路径一致）授权给第三方，而通过HXAPIGate可分别对每个资源进行授权，当仅仅授权“/user/list”+“GET”给第三方平台时，被授权放无法访问同一资源的POST、DELETE、PUT请求当时的接口！
 
 ### 授权认证时序图
-
-![授权流程](https://images.gitee.com/uploads/images/2019/1112/113303_d06bcb01_1038477.jpeg "授权流程.jpg")
+![授权流程](https://images.gitee.com/uploads/images/2020/1218/174437_d67a78db_1038477.jpeg "授权流程.jpg")
 
 ### 性能
 2000并发事务压测报告（jdk1.8，jvm堆内存512M）
