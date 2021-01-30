@@ -7,6 +7,11 @@ target/
 *.dex
 # Java class files  
 *.class   
+#idea
+.idea
+*.iws
+*.iml
+*.ipr
 
 # Eclipse project files  
 .classpath  

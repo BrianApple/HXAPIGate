@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="true">
-	<property name="LOG_HOME" value="/Users/yangcheng/Downloads/appRunLog" />
+	<property name="LOG_HOME" value="/opt" />
 	<!-- 日志输出上下文名称 -->
 	<contextName>usThe</contextName>
 	<!-- 输出日志到控制台 ConsoleAppender -->
