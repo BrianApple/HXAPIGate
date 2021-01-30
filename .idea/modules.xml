@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project version="4">
+  <component name="ProjectModuleManager">
+    <modules>
+      <module fileurl="file://$PROJECT_DIR$/IOTGateConsole/GateConsole.iml" filepath="$PROJECT_DIR$/IOTGateConsole/GateConsole.iml" />
+      <module fileurl="file://$PROJECT_DIR$/HXAPIGate/HXAPIGate.iml" filepath="$PROJECT_DIR$/HXAPIGate/HXAPIGate.iml" />
+      <module fileurl="file://$PROJECT_DIR$/HXBootShiro/HXBootShiro.iml" filepath="$PROJECT_DIR$/HXBootShiro/HXBootShiro.iml" />
+    </modules>
+  </component>
+</project>

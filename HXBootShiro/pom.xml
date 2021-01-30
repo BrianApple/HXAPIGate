@@ -57,7 +57,12 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-web</artifactId>
 		</dependency>
-
+		<!--test-->
+		<dependency>
+			<groupId>org.springframework.boot</groupId>
+			<artifactId>spring-boot-starter-test</artifactId>
+			<scope>test</scope>
+		</dependency>
 		<!--database-->
 		<dependency>
 			<groupId>org.mybatis.spring.boot</groupId>
@@ -153,12 +158,6 @@
 			<version>2.3.0</version>
 		</dependency>
 
-        <!--test-->
-		<dependency>
-			<groupId>org.springframework.boot</groupId>
-			<artifactId>spring-boot-starter-test</artifactId>
-			<scope>test</scope>
-		</dependency>
 		<!-- ignite的zk模块需要，由于版本号原因此处单独引入 -->
 		<dependency>
 			<groupId>org.apache.curator</groupId>
