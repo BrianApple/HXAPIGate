@@ -239,9 +239,11 @@
       	</if>
     </trim>
   </select>
+  <!--查询手机号是否已经存在-->
   <select id="isExistPhone" parameterType="com.usthe.bootshiro.domain.bo.AuthUser" resultType="java.lang.String">
   	select uid from auth_user where phone = #{phone} 
   </select>
+  <!--查询邮箱是否已经存在-->
   <select id="isExistEmail" parameterType="com.usthe.bootshiro.domain.bo.AuthUser" resultType="java.lang.String">
   	select uid from auth_user where email = #{email} 
   </select>

@@ -77,13 +77,13 @@ public class UserController extends BaseAction {
             	user.setUid(userId);
             	userService.updatePassword(user);
             }else {
-            	return new Message().ok(1002, "password error");
+            	return new Message().ok(400, "password error");
             }
         }
     	
 //    	LogExeManager.getInstance().executeLogTask(LogTaskFactory.loginLog(appId, IpUtil.getIpFromRequest(WebUtils.toHttp(request)), (short) 1, "密码修改成功"));
     	
-    	return new Message().ok(6666, "update success");
+    	return new Message().ok(200, "update success");
     }
 
     @ApiOperation(value = "获取对应用户角色",notes = "GET根据用户的appId获取对应用户的角色")
@@ -92,7 +92,7 @@ public class UserController extends BaseAction {
         String roles = userService.loadAccountRole(appId);
         Set<String> roleSet = JsonWebTokenUtil.split(roles);
         LOGGER.debug(roleSet.toString());
-    	return new Message().ok(6666,"return roles success").addData("roles",roleSet);
+    	return new Message().ok(200,"return roles success").addData("roles",roleSet);
     	
     }
 
@@ -106,7 +106,7 @@ public class UserController extends BaseAction {
         List<AuthUser> authUsers = userService.getUserList();
         authUsers.forEach(user->user.setPassword(null));
         PageInfo pageInfo = new PageInfo(authUsers);
-        return new Message().ok(6666,"return user list success").addData("pageInfo",pageInfo);
+        return new Message().ok(200,"return user list success").addData("pageInfo",pageInfo);
     }
 
     @ApiOperation(value = "给用户授权添加角色",httpMethod = "POST")
@@ -116,13 +116,13 @@ public class UserController extends BaseAction {
         String uid = map.get("uid");
         int roleId = Integer.parseInt(((Object)map.get("roleId")).toString());
         boolean flag = userService.authorityUserRole(uid,roleId);
-        return flag ? new Message().ok(6666,"authority success") : new Message().error(1111,"authority error");
+        return flag ? new Message().ok(200,"authority success") : new Message().error(400,"authority error");
     }
 
     @ApiOperation(value = "删除已经授权的用户角色",httpMethod = "DELETE")
     @DeleteMapping("/authority/role/{uid}/{roleId}")
     public Message deleteAuthorityUserRole(@PathVariable String uid, @PathVariable Integer roleId) {
-        return userService.deleteAuthorityUserRole(uid,roleId) ? new Message().ok(6666,"delete success") : new Message().error(1111,"delete fail");
+        return userService.deleteAuthorityUserRole(uid,roleId) ? new Message().ok(200,"delete success") : new Message().error(400,"delete fail");
     }
 
 
@@ -133,18 +133,18 @@ public class UserController extends BaseAction {
         Map<String,String > map = getRequestHeader(request);
         String userId = map.get("userId");
         if (StringUtils.isEmpty(userId)) {
-            return new Message().error(1111, "用户未登录无法登出");
+            return new Message().error(400, "用户未登录无法登出");
         }
-        Object jwt = igniteAutoConfig.getCommonData("JWT-SESSION-"+userId);
+        Object jwt = igniteAutoConfig.getJWTSessionData("JWT-SESSION-"+userId);
 //        String jwt = redisTemplate.opsForValue().get("JWT-SESSION-"+userId);
         if (StringUtils.isEmpty(jwt)) {
-            return new Message().error(1111, "用户未登录无法登出");
+            return new Message().error(400, "用户未登录无法登出");
         }
-        igniteAutoConfig.removeCommonData("JWT-SESSION-"+userId);
+        igniteAutoConfig.removeJWTSessionData("JWT-SESSION-"+userId);
 //        redisTemplate.opsForValue().getOperations().delete("JWT-SESSION-"+userId);
         LogExeManager.getInstance().executeLogTask(LogTaskFactory.exitLog(userId,request.getRemoteAddr(),(short)1,""));
 
-        return new Message().ok(6666, "用户退出成功");
+        return new Message().ok(200, "用户退出成功");
     }
 
 

@@ -32,7 +32,11 @@ public class ShiroConfiguration {
         RestShiroFilterFactoryBean shiroFilterFactoryBean = new RestShiroFilterFactoryBean();
         shiroFilterFactoryBean.setSecurityManager(securityManager);
         shiroFilterFactoryBean.setFilters(filterChainManager.initGetFilters());//添加所有自定义过滤器
-        shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainManager.initGetFilterChain());//添加所有自定义的filterChain---即url和角色的对应关系
+        /**
+         * 添加所有自定义的filterChain
+         * 这里配置的是url与对应授权角色的关系
+         */
+        shiroFilterFactoryBean.setFilterChainDefinitionMap(filterChainManager.initGetFilterChain());
         return shiroFilterFactoryBean;
     }
 

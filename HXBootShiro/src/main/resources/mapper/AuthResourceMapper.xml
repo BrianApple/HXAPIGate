@@ -7,6 +7,7 @@
         <result column="NAME" jdbcType="VARCHAR" property="name"/>
         <result column="PARENT_ID" jdbcType="INTEGER" property="parentId"/>
         <result column="URI" jdbcType="VARCHAR" property="uri"/>
+        <result column="VERSION" jdbcType="VARCHAR" property="version"/>
         <result column="TYPE" jdbcType="SMALLINT" property="type"/>
         <result column="METHOD" jdbcType="VARCHAR" property="method"/>
         <result column="NEED_AUTH" jdbcType="VARCHAR" property="needAuth"/>
@@ -17,14 +18,15 @@
         <result column="UPDATE_TIME" jdbcType="TIMESTAMP" property="updateTime"/>
     </resultMap>
     <sql id="Base_Column_List">
-    ID, CODE, NAME, PARENT_ID, URI, TYPE, METHOD,NEED_AUTH,ROUTE_INFO, ICON, STATUS, CREATE_TIME, UPDATE_TIME
-  </sql>
+    ID, CODE, NAME, PARENT_ID, URI, VERSION, TYPE, METHOD,NEED_AUTH,ROUTE_INFO, ICON, STATUS, CREATE_TIME, UPDATE_TIME
+    </sql>
     <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
         select
         <include refid="Base_Column_List"/>
         from auth_resource
         where ID = #{id,jdbcType=INTEGER}
     </select>
+    <!--删除资源-->
     <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
     delete from auth_resource
     where ID = #{id,jdbcType=INTEGER}
@@ -32,11 +34,11 @@
     <insert id="insert" keyColumn="ID" keyProperty="id" parameterType="com.usthe.bootshiro.domain.bo.AuthResource"
             useGeneratedKeys="true">
     insert into auth_resource (CODE, NAME, PARENT_ID, 
-      URI, TYPE, METHOD, NEED_AUTH,ROUTE_INFO,
+      URI,VERSION, TYPE, METHOD, NEED_AUTH,ROUTE_INFO,
       ICON, STATUS, CREATE_TIME, 
       UPDATE_TIME)
     values (#{code,jdbcType=VARCHAR}, #{name,jdbcType=VARCHAR}, #{parentId,jdbcType=INTEGER}, 
-      #{uri,jdbcType=VARCHAR}, #{type,jdbcType=SMALLINT}, #{method,jdbcType=VARCHAR},  #{needAuth,jdbcType=TINYINT},  #{routeInfo,jdbcType=LONGVARCHAR}, 
+      #{uri,jdbcType=VARCHAR},#{version,jdbcType=VARCHAR}, #{type,jdbcType=SMALLINT}, #{method,jdbcType=VARCHAR},  #{needAuth,jdbcType=TINYINT},  #{routeInfo,jdbcType=LONGVARCHAR},
       #{icon,jdbcType=VARCHAR}, #{status,jdbcType=SMALLINT}, #{createTime,jdbcType=TIMESTAMP}, 
       #{updateTime,jdbcType=TIMESTAMP})
   </insert>
@@ -55,6 +57,9 @@
             </if>
             <if test="uri != null">
                 URI,
+            </if>
+            <if test="version != null">
+                VERSION,
             </if>
             <if test="type != null">
                 TYPE,
@@ -91,6 +96,9 @@
             </if>
             <if test="uri != null">
                 #{uri,jdbcType=VARCHAR},
+            </if>
+            <if test="version != null">
+                #{version,jdbcType=VARCHAR},
             </if>
             <if test="type != null">
                 #{type,jdbcType=SMALLINT},
@@ -131,6 +139,9 @@
             <if test="uri != null">
                 URI = #{uri,jdbcType=VARCHAR},
             </if>
+            <if test="version != null">
+                VERSION = #{version,jdbcType=VARCHAR},
+            </if>
             <if test="type != null">
                 TYPE = #{type,jdbcType=SMALLINT},
             </if>
@@ -162,6 +173,7 @@
       NAME = #{name,jdbcType=VARCHAR},
       PARENT_ID = #{parentId,jdbcType=INTEGER},
       URI = #{uri,jdbcType=VARCHAR},
+      VERSION = #{version,jdbcType=VARCHAR},
       TYPE = #{type,jdbcType=SMALLINT},
       METHOD = #{method,jdbcType=VARCHAR},
        NEED_AUTH = #{needAuth,jdbcType=TINYINT}, 
@@ -178,7 +190,7 @@
     from auth_resource re
     LEFT JOIN auth_role_resource ro on re.id = ro.RESOURCE_ID
     LEFT JOIN auth_role rol on ro.ROLE_ID = rol.ID
-    where re.type = 2
+    where (re.type = 2 or re.type = 0)
     GROUP BY
     re.URI,re.ID
   </select>
@@ -187,7 +199,7 @@
     from auth_resource re
     LEFT JOIN auth_role_resource ro on re.id = ro.RESOURCE_ID
     LEFT JOIN auth_role rol on ro.ROLE_ID = rol.ID
-    where re.type = 2 and re.ID =  #{id,jdbcType=INTEGER}
+    where  (re.type = 2 or re.type = 0) and re.ID =  #{id,jdbcType=INTEGER}
     GROUP BY
     re.URI,re.ID
   </select>
@@ -204,26 +216,43 @@
         select a.* from auth_resource a
         where a.type = 1
     </select>
-
-    <select id="selectApiTeamList" resultMap="BaseResultMap">
+    <!--查询api类型，分为两种情况，当isType == true时，只查询api根类别，根类别是所有Api类别的父级节点-->
+    <select id="selectApiTeamList" parameterType="com.usthe.bootshiro.domain.bo.AuthResource" resultMap="BaseResultMap">
         select * from auth_resource a
         where a.type = 3
+        <if test="parentId == -1">
+            and  PARENT_ID = -1
+        </if>
+        <if test="parentId != -1">
+            and  PARENT_ID != -1
+        </if>
+    </select>
+    <!--查询api类型，分为两种情况，当isType == true时，只查询api根类别，根类别是所有Api类别的父级节点-->
+    <select id="selectApiListByName" parameterType="com.usthe.bootshiro.domain.bo.AuthResource" resultMap="BaseResultMap">
+        select * from auth_resource a
+        where a.name = #{name,jdbcType=VARCHAR}
     </select>
 
     <select id="selectApiList" resultMap="BaseResultMap">
         select a.* from auth_resource a
-        where a.type = 2
+        where  (a.type = 2 or a.type = 0) and a.status = 1
     </select>
 
     <select id="selectApiListByTeamId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
         select a.* from auth_resource a
-        where a.parent_id = #{teamId,jdbcType=INTEGER} and a.type in (2,3)
+        where a.parent_id = #{teamId,jdbcType=INTEGER} and a.type in (0,2,3)
+    </select>
+
+    <!--根据资源URI和设备版本信息+接口所属类别组合查询-->
+    <select id="selectApiByIdAndVersion" parameterType="com.usthe.bootshiro.domain.bo.AuthResource" resultMap="BaseResultMap">
+        select a.ID from auth_resource a
+        where a.URI = #{uri,jdbcType=VARCHAR} and a.VERSION = #{version,jdbcType=VARCHAR} and a.PARENT_ID = #{parentId,jdbcType=INTEGER}
     </select>
 
     <select id="selectApisByRoleId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
         select distinct a.* from auth_resource a
         join auth_role_resource b on a.id = b.resource_id
-        where b.role_id = #{roleId,jdbcType=INTEGER} and a.type = 2
+        where b.role_id = #{roleId,jdbcType=INTEGER} and  (a.type = 2 or a.type = 0)
     </select>
 
     <select id="selectMenusByRoleId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
@@ -235,10 +264,19 @@
     <select id="selectNotAuthorityApisByRoleId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
         select a.*
         from auth_resource a
-        where a.type = 2 and not exists (
+        where (a.type = 2 or a.type = 0) and not exists (
           select 1 from auth_role_resource b
 		  where a.id = b.resource_id and b.role_id = #{roleId,jdbcType=INTEGER}
 		)
+    </select>
+    <!-- 获取itmId对应资源类型下，所有没有和角色id关联的api-->
+    <select id="selectNotAuthorityApisByTeamIdAndRID" parameterType="java.lang.Integer" resultType="com.usthe.bootshiro.domain.bo.AuthResource">
+        select a.*
+        from auth_resource a
+        where (a.type = 2 or a.type = 0)   and a.PARENT_ID = #{param1} and not exists (
+            select 1 from auth_role_resource b
+            where a.id = b.resource_id and b.role_id = #{param2}
+            )
     </select>
 
     <select id="selectNotAuthorityMenusByRoleId" parameterType="java.lang.Integer" resultMap="BaseResultMap">

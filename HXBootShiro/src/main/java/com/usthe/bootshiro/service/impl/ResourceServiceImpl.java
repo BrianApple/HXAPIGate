@@ -35,6 +35,21 @@ public class ResourceServiceImpl implements ResourceService {
 
     @Override
     public Boolean addMenu(AuthResource menu) throws DataAccessException {
+
+        if(3 == menu.getType()){
+            //当添加的是资源类别时，根据资源类别名称去重
+            List<AuthResource>  resources = authResourceMapper.selectApiListByName(menu);
+            if (resources.size()>0){
+                return false;
+            }
+        }else {
+            //添加的是普通的APi资源时
+            List<AuthResource>  resources = authResourceMapper.selectApiByIdAndVersion(menu);
+            if (resources.size() > 0 ){
+                //同一uri+version  不能重复
+                return false;
+            }
+        }
         int num = authResourceMapper.insertSelective(menu);
         return num == 1 ? Boolean.TRUE : Boolean.FALSE;
     }
@@ -52,8 +67,8 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public List<AuthResource> getApiTeamList() throws DataAccessException {
-        return authResourceMapper.selectApiTeamList();
+    public List<AuthResource> getApiTeamList(AuthResource authResource) throws DataAccessException {
+        return authResourceMapper.selectApiTeamList(authResource);
     }
 
     @Override
@@ -91,5 +106,15 @@ public class ResourceServiceImpl implements ResourceService {
 		// TODO Auto-generated method stub
 		return authResourceMapper.selectByPrimaryKey(apiId);
 	}
+
+    @Override
+    public List<AuthResource> getApiListNotRelatedByRID(int rId) {
+        return authResourceMapper.selectNotAuthorityApisByRoleId(rId);
+    }
+
+    @Override
+    public List<AuthResource> getApiListByTeamIdAndRID(int itmId, int rId) {
+        return authResourceMapper.selectNotAuthorityApisByTeamIdAndRID(itmId,rId);
+    }
 
 }

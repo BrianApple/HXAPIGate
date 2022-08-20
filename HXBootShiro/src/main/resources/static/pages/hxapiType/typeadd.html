@@ -1,0 +1,171 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>添加API类型</title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+		<link rel="stylesheet" href="../../css/font.css">
+		<link rel="stylesheet" href="../../css/weadmin.css">
+		<!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+		<!--[if lt IE 9]>
+	      <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+	      <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+	    <![endif]-->
+	    <script src="../../js/jquery-3.1.1.js"></script>
+	    <style type="text/css">
+	    	.yf-input-del .layui-input-inline .layui-input {
+				padding-right: 20px;
+			}
+
+			.yf-input-del .layui-input-inline i.layui-icon {
+				position: absolute;
+				right: 2px;
+				top: 10px;
+				color: #999999;
+			}
+	    </style>
+	</head>
+
+	<body>
+		<div class="weadmin-body">
+			<div class="layui-row">
+				<form class="layui-form layui-col-md12 we-search">
+					<div class="layui-form-item">
+
+						<label for="L_email" class="layui-form-label">
+							资源类型
+						</label>
+						<div  class="layui-input-inline">
+							<select name="api_Type" id= "api_Type">
+							</select>
+						</div>
+						<label for="L_email" class="layui-form-label">
+							类别名称
+						</label>
+						<div class="layui-input-inline">
+							<input type="text" id="interface_name" name="interface_name" lay-verify="required" autocomplete="" class="layui-input">
+						</div>
+
+
+					</div>
+					<div class="layui-form-item">
+						<label for="username" class="layui-form-label">
+							成员类型
+						</label>
+						<div  class="layui-input-inline">
+							<select name="sour_Type">
+								<option value="3">API资源</option>
+							</select>
+						</div>
+
+						<label for="username" class="layui-form-label">
+							状态
+						</label>
+						<div class=" layui-input-inline" id="state">
+							<input type="radio" name="state" value="1" title="正常" checked>
+							<input type="radio" name="state" value="9" title="禁用">
+						</div>
+
+					</div>
+
+
+					<div class="layui-form-item">
+						<label for="L_repass" class="layui-form-label">
+						</label>
+						<button class="layui-btn" lay-filter="add" lay-submit="">确定</button>
+					</div>
+				</form>
+			</div>
+		</div>
+		<script src="../../lib/layui/layui.js" charset="utf-8"></script>
+ 		<script type="text/javascript">
+ 			var httpStr = "";
+ 			var dubboStr = "";
+			$(function(){
+				var curapiTypeId;
+				layui.use(['form', 'jquery','util','admin', 'layer'], function() {
+					var form = layui.form,
+						$ = layui.jquery,
+						util = layui.util,
+						admin = layui.admin,
+						layer = layui.layer;
+					//自定义验证规则
+					form.verify({
+						pid: [/^[0-9a-zA-Z]{4}$/, '必须为字母或数字且长度为4'],
+						intVal: [ /^[0-9]+[0-9]*]*$/, '必须为正整数'],
+						allIntVal: [ /^-?[1-9]\d*$/, '必须为整数']
+					});
+					//失去焦点时判断值为空不验证，一旦填写必须验证
+
+					//监听提交
+					form.on('submit(add)', function(data) {
+						console.log(data.field);
+						var f = data.field;
+						//console.log(f.username);
+						var userInfo = localStorage.getItem("userInfo")
+						var user = JSON.parse(userInfo);
+						var jwt = user.jwt;
+						$.post("/inner/api/addApiResource", {"data":f,"jwt":jwt,"userId":user.user.uid},
+							function(data){
+							if(data.retSig == 200){ // 201表示已经存在
+								var index = parent.layer.getFrameIndex(window.name);
+								
+		    					var _len = parent.$('#memberList tr').length;
+		    					//调用父页面的初始化方法
+								parent.getApiByItemId(curapiTypeId,1,10,true);
+								//关闭当前frame
+								parent.layer.close(index);
+								
+								
+							}else{
+								layer.msg("创建异常",{icon: 5,time: 2000});
+							}
+						});
+						
+						
+						return false;
+					});
+
+				});
+				//初始化API类别下拉框
+				getApiType();
+				
+				curapiTypeId = parent.apiTypeId
+			})
+		</script>
+		<script>
+		
+			
+			layui.extend({
+				admin: '{/}../../js/admin'
+			});
+
+	        /*
+	        
+	        	获取API类别下拉框
+	        */
+	        function getApiType(){
+				var userInfo = localStorage.getItem("userInfo")
+				var user = JSON.parse(userInfo);
+				var jwt = user.jwt;
+				$.post("/inner/api/initApiType",{"jwt":jwt,"userId":user.user.uid,str:true},function(data){
+					if(data.retSig == 200){
+						var retData = data.httpRet;
+						var str = "";
+						for(var i=0;i<retData.length;i++){
+							var iotGateDB = retData[i];
+							str +="<option value='" + iotGateDB.id + "'>"+iotGateDB.name+"</option>";
+						}
+						$('#api_Type').html(str); 
+						layui.form.render("select");
+					}
+				});
+				
+			}
+		</script>
+	</body>
+
+</html>

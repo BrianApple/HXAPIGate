@@ -5,15 +5,19 @@ import com.github.pagehelper.PageInfo;
 import com.usthe.bootshiro.domain.bo.AuthAccountLog;
 import com.usthe.bootshiro.domain.bo.AuthOperationLog;
 import com.usthe.bootshiro.domain.vo.Message;
+import com.usthe.bootshiro.ignite.IgniteAutoConfig;
 import com.usthe.bootshiro.service.AccountLogService;
 import com.usthe.bootshiro.service.OperationLogService;
+import hx.apigate.databridge.xmlBean.RouteAll;
 import io.swagger.annotations.ApiOperation;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author tomsun28
@@ -28,7 +32,6 @@ public class LogController extends BaseAction {
 
     @Autowired
     OperationLogService operationLogService;
-
     @SuppressWarnings("unchecked")
     @ApiOperation(value = "获取日志记录", httpMethod = "GET")
     @RequestMapping("/accountLog/{currentPage}/{pageSize}")
@@ -36,7 +39,7 @@ public class LogController extends BaseAction {
         PageHelper.startPage(currentPage, pageSize);
         List<AuthAccountLog> accountLogs = accountLogService.getAccountLogList();
         PageInfo pageInfo = new PageInfo(accountLogs);
-        return new Message().ok(6666, "return accountLogs success").addData("data",pageInfo);
+        return new Message().ok(200, "return accountLogs success").addData("data",pageInfo);
     }
 
     @SuppressWarnings("unchecked")
@@ -46,6 +49,6 @@ public class LogController extends BaseAction {
         PageHelper.startPage(currentPage, pageSize);
         List<AuthOperationLog> authOperationLogs = operationLogService.getOperationList();
         PageInfo pageInfo = new PageInfo(authOperationLogs);
-        return new Message().ok(6666, "return operationLogList success").addData("data", pageInfo);
+        return new Message().ok(200, "return operationLogList success").addData("data", pageInfo);
     }
 }

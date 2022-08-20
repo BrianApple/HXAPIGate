@@ -1,0 +1,428 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>添加API</title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+		<link rel="stylesheet" href="../../css/font.css">
+		<link rel="stylesheet" href="../../css/weadmin.css">
+		<!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+		<!--[if lt IE 9]>
+	      <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+	      <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+	    <![endif]-->
+	    <script src="../../js/jquery-3.1.1.js"></script>
+	    <style type="text/css">
+	    	.yf-input-del .layui-input-inline .layui-input {
+				padding-right: 20px;
+			}
+
+			.yf-input-del .layui-input-inline i.layui-icon {
+				position: absolute;
+				right: 2px;
+				top: 10px;
+				color: #999999;
+			}
+	    </style>
+	</head>
+
+	<body>
+		<div class="weadmin-body">
+			<div class="layui-row">
+				<form class="layui-form layui-col-md12 we-search">
+				<div class="layui-form-item">
+				
+					<label for="L_email" class="layui-form-label">
+		                	API类别
+		            </label>
+					<div  class="layui-input-inline">
+						<select name="api_Type" id= "api_Type">
+						</select>
+					</div>
+					<label for="username" class="layui-form-label">
+	                  		类别
+					</label>
+					<div  class="layui-input-inline">
+						<select name="sour_Type">
+						      <option value="2">API资源</option>
+						</select>
+					</div>
+					
+				</div>
+				<div class="layui-form-item">
+				
+					<label for="L_email" class="layui-form-label">
+		                	接口名称
+		            </label>
+					<div class="layui-input-inline">
+						<input type="text" id="interface_name" name="interface_name" lay-verify="required" autocomplete="" class="layui-input">
+					</div>
+					<label for="L_email" class="layui-form-label" style="color: red;">
+		                	url(通配符)
+		            </label>
+					<div class="layui-input-inline">
+						<input type="text" id="url_val" name="url_val" lay-verify="required" autocomplete="" class="layui-input">
+					</div>
+					
+				</div>
+				<div class="layui-form-item">
+				
+					<label for="L_email" class="layui-form-label" style="color: red;">
+		                	访问方式
+		            </label>
+					<div  class="layui-input-inline">
+						<select name="request_method">
+						      <option value="POST">POST</option>
+						      <option value="GET">GET</option>
+						      <option value="PUT">PUT</option>
+						      <option value="DELETE">DELETE</option>
+						      <option value="PATCH">PATCH</option>
+						</select>
+					</div>
+					<label for="username" class="layui-form-label">
+	                  		状态
+					</label>
+					<div class=" layui-input-inline" id="state">
+				      <input type="radio" name="state" value="1" title="正常" checked>
+				      <input type="radio" name="state" value="9" title="禁用">
+				    </div>
+					
+				</div>
+				<div class="layui-form-item" id = "api_version_div">
+						
+					<label for="username" class="layui-form-label">
+	                  		接口版本
+					</label>
+					<div class="layui-input-inline" >
+				     	<input type="text" id="api_version" name="api_version" lay-verify="required" autocomplete="" class="layui-input">
+				    </div>
+					<label for="username" class="layui-form-label">
+	                  		版本策略
+					</label>
+					<div class=" layui-input-inline" id="api_version_balance">
+				      <input type="radio" name="api_version_balance" lay-filter="api_version_balance_evn" value="1" title="轮寻" checked>
+				      <input type="radio" name="api_version_balance" lay-filter="api_version_balance_evn" value="0" title="权重">
+				    </div>
+				    
+				    <!-- <label for="username" class="layui-form-label api-version">
+	                  		权重
+					</label>
+					<div class="layui-input-inline api-version" >
+				     	<input type="text" id="api_version_weightNum" name="api_version_weightNum" lay-verify="required" autocomplete="" class="layui-input">
+				    </div>
+					 -->
+				</div>
+				<div class="layui-form-item">
+				
+					<label for="username" class="layui-form-label">
+	                  		TPS
+					</label>
+					<div class="layui-input-inline" >
+				     	<input type="text" id="all_tps" name="all_tps" lay-verify="required" autocomplete="" class="layui-input">
+				    </div>
+					<label for="username" class="layui-form-label">
+	                  		路由策略
+					</label>
+					<div class=" layui-input-inline" id="balance">
+				      <input type="radio" name="balance" value="1" title="轮寻" checked>
+				      <input type="radio" name="balance" value="0" title="权重">
+				    </div>
+					
+				</div>
+				<div class="layui-form-item">
+						
+					<label for="username" class="layui-form-label">
+                  		规约类型
+					</label>
+					<div  class="layui-input-inline">
+						<select name="pType">
+						      <option value="http">HTTP</option>
+						      <option value="dubbo">Dubbo</option>
+						</select>
+					</div>
+					<label for="username" class="layui-form-label">
+                  		开启鉴权
+					</label>
+					<div class="layui-input-inline" id="isAuth"><!-- <div class="layui-input-block layui-input-inline" id="isAuth"> -->
+				      <input type="radio" name="isAuth" value="1" title="开启" checked>
+				      <input type="radio" name="isAuth" value="0" title="关闭">
+				    </div>
+				</div>
+				
+				<div id = "all_routIndo">
+ 					<div class="layui-form-item tell tel1" data-id="1">
+					     <div class="layui-inline">
+					        <label class="layui-form-label">路由信息</label>
+					        <div class="layui-input-inline" style="float: left;">
+					            <input type="tel" name="rout_ipAddr1" placeholder="请输入服务地址" autocomplete="off" class="layui-input">
+					        </div>
+					        <div class="layui-input-inline"  style="float: left;">
+					            <input type="tel" name="rout_port1" placeholder="请输入端口" autocomplete="off" class="layui-input">
+					        </div>
+					        <div class="layui-input-inline"  style="float: left;">
+					            <input type="tel" name="rout_order1" placeholder="请输入order" autocomplete="off" class="layui-input">
+					        </div>
+					        <div class="layui-input-inline"  style="float: left;">
+					            <input type="tel" name="rout_weight1" placeholder="请输入权值" autocomplete="off" class="layui-input">
+					        </div>
+					     </div>
+					     <div class="layui-inline">
+					     	<label class="layui-form-label">限流设置</label>
+					        <div class="layui-input-inline"  style="float: left;">
+					            <input type="tel" name="rout_tps1" placeholder="请输入TPS" autocomplete="off" class="layui-input">
+					        </div>
+					        <button class="layui-btn layui-btn-small" type="button" onclick="addtel()"><i class="layui-icon"></i></button>
+					        <button class="layui-btn layui-btn-small layui-btn-danger" type="button" onclick="deltel(1)"><i class="layui-icon"></i></button>
+					     </div>
+					</div>
+				<!-- <div class="layui-form-item tell tel1" data-id="1">
+					     <div class="layui-inline">
+					        <label class="layui-form-label">路由信息</label>
+					        <div class="layui-input-inline"  style="float: left;">
+					            <input type="tel" name="route_InterfaceName" placeholder="请输入服务接口全名" autocomplete="off" class="layui-input">
+					        </div>
+					        <div class="layui-input-inline" style="float: left;">
+					            <input type="tel" name="route_tps" placeholder="请输入TPS" autocomplete="off" class="layui-input">
+					        </div>
+					        <button class="layui-btn layui-btn-small" type="button" onclick="addtel()"><i class="layui-icon"></i></button>
+					        <button class="layui-btn layui-btn-small layui-btn-danger" type="button" onclick="deltel(1)"><i class="layui-icon"></i></button>
+					     </div>
+					</div> -->
+				</div>
+				
+				<div class="layui-form-item">
+					<label for="L_repass" class="layui-form-label">
+              		</label>
+					<button class="layui-btn" lay-filter="add" lay-submit="">确定</button>
+				</div>
+			</form>
+			</div>
+		</div>
+		<script src="../../lib/layui/layui.js" charset="utf-8"></script>
+ 		<script type="text/javascript">
+ 			var httpStr = 
+	            "<div class=\"layui-form-item tell tel1\" data-id=\"1\">" +
+	            "		 <div class=\"layui-inline\">" +
+	            "				<label class=\"layui-form-label\">路由信息</label>" +
+	            "				<div class=\"layui-input-inline\" style=\"float: left;\">" +
+	            "						<input type=\"tel\" name=\"CRM_Clues_AdName\" placeholder=\"请输入服务地址\" autocomplete=\"off\" class=\"layui-input\">" +
+	            "				</div>" +
+	            "				<div class=\"layui-input-inline\"  style=\"float: left;\">" +
+	            "						<input type=\"tel\" name=\"CRM_Clues_AdName\" placeholder=\"请输入端口\" autocomplete=\"off\" class=\"layui-input\">" +
+	            "				</div>" +
+	            "				<div class=\"layui-input-inline\"  style=\"float: left;\">" +
+	            "						<input type=\"tel\" name=\"CRM_Clues_AdName\" placeholder=\"请输入order\" autocomplete=\"off\" class=\"layui-input\">" +
+	            "				</div>" +
+	            "				<div class=\"layui-input-inline\"  style=\"float: left;\">" +
+	            "						<input type=\"tel\" name=\"CRM_Clues_AdName\" placeholder=\"请输入权值\" autocomplete=\"off\" class=\"layui-input\">" +
+	            "				</div>" +
+	            "		 </div>" +
+	            "		 <div class=\"layui-inline\"> " +
+	            "			<label class=\"layui-form-label\">限流设置</label> " +
+	            "				<div class=\"layui-input-inline\"  style=\"float: left;\"> " +
+	            "						<input type=\"tel\" name=\"CRM_Clues_AdName\" placeholder=\"请输入TPS\" autocomplete=\"off\" class=\"layui-input\"> " +
+	            "				</div> " +
+	            "				<button class=\"layui-btn layui-btn-small\" type=\"button\" onclick=\"addtel()\"><i class=\"layui-icon\"></i></button> " +
+	            "				<button class=\"layui-btn layui-btn-small layui-btn-danger\" type=\"button\" onclick=\"deltel(1)\"><i class=\"layui-icon\"></i></button> " +
+	            "		 </div> " +
+	            "</div>";
+ 			var dubboStr = 
+ 				"<div class=\"layui-form-item tell tel1\" data-id=\"1\">"+
+	 				"<div class=\"layui-inline\"> " +
+	 				"	<label class=\"layui-form-label\">路由信息</label> " +
+	 				"	<div class=\"layui-input-inline\"  style=\"float: left;\"> " +
+	 				"			<input type=\"tel\" name=\"route_InterfaceName1\" placeholder=\"请输入服务接口全名\" autocomplete=\"off\" class=\"layui-input\"> " +
+	 				"	</div> " +
+	 				"	<div class=\"layui-input-inline\" style=\"float: left;\"> " +
+	 				"			<input type=\"tel\" name=\"route_tps1\" placeholder=\"请输入TPS\" autocomplete=\"off\" class=\"layui-input\"> " +
+	 				"	</div> " +
+	 				"	<button class=\"layui-btn layui-btn-small\" type=\"button\" onclick=\"addteldubbo()\"><i class=\"layui-icon\"></i></button> " +
+	 				"	<button class=\"layui-btn layui-btn-small layui-btn-danger\" type=\"button\" onclick=\"deltel(1)\"><i class=\"layui-icon\"></i></button> " +
+	 				"</div>"+
+	 			"</div>";
+			$(function(){
+				var curapiTypeId;
+				layui.use(['form', 'jquery','util','admin', 'layer'], function() {
+					var form = layui.form,
+						$ = layui.jquery,
+						util = layui.util,
+						admin = layui.admin,
+						layer = layui.layer;
+					form.on('select', function (data) {
+						console.log(data.value);
+						if(data.value == "http"){
+							$("#all_routIndo").html(httpStr)
+						}else if(data.value == "dubbo"){
+							$("#all_routIndo").html(dubboStr)
+							
+						}
+					 });
+					form.on('radio(api_version_balance_evn)', function (data) {
+			            if(data.value == 1){
+				            $(".api-version").remove()
+			            }else{
+				            $(".api-version").remove();
+				            var str = 
+				            "<label for=\"username\" class=\"layui-form-label api-version\">\n" +
+				            "	    版本权值\n" +
+				            "</label>\n" +
+				            "<div class=\"layui-input-inline api-version\" >\n" +
+				            "	<input type=\"text\" id=\"api_version_weightNum\" name=\"api_version_weightNum\" lay-verify=\"allIntVal\" autocomplete=\"\" class=\"layui-input\">\n" +
+				            "</div>";
+			            	$("#api_version_div").append(str);
+			            }
+			        });
+					//自定义验证规则
+					form.verify({
+						pid: [/^[0-9a-zA-Z]{4}$/, '必须为字母或数字且长度为4'],
+						intVal: [ /^[0-9]+[0-9]*]*$/, '必须为正整数'],
+						allIntVal: [ /^-?[1-9]\d*$/, '必须为整数']
+					});
+					//失去焦点时判断值为空不验证，一旦填写必须验证
+
+					//监听提交
+					form.on('submit(add)', function(data) {
+						console.log(data.field);
+						var f = data.field;
+						//console.log(f.username);
+						//console.log(f.sex);				
+						//var sex = $('input:radio[name="sex"]:checked').val();
+
+						var userInfo = localStorage.getItem("userInfo")
+						var user = JSON.parse(userInfo);
+						var jwt = user.jwt;
+						$.post("/inner/api/addApiResource", {"data":f,"jwt":jwt,"userId":user.user.uid},
+							function(data){
+
+							if(data.retSig == 200){ // 201表示已经存在
+
+								
+								var index = parent.layer.getFrameIndex(window.name);
+								
+		    					var _len = parent.$('#memberList tr').length;
+		    					//调用父页面的初始化方法
+								parent.getApiByItemId(curapiTypeId,1,10,true);
+								//关闭当前frame
+								parent.layer.close(index);
+								
+								
+							}else{
+								layer.msg("创建异常",{icon: 5,time: 2000});
+							}
+						});
+						
+						
+						return false;
+					});
+
+				});
+				//初始化API类别下拉框
+				getApiType();
+				
+				curapiTypeId = parent.apiTypeId
+			})
+		</script>
+		<script>
+		
+			
+			layui.extend({
+				admin: '{/}../../js/admin'
+			});
+			//http协议添加一行
+			function addtel() {
+
+	            var id = $('div.tell:last').attr('data-id');
+	            var v = parseInt(id) + 1;
+	            var str = "";
+
+	            str += 
+	            	"<div class=\"layui-form-item tell tel"+v+"\" data-id=\""+v+"\">" +
+	            	"		 <div class=\"layui-inline\"> " +
+	            	"				<label class=\"layui-form-label\">路由信息</label> " +
+	            	"				<div class=\"layui-input-inline\" style=\"float: left;\"> " +
+	            	"						<input type=\"tel\" name=\"rout_ipAddr"+v+"\" placeholder=\"请输入服务地址\" autocomplete=\"off\" class=\"layui-input\"> " +
+	            	"				</div> " +
+	            	"				<div class=\"layui-input-inline\"  style=\"float: left;\"> " +
+	            	"						<input type=\"tel\" name=\"rout_port"+v+"\" placeholder=\"请输入端口\" autocomplete=\"off\" class=\"layui-input\"> " +
+	            	"				</div> " +
+	            	"				<div class=\"layui-input-inline\"  style=\"float: left;\"> " +
+	            	"						<input type=\"tel\" name=\"rout_order"+v+"\" placeholder=\"请输入order\" autocomplete=\"off\" class=\"layui-input\"> " +
+	            	"				</div> " +
+	            	"				<div class=\"layui-input-inline\"  style=\"float: left;\"> " +
+	            	"						<input type=\"tel\" name=\"rout_weight"+v+"\" placeholder=\"请输入权值\" autocomplete=\"off\" class=\"layui-input\"> " +
+	            	"				</div> " +
+	            	"		 </div> " +
+	            	"		 <div class=\"layui-inline\"> " +
+	            	"			<label class=\"layui-form-label\">限流设置</label> " +
+	            	"				<div class=\"layui-input-inline\"  style=\"float: left;\"> " +
+	            	"						<input type=\"tel\" name=\"rout_tps"+v+"\" placeholder=\"请输入TPS\" autocomplete=\"off\" class=\"layui-input\"> " +
+	            	"				</div> " +
+	            	"				<button class=\"layui-btn layui-btn-small\" type=\"button\" onclick=\"addtel()\"><i class=\"layui-icon\"></i></button> " +
+	            	"				<button class=\"layui-btn layui-btn-small layui-btn-danger\" type=\"button\" onclick=\"deltel(" + v +")\"><i class=\"layui-icon\"></i></button> " +
+	            	"		 </div> " +
+	            	"</div>";
+	            
+	            
+	            $(".tel" + id).after(str);
+
+	        }
+			//dubbo协议添加一行
+			function addteldubbo() {
+
+	            var id = $('div.tell:last').attr('data-id');
+	            var v = parseInt(id) + 1;
+	            var str = "";
+
+	            str += 
+	            	"<div class=\"layui-form-item tell tel"+v+"\" data-id=\""+v+"\">"+
+	 				"<div class=\"layui-inline\"> " +
+	 				"	<label class=\"layui-form-label\">路由信息</label> " +
+	 				"	<div class=\"layui-input-inline\"  style=\"float: left;\"> " +
+	 				"			<input type=\"tel\" name=\"route_InterfaceName"+v+"\" placeholder=\"请输入服务接口全名\" autocomplete=\"off\" class=\"layui-input\"> " +
+	 				"	</div> " +
+	 				"	<div class=\"layui-input-inline\" style=\"float: left;\"> " +
+	 				"			<input type=\"tel\" name=\"route_tps"+v+"\" placeholder=\"请输入TPS\" autocomplete=\"off\" class=\"layui-input\"> " +
+	 				"	</div> " +
+	 				"	<button class=\"layui-btn layui-btn-small\" type=\"button\" onclick=\"addteldubbo()\"><i class=\"layui-icon\"></i></button> " +
+	 				"	<button class=\"layui-btn layui-btn-small layui-btn-danger\" type=\"button\" onclick=\"deltel("+v+")\"><i class=\"layui-icon\"></i></button> " +
+	 				"</div>"+
+	 			"</div>";
+	            
+	            
+	            $(".tel" + id).after(str);
+
+	        }
+	        function deltel(value) {
+	            $(".tel" + value).remove()
+	        }
+	        
+	        /*
+	        
+	        	获取API类别下拉框
+	        */
+	        function getApiType(){
+				var userInfo = localStorage.getItem("userInfo")
+				var user = JSON.parse(userInfo);
+				var jwt = user.jwt;
+				$.post("/inner/api/initApiType",{"jwt":jwt,"userId":user.user.uid},function(data){
+					if(data.retSig == 200){
+						var retData = data.httpRet;
+						var str = "";
+						for(var i=0;i<retData.length;i++){
+							var iotGateDB = retData[i];
+							str +="<option value='" + iotGateDB.id + "'>"+iotGateDB.name+"</option>";
+						}
+						$('#api_Type').html(str);
+						$("#api_Type ").val(parent.apiTypeId);
+						layui.form.render("select");
+					}
+				});
+				
+			}
+		</script>
+	</body>
+
+</html>

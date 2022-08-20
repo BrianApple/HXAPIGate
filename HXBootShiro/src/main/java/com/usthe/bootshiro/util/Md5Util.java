@@ -48,4 +48,8 @@ public class Md5Util {
         }
 
     }
+    
+    public static void main(String[] args) {	
+    	System.out.println(Md5Util.md5("123456" + "gfkqj9"));//E9D4A168745CA9BE0DD757D4F48965D3
+	}
 }

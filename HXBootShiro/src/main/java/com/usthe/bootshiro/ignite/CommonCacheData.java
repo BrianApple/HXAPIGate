@@ -3,10 +3,13 @@ package com.usthe.bootshiro.ignite;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 
+/**
+ * 通用的数据缓存
+ */
 public class CommonCacheData{
 	long initTime;//初始化时间
 	long existTime;//有效时间，单位秒
-	String data;//数据
+	String data;//具体的数据
 	
 	/**
 	 * 

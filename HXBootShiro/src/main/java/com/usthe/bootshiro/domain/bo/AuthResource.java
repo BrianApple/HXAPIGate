@@ -31,6 +31,10 @@ public class AuthResource {
      * 接口地址URL
      */
     private String uri;
+    /**
+     * 接口版本
+     */
+    private String version;
 
     /**
      * 类型 1:菜单menu 2:资源element(rest-api) 3:资源分类
@@ -174,5 +178,13 @@ public class AuthResource {
 
     public void setUpdateTime(Date updateTime) {
         this.updateTime = updateTime;
+    }
+
+    public String getVersion() {
+        return version;
+    }
+
+    public void setVersion(String version) {
+        this.version = version;
     }
 }

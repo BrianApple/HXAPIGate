@@ -13,6 +13,7 @@ import java.io.*;
 import java.util.Enumeration;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * http request response 过滤XSS SQL 数据工具类
@@ -56,7 +57,27 @@ public class RequestResponseUtil {
         if (request.getAttribute(STR_BODY) != null) {
             // 已经读出则返回attribute中的body
             return (Map<String,String>)request.getAttribute(STR_BODY);
-        } else {
+        } else if(request.getParameterMap() != null && request.getParameterMap().size()>0){
+
+            Map<String, String[]> map = request.getParameterMap();
+            Set<String> set  = map.keySet();
+
+            Map<String, String> retMap = new HashMap<>();
+            for (String str : set ) {
+                if (str.contains("[")){
+                    //登录时所携带参数有[
+                    String temp = str.split("\\[")[1];
+                    temp = temp.substring(0,temp.length()-1);
+                    retMap.put(temp,map.get(str)[0]);
+                }else {
+                    retMap.put(str,map.get(str)[0]);
+                }
+
+
+            }
+            return retMap;
+        }
+        else {
             try {
                 Map<String,String > maps = JSON.parseObject(request.getInputStream(),Map.class);
                 dataMap.putAll(maps);

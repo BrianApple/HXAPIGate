@@ -9,35 +9,50 @@ import java.util.concurrent.atomic.AtomicInteger;
 import org.apache.ignite.IgniteSemaphore;
 
 /**
-　 * <p>Description: 路由转发配置</p>
-　 * <p>Copyright: Copyright (c) 2019</p>
-　 * <p>Company: www.uiotp.com</p>
-　 * @author yangcheng,hjj
-　 * @date 2019年10月29日
-　 * @version 1.0
+ 　 * <p>Description: 路由转发配置</p>
+ 　 * <p>Copyright: Copyright (c) 2019</p>
+ 　 * <p>Company: www.uiotp.com</p>
+ 　 * @author yangcheng
+ 　 * @date 2019年10月29日
+ 　 * @version 1.0
  */
 public class Route implements Serializable{
-	private String matchUrl;//路由名称
-	
+	//路由名称
+	private String matchUrl;//示例：http://localhost:8081/account/login,则为account/login
+
 	private String version;//版本
-	private int versionWeight;//版本权重
+	private int versionWeight;
+
 	/**
 	 * 使用策略--circle/weight
 	 */
 	private String stratege;
 	/**
 	 * 通讯规约--http/dubbo
+	 * 当规约类型未dubbo时，不再需要配置路径routeNodes，dubbo本身自动实现路由发现和负载等特性
 	 */
 	private String protocal;
-	
+	/**
+	 * 是否需要授权
+	 * true  需要 --会从head中获取authorization和userId值
+	 * false 不需要
+	 */
 	private boolean needAuth;
+	/**
+	 * 配置所有路由
+	 */
 	private List<RouteNode> routeNodes;
-	private AtomicInteger index;
-	private IgniteSemaphore tps;
-	private int[] nodeWeight ;
+	private AtomicInteger index;//轮寻策略下标值
+	private IgniteSemaphore tps;//吞吐量--全路由限流
+
+	//权重相关
+	private int[] nodeWeight ;//初始化后路由下标与routeNodes中下标一一对应
 	private CopyOnWriteArrayList<Integer> current_weight;
 	private CopyOnWriteArrayList<Integer> temp_weight;
 	private int totalWeight = 0;
+	/**
+	 * 初始化权重信息
+	 */
 	public void init() {
 		nodeWeight = new int[routeNodes.size()];
 		current_weight = new CopyOnWriteArrayList<Integer>();
@@ -55,38 +70,43 @@ public class Route implements Serializable{
 			totalWeight += curNodeWeight;
 			nodeWeight[i] = curNodeWeight;
 			temp_weight.add(curNodeWeight);
-			current_weight.add(0);
+			current_weight.add(0);//默认当前全部为0
 		}
 	}
+
+	/**
+	 * 权重策略 获取下一个节点方法
+	 * @return
+	 */
 	public RouteNode nextNodeByWeight() {
 		int maxIndex=-1;
-        for(int i=0;i<temp_weight.size();i++){
-            if(maxIndex==-1)
-                maxIndex=i;
-            else{
-                if(current_weight.get(i)>current_weight.get(maxIndex))
-                    maxIndex=i;
-            }
-        }
-        temp_weight.set(maxIndex, (temp_weight.get(maxIndex)- totalWeight));
-        for(int i=0;i<current_weight.size();i++){
-            current_weight.set(i, temp_weight.get(i)+nodeWeight[i]);
-        }
-        Collections.copy(temp_weight, current_weight);
-        return  routeNodes.get(maxIndex);
+		for(int i=0;i<temp_weight.size();i++){
+			if(maxIndex==-1)
+				maxIndex=i;
+			else{
+				if(current_weight.get(i)>current_weight.get(maxIndex))
+					maxIndex=i;
+			}
+		}
+		temp_weight.set(maxIndex, (temp_weight.get(maxIndex)- totalWeight));
+		for(int i=0;i<current_weight.size();i++){
+			current_weight.set(i, temp_weight.get(i)+nodeWeight[i]);
+		}
+		Collections.copy(temp_weight, current_weight);
+		return  routeNodes.get(maxIndex);
 
 	}
-	
-	
-	
-	
+
+
+
+
 	public List<RouteNode> getRouteNodes() {
 		return routeNodes;
 	}
 	public void setRouteNodes(List<RouteNode> routeNodes) {
 		this.routeNodes = routeNodes;
 	}
-	
+
 	public String getVersion() {
 		return version;
 	}
@@ -122,7 +142,7 @@ public class Route implements Serializable{
 		this.needAuth = needAuth;
 	}
 	public AtomicInteger getIndex() {
-		
+
 		return this.index == null ? (this.index = new AtomicInteger(-1)) : this.index;
 	}
 	public void setIndex(AtomicInteger index) {
@@ -146,5 +166,5 @@ public class Route implements Serializable{
 	}
 
 
-	
+
 }

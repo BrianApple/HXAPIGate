@@ -31,6 +31,8 @@ import java.util.concurrent.TimeUnit;
 
 /**
  *   基于 用户名密码 的认证过滤器
+ *   com.usthe.bootshiro.shiro.filter.ShiroFilterChainManager类中
+ *   将所有账户登陆相关的url都关联到了当前filter
  * @author tomsun28
  * @date 20:18 2018/2/10
  */
@@ -52,30 +54,6 @@ public class PasswordFilter extends AccessControlFilter {
     @Override
     protected boolean onAccessDenied(ServletRequest request, ServletResponse response) throws Exception {
 
-        if (isPasswordTokenGet(request)) {
-            //动态生成秘钥，redis存储秘钥供之后秘钥验证使用，设置有效期5秒用完即丢弃
-            String tokenKey = CommonUtil.getRandomString(16);//动态秘钥
-            String userKey = CommonUtil.getRandomString(6);
-            try {
-            	String str = request.getRemoteHost();
-                //将密钥存储进redis
-            	igniteAutoConfig.cacheTOKEN_KAY(500,"TOKEN_KEY_"+ IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey.toUpperCase(),tokenKey);
-//                redisTemplate.opsForValue().set("TOKEN_KEY_"+ IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey.toUpperCase(),tokenKey,500, TimeUnit.SECONDS);
-                // 动态秘钥response返回给前端
-                Message message = new Message();
-                message.ok(1000,"issued tokenKey success")
-                        .addData("tokenKey",tokenKey).addData("userKey", userKey.toUpperCase());
-                RequestResponseUtil.responseWrite(JSON.toJSONString(message),response);
-
-            }catch (Exception e) {
-                LOGGER.warn("签发动态秘钥失败"+e.getMessage(),e);
-                Message message = new Message();
-                message.ok(1001,"issued tokenKey fail");
-                RequestResponseUtil.responseWrite(JSON.toJSONString(message),response);
-            }
-            return false;
-        }
-
         // 判断是否是登录请求
         if(isPasswordLoginPost(request)){
 
@@ -84,7 +62,7 @@ public class PasswordFilter extends AccessControlFilter {
                 authenticationToken = createPasswordToken(request);
             }catch (Exception e) {
                 // response 告知无效请求
-                Message message = new Message().error(1111,"error request");
+                Message message = new Message().error(400,"error request");
                 RequestResponseUtil.responseWrite(JSON.toJSONString(message),response);
                 return false;
             }
@@ -97,13 +75,13 @@ public class PasswordFilter extends AccessControlFilter {
             }catch (AuthenticationException e) {
                 LOGGER.warn(authenticationToken.getPrincipal()+"::"+e.getMessage());
                 // 返回response告诉客户端认证失败
-                Message message = new Message().error(1002,"login fail");
+                Message message = new Message().error(400,"login fail");
                 RequestResponseUtil.responseWrite(JSON.toJSONString(message),response);
                 return false;
             }catch (Exception e) {
                 LOGGER.error(authenticationToken.getPrincipal()+"::认证异常::"+e.getMessage(),e);
                 // 返回response告诉客户端认证失败
-                Message message = new Message().error(1002,"login fail");
+                Message message = new Message().error(400,"login fail");
                 RequestResponseUtil.responseWrite(JSON.toJSONString(message),response);
                 return false;
             }
@@ -114,7 +92,7 @@ public class PasswordFilter extends AccessControlFilter {
         }
         // 之后添加对账户的找回等
         // response 告知无效请求
-        Message message = new Message().error(1111,"error request");
+        Message message = new Message().error(500,"error request");
         RequestResponseUtil.responseWrite(JSON.toJSONString(message),response);
         return false;
     }
@@ -141,15 +119,13 @@ public class PasswordFilter extends AccessControlFilter {
 
         Map<String ,String> map = RequestResponseUtil.getRequestBodyMap(request);
         String password = map.get("password");
-        String timestamp = map.get("timestamp");
-        String methodName = map.get("methodName");
+        if (password == null){
+            return false;
+        }
         String appId = map.get("appId");
         return (request instanceof HttpServletRequest)
-                && "POST".equals(((HttpServletRequest) request).getMethod().toUpperCase())
                 && null != password
-                && null != timestamp
-                && null != appId
-                && "login".equals(methodName);
+                && null != appId;
     }
 
     private boolean isAccountRegisterPost(ServletRequest request) {
@@ -177,15 +153,11 @@ public class PasswordFilter extends AccessControlFilter {
 
         Map<String ,String> map = RequestResponseUtil.getRequestBodyMap(request);
         String appId = map.get("appId");//用户名
-        String timestamp = map.get("timestamp");
         String password = map.get("password");
         String host = IpUtil.getIpFromRequest(WebUtils.toHttp(request));
         //获取动态密钥时服务端生成的随机数
-        String userKey = map.get("userKey");
         //动态密钥
-        String tokenKey = igniteAutoConfig.getTOKEN_KAY("TOKEN_KEY_"+host.toUpperCase()+userKey);
-//        String tokenKey = redisTemplate.opsForValue().get("TOKEN_KEY_"+host.toUpperCase()+userKey);
-        return new PasswordToken(appId,password,timestamp,host,tokenKey);
+        return new PasswordToken(appId,password,null,host,null);
     }
 
     public void setRedisTemplate(StringRedisTemplate redisTemplate) {

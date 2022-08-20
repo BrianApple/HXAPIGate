@@ -26,7 +26,7 @@ public interface ResourceService {
     List<AuthResource> getMenus();
 
     /**
-     * description TODO
+     * description 添加资源
      *
      * @param menu 1
      * @return java.lang.Boolean
@@ -51,11 +51,11 @@ public interface ResourceService {
 
 
     /**
-     * description TODO
-     *
-     * @return java.util.List<com.usthe.bootshiro.domain.bo.AuthResource>
+     * 获取API类型
+     * @param isType  是否获取API根类别--根类别是所有Api类别的父级节点
+     * @return
      */
-    List<AuthResource> getApiTeamList();
+    List<AuthResource> getApiTeamList(AuthResource authResource);
 
     /**
      * description TODO
@@ -110,4 +110,19 @@ public interface ResourceService {
      * @return
      */
 	AuthResource getApiInfoByapiId(Integer apiId);
+
+    /**
+     * 获取没有被当前角色id关联的所有API
+     * @param rId
+     * @return
+     */
+    List<AuthResource> getApiListNotRelatedByRID(int rId);
+
+    /**
+     * 获取itmId对应资源类型下，所有没有和角色id关联的api
+     * @param itmId
+     * @param rId
+     * @return
+     */
+    List<AuthResource> getApiListByTeamIdAndRID(int itmId, int rId);
 }

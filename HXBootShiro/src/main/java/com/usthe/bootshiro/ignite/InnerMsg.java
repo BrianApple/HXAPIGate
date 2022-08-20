@@ -5,7 +5,7 @@ import java.io.Serializable;
 /**
  * 节点通信Bean
  * @Description:    
- * @author: yangcheng,hjj    
+ * @author: yangcheng    
  * @date:   2019年9月11日
  */
 public class InnerMsg implements Serializable{

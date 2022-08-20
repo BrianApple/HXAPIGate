@@ -13,6 +13,7 @@ import com.usthe.bootshiro.support.SpringContextHolder;
 
 import hx.apigate.databridge.xmlBean.Route;
 
+import jdk.nashorn.internal.ir.ContinueNode;
 import org.apache.ignite.IgniteCache;
 import org.apache.shiro.spring.web.ShiroFilterFactoryBean;
 import org.apache.shiro.web.filter.mgt.DefaultFilterChainManager;
@@ -70,12 +71,10 @@ public class ShiroFilterChainManager {
         Map<String,Filter> filters = new LinkedHashMap<>();
         
         PasswordFilter passwordFilter = new PasswordFilter();
-//        passwordFilter.setRedisTemplate(redisTemplate);
         passwordFilter.setIgniteAutoConfig(igniteAutoConfig);
         filters.put("auth",passwordFilter);
         
         BonJwtFilter jwtFilter = new BonJwtFilter();
-//        jwtFilter.setRedisTemplate(redisTemplate);
         jwtFilter.setIgniteAutoConfig(igniteAutoConfig);
         jwtFilter.setAccountService(accountService);
         filters.put("jwt",jwtFilter);
@@ -85,22 +84,28 @@ public class ShiroFilterChainManager {
     }
     /**
      * description 初始化获取过滤链规则--项目启动时会执行
-         *  将需要拦截的路径以及对应使用的过滤器统一配置好
+     *  将需要拦截的路径以及对应使用的过滤器统一配置好——当前需要加载的仅限bootshiro自己需要鉴权的url，
      * @return java.util.Map<java.lang.String,java.lang.String>
      */
     public Map<String,String> initGetFilterChain() {
         Map<String,String> filterChain = new LinkedHashMap<>();
         // -------------anon 默认过滤器忽略的URL
-        List<String> defalutAnon = Arrays.asList("/css/**","/js/**");
+        List<String> defalutAnon = Arrays.asList("/css/**","/js/**","static/css/**");
         defalutAnon.forEach(ignored -> filterChain.put(ignored,"anon"));
         
         // -------------auth 默认需要认证过滤器的URL 走auth--PasswordFilter
         //登录和注册都是走这个过滤器
-        List<String> defalutAuth = Arrays.asList("/account/**");
+        List<String> defalutAuth = Arrays.asList("/inner/user/**");
         defalutAuth.forEach(auth -> filterChain.put(auth,"auth"));
         
         // -------------dynamic 动态URL
         if (shiroFilterRulesProvider != null) {
+            /**
+             * 从数据库中获取所有角色和资源（API路径和请求类型 ）的对应关系
+             * 实例
+             * url= "/account/login==POST"
+             * needRoles = "role_admin,role_user,role_guest,role_application_uiotcp_portal,role_anon"
+             */
             List<RolePermRule> rolePermRules = this.shiroFilterRulesProvider.loadRolePermRules();
             if (null != rolePermRules) {
             	IgniteCache<String,String> apiAuthCache = igniteAutoConfig.getApiAuthCache();
@@ -108,24 +113,23 @@ public class ShiroFilterChainManager {
                     /**
                      * 生成满足shiro规则的过滤器链
                      */
-                    StringBuilder chain = rule.toFilterChain();
+                    StringBuilder chain = rule.toFilterChain4jwt();
                     if (null != chain) {
-                      /**
-                       * 实例 chain.toString() = “jwt[role_guest,role_application_uiotcp_portal,role_admin]”jwt为过滤器名称
-                       * 
-                       * 第三方微应用的接口不需要被添加到过滤器链路中的，第三方API接口走的是API网关的鉴权
-                       * 
-                       */
-                    	if(rule.getUrl().startsWith("/user/") || rule.getUrl().startsWith("/resource/")
-                    			|| rule.getUrl().startsWith("/account/")  || rule.getUrl().startsWith("/role/") ) {
-                    		//授权平台自有接口 加入鉴权链路
-                    		filterChain.putIfAbsent(rule.getUrl(),chain.toString());
-                    	}
-                    	//所有API接口都保存到ignite缓存中
-                        apiAuthCache.put(Constance.API_RESOURCE_ROLE+rule.getUrl(), rule.getNeedRoles());
-                        //redisTemplate.opsForValue().set(API_RESOURCE_ROLE+rule.getUrl(), rule.getNeedRoles());
-                        System.out.println("存在的过滤器==="+rule.getUrl()+"==="+chain.toString());
-                        LOGGER.info("存在的过滤器==="+rule.getUrl()+"==="+chain.toString());
+                    	if(rule.getUrl().startsWith("/inner")) {
+                    		if(!rule.getUrl().startsWith("/inner/user")){
+								//授权平台自有接口(登录除外) 加入鉴权链路
+								filterChain.putIfAbsent(rule.getUrl(),chain.toString());
+								System.out.println("Console平台内部鉴权规则==="+rule.getUrl()+"==="+chain.toString());
+								LOGGER.info("Console平台内部鉴权规则==="+rule.getUrl()+"==="+chain.toString());
+							}
+
+                    	}else {
+							//ignite只缓存需要被代理的API信息
+							apiAuthCache.put(Constance.API_RESOURCE_ROLE+rule.getUrl(), rule.getNeedRoles());
+							System.out.println("HXAPIGate接口鉴权规则==="+rule.getUrl()+"==="+rule.getNeedRoles());
+							LOGGER.info("HXAPIGate接口鉴权规则==="+rule.getUrl()+"==="+rule.getNeedRoles());
+						}
+
                     }
                 });
             }
@@ -133,7 +137,7 @@ public class ShiroFilterChainManager {
         return filterChain;
     }
     /**
-     * description 当用户修改授权平台自己的API时，重新加载平台过滤器链
+     * description 当前只针对"/inner"内部使用Api，重新加载平台过滤器链
      * @return java.util.Map<java.lang.String,java.lang.String>
      */
     public Map<String,String> updateGetFilterChain() {
@@ -144,7 +148,7 @@ public class ShiroFilterChainManager {
     	
     	// -------------auth 默认需要认证过滤器的URL 走auth--PasswordFilter
     	//登录和注册都是走这个过滤器
-    	List<String> defalutAuth = Arrays.asList("/account/**");
+    	List<String> defalutAuth = Arrays.asList("/inner/user/**");
     	defalutAuth.forEach(auth -> filterChain.put(auth,"auth"));
     	
     	// -------------dynamic 动态URL
@@ -155,13 +159,12 @@ public class ShiroFilterChainManager {
     				/**
     				 * 生成满足shiro规则的过滤器链
     				 */
-    				StringBuilder chain = rule.toFilterChain();
+    				StringBuilder chain = rule.toFilterChain4jwt();
     				if (null != chain) {
-    					if(rule.getUrl().startsWith("/user/") || rule.getUrl().startsWith("/resource")
-    							|| rule.getUrl().startsWith("/account")  || rule.getUrl().startsWith("/role") ) {
-    						//授权平台自有接口 加入鉴权链路
+    					if(rule.getUrl().startsWith("/inner/") && !rule.getUrl().startsWith("/inner/user")) {
+							//授权平台自有接口 加入鉴权链路
     						filterChain.putIfAbsent(rule.getUrl(),chain.toString());
-    						System.out.println("update存在的过滤器==="+rule.getUrl()+"==="+chain.toString());
+    						System.out.println("Console平台内部鉴权规则更新==="+rule.getUrl()+"==="+chain.toString());
     					}
     				}
     			});
@@ -169,17 +172,22 @@ public class ShiroFilterChainManager {
     	}
     	return filterChain;
     }
+    /**
+     * description 重新加载过滤链规则（清空缓存中原过滤器链）
+     * 当角色授权的资源动态更改之后 需要重新加载过滤器链规则
+     */
     public void reloadFilterChain(int apiSourceId) {
     	RolePermRule rule = this.shiroFilterRulesProvider.loadRolePermRulesByResourceId(apiSourceId);
     	String url = rule.getUrl();
-    	if(url.startsWith("/user/") || url.startsWith("/resource/")
-    			|| url.startsWith("/account/")  || url.startsWith("/role/") ) {
+    	if(rule.getUrl().startsWith("/inner/")) {
+    		//授权平台自有接口 加入鉴权链路
     		ShiroFilterFactoryBean shiroFilterFactoryBean = SpringContextHolder.getBean(ShiroFilterFactoryBean.class);
     		AbstractShiroFilter abstractShiroFilter = null;
     		try {
     			abstractShiroFilter = (AbstractShiroFilter)shiroFilterFactoryBean.getObject();
     			RestPathMatchingFilterChainResolver filterChainResolver = (RestPathMatchingFilterChainResolver)abstractShiroFilter.getFilterChainResolver();
     			DefaultFilterChainManager filterChainManager = (DefaultFilterChainManager)filterChainResolver.getFilterChainManager();
+    			//清空原过滤器链缓存
     			filterChainManager.getFilterChains().clear();
     			shiroFilterFactoryBean.getFilterChainDefinitionMap().clear();
     			shiroFilterFactoryBean.setFilterChainDefinitionMap(this.updateGetFilterChain());
@@ -199,12 +207,12 @@ public class ShiroFilterChainManager {
 		}
     	
     	//更新缓存
-    	
-    	
     }
-    
-    
-    public void initAllApiRoute() {
+
+	/**
+	 * 将所有API资源保存到缓存
+	 */
+	public void initAllApiRoute() {
     	List<AuthResource> allApi = resourceService.getApiList();
     	igniteAutoConfig.initApiRouteInfo(allApi);
     }

@@ -48,8 +48,9 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
     protected boolean isAccessAllowed(ServletRequest servletRequest, ServletResponse servletResponse, Object mappedValue) throws Exception {
         Subject subject = getSubject(servletRequest,servletResponse);
 
+        Map<String ,String> map = RequestResponseUtil.getRequestBodyMap(servletRequest);
         //记录调用api日志到数据库
-        LogExeManager.getInstance().executeLogTask(LogTaskFactory.bussinssLog(WebUtils.toHttp(servletRequest).getHeader("userId"),
+        LogExeManager.getInstance().executeLogTask(LogTaskFactory.bussinssLog(map.get("userId"),
                 WebUtils.toHttp(servletRequest).getRequestURI(),WebUtils.toHttp(servletRequest).getMethod(),(short)1,null));
 
         boolean isJwtPost = (null != subject && !subject.isAuthenticated()) && isJwtSubmission(servletRequest);
@@ -63,12 +64,15 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
 
                 // 如果是JWT过期
                 if (STR_EXPIRED.equals(e.getMessage())) {
+                    // 这里初始方案先抛出令牌过期，之后设计为在Redis中查询当前userId对应令牌，其设置的过期时间是JWT的两倍，此作为JWT的refresh时间
+                    // 当JWT的有效时间过期后，查询其refresh时间，refresh时间有效即重新派发新的JWT给客户端，
+                    // refresh也过期则告知客户端JWT时间过期重新认证
 
                     // 当存储在redis的JWT没有过期，即refresh time 没有过期
-                    String userId = WebUtils.toHttp(servletRequest).getHeader("userId");
-                    String jwt = WebUtils.toHttp(servletRequest).getHeader("authorization");
+                    String userId = map.get("userId");
+                    String jwt = map.get("jwt");
                     
-                    Object refreshJwt = igniteAutoConfig.getCommonData("JWT-SESSION-"+userId);
+                    Object refreshJwt = igniteAutoConfig.getJWTSessionData("JWT-SESSION-"+userId);
 //                    String refreshJwt = redisTemplate.opsForValue().get("JWT-SESSION-"+userId);
                     if (null != refreshJwt && refreshJwt.equals(jwt)) {
                         // 重新申请新的JWT
@@ -78,22 +82,21 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
                         long refreshPeriodTime = 36000L;
                         String newJwt = JsonWebTokenUtil.issueJWT(UUID.randomUUID().toString(),userId,
                                 "token-server",refreshPeriodTime >> 1,roles,null, SignatureAlgorithm.HS512);
-                        // 将签发的JWT存储到Redis： {JWT-SESSION-{userId} , jwt}
-                        igniteAutoConfig.cacheCommonData(refreshPeriodTime, "JWT-SESSION-"+userId, newJwt);
-//                        redisTemplate.opsForValue().set("JWT-SESSION-"+userId,newJwt,refreshPeriodTime, TimeUnit.SECONDS);
-                        Message message = new Message().ok(1005,"new jwt").addData("jwt",newJwt);
+                        // 将签发的JWT存储到ignite： {JWT-SESSION-{userId} , jwt}
+                        igniteAutoConfig.cacheJWTSessionData(refreshPeriodTime, "JWT-SESSION-"+userId, newJwt);
+                        Message message = new Message().ok(201,"new jwt").addData("jwt",newJwt);
                         RequestResponseUtil.responseWrite(JSON.toJSONString(message),servletResponse);
                         return false;
                     }else {
                         // jwt时间失效过期,jwt refresh time失效 返回jwt过期客户端重新登录
-                        Message message = new Message().error(1006,"expired jwt");
+                        Message message = new Message().error(400,"expired jwt");
                         RequestResponseUtil.responseWrite(JSON.toJSONString(message),servletResponse);
                         return false;
                     }
 
                 }
                 // 其他的判断为JWT错误无效
-                Message message = new Message().error(1007,"error Jwt");
+                Message message = new Message().error(400,"error Jwt");
                 RequestResponseUtil.responseWrite(JSON.toJSONString(message),servletResponse);
                 return false;
 
@@ -101,13 +104,13 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
                 // 其他错误
                 LOGGER.error(IpUtil.getIpFromRequest(WebUtils.toHttp(servletRequest))+"--JWT认证失败"+e.getMessage(),e);
                 // 告知客户端JWT错误1005,需重新登录申请jwt
-                Message message = new Message().error(1007,"error jwt");
+                Message message = new Message().error(400,"error jwt");
                 RequestResponseUtil.responseWrite(JSON.toJSONString(message),servletResponse);
                 return false;
             }
         }else {
             // 请求未携带jwt 判断为无效请求
-            Message message = new Message().error(1111,"error request,jwt not exists");
+            Message message = new Message().error(400,"error request,jwt not exists");
             RequestResponseUtil.responseWrite(JSON.toJSONString(message),servletResponse);
             return false;
         }
@@ -121,7 +124,7 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
         if (subject != null && subject.isAuthenticated()){
             //  已经认证但未授权的情况
             // 告知客户端JWT没有权限访问此资源
-            Message message = new Message().error(1008,"no permission");
+            Message message = new Message().error(403,"no permission");
             RequestResponseUtil.responseWrite(JSON.toJSONString(message),servletResponse);
         }
         // 过滤链终止
@@ -130,22 +133,25 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
 
     private boolean isJwtSubmission(ServletRequest request) {
 
-        String jwt = RequestResponseUtil.getHeader(request,"authorization");
-        String userId = RequestResponseUtil.getHeader(request,"userId");
+        Map<String ,String> map = RequestResponseUtil.getRequestBodyMap(request);
+        String jwt = map.get("jwt");
+        if (jwt == null){
+            return false;
+        }
+        String appId = map.get("userId");
         return (request instanceof HttpServletRequest)
-                && !StringUtils.isEmpty(jwt)
-                && !StringUtils.isEmpty(userId);
+                && null != jwt
+                && null != appId;
     }
 
     private AuthenticationToken createJwtToken(ServletRequest request) {
 
-        Map<String,String> maps = RequestResponseUtil.getRequestHeaders(request);
-        String userId = maps.get("userId");
+        Map<String ,String> map = RequestResponseUtil.getRequestBodyMap(request);
+        String userId = map.get("userId");
         String ipHost = request.getRemoteAddr();
-        String jwt = maps.get("authorization");
-        String deviceInfo = maps.get("deviceInfo");
+        String jwt = map.get("jwt");
 
-        return new JwtToken(ipHost,deviceInfo,jwt,userId);
+        return new JwtToken(ipHost,null,jwt,userId);
     }
 
     /**

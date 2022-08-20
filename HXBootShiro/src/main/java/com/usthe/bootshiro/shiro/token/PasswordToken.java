@@ -18,13 +18,14 @@ public class PasswordToken implements AuthenticationToken{
     private String password;
     private String timestamp;
     private String host;
+    //登陆是密码加密所需动态密钥
     private String tokenKey;
 
     public PasswordToken(String appId, String password, String timestamp, String host,String tokenKey) throws Exception {
         this.appId = appId;
         this.timestamp = timestamp;
         this.host = host;
-        this.password = AesUtil.aesDecode(password,tokenKey);
+        this.password = password;//明文不用解密
         this.tokenKey = tokenKey;
 
     }

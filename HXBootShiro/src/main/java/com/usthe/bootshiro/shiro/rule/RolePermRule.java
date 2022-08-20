@@ -29,7 +29,7 @@ public class RolePermRule implements Serializable {
     }
 
     public String getNeedRoles() {
-        return needRoles;
+        return needRoles == null || "null".equals(needRoles) ? "00_no_auth_role" : needRoles;
     }
 
     public void setUrl(String url) {
@@ -45,12 +45,20 @@ public class RolePermRule implements Serializable {
      * “jwt[role_guest,role_application_uiotcp_portal,role_admin]”中“jwt”为过滤器名称
      * @return java.lang.StringBuilder
      */
-    public StringBuilder toFilterChain() {
+    public StringBuilder toFilterChain4jwt() {
 
         if (null == this.url || this.url.isEmpty()) {
             return null;
         }
+
         StringBuilder stringBuilder = new StringBuilder();
+        if(null == this.needRoles || "null".equals(needRoles) ){
+            /**
+             * api资源未做任何授权时，角色为空
+             */
+            stringBuilder.append("jwt[00_no_auth_role]");
+        }
+
         Set<String> roleSet = JsonWebTokenUtil.split(this.getNeedRoles());
 
         // 约定只要role_anon角色拥有了当前uri资源的权限,那么则认为当前资源的访问不需要任何权限，使用anon过滤器

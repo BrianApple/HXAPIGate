@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration scan="false" scanPeriod="60 seconds" debug="false">
-    <property name="LOG_HOME" value="/opt/uiotcplogs/HXAPIGATE" />
+    <property name="LOG_HOME" value="/opt/HXAPIGate/HXBootShiro" />
     <property name="appName" value="HXAPIGATE_LOGS"></property>
      
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">

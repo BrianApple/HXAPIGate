@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+
+	<head>
+		<meta charset="UTF-8">
+		<title>编辑角色</title>
+		<meta name="renderer" content="webkit">
+		<meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=0">
+		<link rel="stylesheet" href="../../../css/font.css">
+		<link rel="stylesheet" href="../../../css/weadmin.css">
+		<!-- 让IE8/9支持媒体查询，从而兼容栅格 -->
+		<!--[if lt IE 9]>
+	      <script src="https://cdn.staticfile.org/html5shiv/r29/html5.min.js"></script>
+	      <script src="https://cdn.staticfile.org/respond.js/1.4.2/respond.min.js"></script>
+	    <![endif]-->
+	    <script src="../../../js/jquery-3.1.1.js"></script>
+	    <style type="text/css">
+	    	.yf-input-del .layui-input-inline .layui-input {
+				padding-right: 20px;
+			}
+
+			.yf-input-del .layui-input-inline i.layui-icon {
+				position: absolute;
+				right: 2px;
+				top: 10px;
+				color: #999999;
+			}
+	    </style>
+	</head>
+
+	<body>
+		<div class="weadmin-body">
+			<div class="layui-row">
+				<form class="layui-form layui-col-md12 we-search">
+				<div class="layui-form-item">
+				
+					<label for="L_email" class="layui-form-label">
+		                	编码
+		            </label>
+					<div class="layui-input-inline">
+						<input type="text" id="role_code" name="role_code" lay-verify="required" autocomplete="" class="layui-input">
+					</div>
+				</div>
+				<div class="layui-form-item">
+				
+					<label for="L_email" class="layui-form-label">
+		                	名称
+		            </label>
+					<div class="layui-input-inline">
+						<input type="text" id="role_name" name="role_name" lay-verify="required" autocomplete="" class="layui-input">
+					</div>
+				</div>
+				<div class="layui-form-item">
+					<label for="username" class="layui-form-label">
+	                  		状态
+					</label>
+					<div  class="layui-input-inline">
+						<select name="role_state" id="role_state">
+						      <option value="1">正常</option>
+						      <option value="0">禁用</option>
+						</select>
+					</div>
+					
+				</div>
+				
+				<div class="layui-form-item">
+					<label for="L_repass" class="layui-form-label">
+              		</label>
+					<button class="layui-btn" lay-filter="add" lay-submit="">确定</button>
+				</div>
+			</form>
+			</div>
+		</div>
+		<script src="../../../lib/layui/layui.js" charset="utf-8"></script>
+ 		<script>
+			var apiId;//apiid
+			
+			layui.extend({
+				admin: '{/}../../../js/admin'
+			});
+			$(function(){
+				apiId = parent.curEditAPIId
+				layui.use(['form', 'jquery','util','admin', 'layer'], function() {
+					var form = layui.form,
+						$ = layui.jquery,
+						util = layui.util,
+						admin = layui.admin,
+						layer = layui.layer;
+					//自定义验证规则
+					form.verify({
+						pid: [/^[0-9a-zA-Z]{4}$/, '必须为字母或数字且长度为4'],
+						intVal: [ /^[0-9]+[0-9]*]*$/, '必须为正整数'],
+						allIntVal: [ /^-?[1-9]\d*$/, '必须为整数']
+					});
+					//失去焦点时判断值为空不验证，一旦填写必须验证
+
+					//监听提交
+					form.on('submit(add)', function(data) {
+						//console.log(data.field);
+						var f = data.field;
+						//console.log(f.username);
+						//console.log(f.sex);				
+						//var sex = $('input:radio[name="sex"]:checked').val();
+						//发异步，把数据提交给php
+						var userInfo = localStorage.getItem("userInfo")
+						var user = JSON.parse(userInfo);
+						var jwt = user.jwt;
+						$.post("/inner/role/updateRoleById", {"data":f,"jwt":jwt,"userId":user.user.uid,"str":apiId},
+							function(data){
+							if(data.retSig == 200){ // 201表示已经存在
+								var index = parent.layer.getFrameIndex(window.name);
+								
+		    					var _len = parent.$('#memberList tr').length;
+		    					//调用父页面的根据api类别初始化api方法
+								parent.getAllRoles();
+								//关闭当前frame
+								parent.layer.close(index);
+								
+								
+							}else if(data.retSig == 201){
+								layer.msg("规约编号已经存在",{icon: 5,time: 2000});
+							}
+						});
+						
+						
+						return false;
+					});
+
+				});
+				getRoleInfo(apiId);
+			})
+			
+		</script>
+		<script type="text/javascript">
+			
+			//回显信息
+			function getRoleInfo(roleId){
+				;
+				var userInfo = localStorage.getItem("userInfo")
+				var user = JSON.parse(userInfo);
+				var jwt = user.jwt;
+				$.post("/inner/role/initRoleByroleId",{"jwt":jwt,"userId":user.user.uid,"str":roleId},function(data){
+					if(data.retSig == 200){
+
+						var httpRET = data.httpRet;
+						//基本信息
+						var  role_code = httpRET.code;
+						var  role_name = httpRET.name;
+						var  role_state = httpRET.status;
+						$("#role_code").val(role_code);
+						$("#role_name").val(role_name);
+						$("#role_state").val(role_state);
+						layui.form.render();//layui重新渲染所有组件
+					}
+				});
+			}
+		</script>
+	</body>
+
+</html>

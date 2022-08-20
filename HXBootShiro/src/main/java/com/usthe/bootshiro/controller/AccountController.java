@@ -1,24 +1,17 @@
 package com.usthe.bootshiro.controller;
 
 import com.usthe.bootshiro.domain.bo.AuthUser;
-import com.usthe.bootshiro.domain.vo.Account;
 import com.usthe.bootshiro.domain.vo.JwtAccount;
 import com.usthe.bootshiro.domain.vo.Message;
-import com.usthe.bootshiro.ignite.CommonCacheData;
-import com.usthe.bootshiro.ignite.Constance;
 import com.usthe.bootshiro.ignite.IgniteAutoConfig;
 import com.usthe.bootshiro.service.AccountService;
 import com.usthe.bootshiro.service.UserService;
-import com.usthe.bootshiro.shiro.provider.AccountProvider;
-import com.usthe.bootshiro.shiro.token.PasswordToken;
 import com.usthe.bootshiro.support.factory.LogTaskFactory;
 import com.usthe.bootshiro.support.manager.LogExeManager;
 import com.usthe.bootshiro.util.*;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.swagger.annotations.ApiOperation;
 
-import org.apache.ignite.configuration.CacheConfiguration;
-import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.web.util.WebUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -26,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import javax.servlet.http.HttpServletRequest;
@@ -34,12 +26,10 @@ import javax.servlet.http.HttpServletResponse;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  *   post新增,get读取,put完整更新,patch部分更新,delete删除
- *   
+ *  第三方系统用户登录/注册
  * @author tomsun28
  * @date 14:40 2018/3/8
  */
@@ -89,7 +79,7 @@ public class AccountController extends BaseAction {
     @PostMapping("/login")
     public Message accountLogin(HttpServletRequest request, HttpServletResponse response) {
         Map<String, String> params = RequestResponseUtil.getRequestBodyMap(request);
-        String appId = params.get("appId");
+        String appId = params.get("userId");
         // 根据appId获取其对应所拥有的角色(这里设计为角色对应资源，没有权限对应资源)
         String roles = accountService.loadAccountRole(appId);
         // 时间以秒计算,token有效刷新时间是token有效过期时间的2倍
@@ -100,7 +90,7 @@ public class AccountController extends BaseAction {
         	/**
         	 * 访客账户多端登录
         	 */
-        	jwt =(String) igniteAutoConfig.getCommonData( JWT_SESSION + appId) ;
+        	jwt =(String) igniteAutoConfig.getJWTSessionData( JWT_SESSION + appId) ;
         	if(jwt != null  && !"".equals(jwt)) {
         		try {
         			//已经登录，延长jwt失效时间即可
@@ -123,7 +113,7 @@ public class AccountController extends BaseAction {
         			ISSUER, refreshPeriodTime >> 1 , roles, null, SignatureAlgorithm.HS512);
         }
         //  {JWT-SESSION-{appID} , jwt}
-        igniteAutoConfig.cacheCommonData(refreshPeriodTime, JWT_SESSION + appId , jwt);
+        igniteAutoConfig.cacheJWTSessionData(refreshPeriodTime, JWT_SESSION + appId , jwt);
 //        redisTemplate.opsForValue().set(JWT_SESSION + appId, jwt, refreshPeriodTime, TimeUnit.SECONDS);
         AuthUser authUser = userService.getUserByAppId(appId);
         authUser.setPassword(null);
@@ -131,7 +121,7 @@ public class AccountController extends BaseAction {
 
         LogExeManager.getInstance().executeLogTask(LogTaskFactory.loginLog(appId, IpUtil.getAllIpFromRequest(WebUtils.toHttp(request)), (short) 1, "登录成功"));
 
-        return new Message().ok(1003, "issue jwt success").addData("jwt", jwt).addData("user", authUser);
+        return new Message().ok(200, "issue jwt success").addData("jwt", jwt).addData("user", authUser);
     }
 
 
@@ -148,25 +138,18 @@ public class AccountController extends BaseAction {
 
         Map<String, String> params = RequestResponseUtil.getRequestBodyMap(request);
         AuthUser authUser = new AuthUser();
-        String uid = params.get("uid");//uid,用户账号,主键
+        String uid = params.get("userId");//uid,用户账号,主键
         String password = params.get("password");
-        String userKey = params.get("userKey");
+//        String userKey = params.get("userKey");
         if (StringUtils.isEmpty(uid) || StringUtils.isEmpty(password)) {
             // 必须信息缺一不可,返回注册账号信息缺失
-            return new Message().error(1111, "账户信息缺失");
+            return new Message().error(400, "账户信息缺失");
         }
-       
-
         authUser.setUid(uid);
-
         // 从Redis取出密码传输加密解密秘钥
-//        String ss = IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase();
-        String tokenKey = igniteAutoConfig.getTOKEN_KAY("TOKEN_KEY_" + IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey);
-//        String tokenKey = redisTemplate.opsForValue().get("TOKEN_KEY_" + IpUtil.getIpFromRequest(WebUtils.toHttp(request)).toUpperCase()+userKey);
-        String realPassword = AesUtil.aesDecode(password, tokenKey);
         String salt = CommonUtil.getRandomString(6);
         // 存储到数据库的密码为 MD5(原密码+盐值)
-        authUser.setPassword(Md5Util.md5(realPassword + salt));
+        authUser.setPassword(Md5Util.md5(password + salt));
         authUser.setSalt(salt);
         authUser.setCreateTime(new Date());
         if (!StringUtils.isEmpty(params.get(STR_USERNAME))) {//用户名(nick_name)
@@ -194,15 +177,15 @@ public class AccountController extends BaseAction {
         String msg = accountService.isAccountExist(authUser) ;
         if (msg != null ){
             // 账户已存在
-            return new Message().error(1111, msg);
+            return new Message().error(400, msg);
         }
         
         if (accountService.registerAccount(authUser)) {
             LogExeManager.getInstance().executeLogTask(LogTaskFactory.registerLog(uid, IpUtil.getIpFromRequest(WebUtils.toHttp(request)), (short) 1, "注册成功"));
-            return new Message().ok(2002, "注册成功");
+            return new Message().ok(200, "注册成功");
         } else {
             LogExeManager.getInstance().executeLogTask(LogTaskFactory.registerLog(uid, IpUtil.getIpFromRequest(WebUtils.toHttp(request)), (short) 0, "注册失败"));
-            return new Message().ok(1111, "注册失败");
+            return new Message().ok(400, "注册失败");
         }
     }
 

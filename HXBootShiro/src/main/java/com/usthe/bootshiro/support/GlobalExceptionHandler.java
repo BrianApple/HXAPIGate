@@ -36,9 +36,9 @@ public class GlobalExceptionHandler {
         final Throwable cause = e.getCause();
         // 之后判断cause类型进一步记录日志处理
         if (cause instanceof MySQLIntegrityConstraintViolationException ) {
-            return new Message().error(1111, "数据冲突操作失败");
+            return new Message().error(500, "数据冲突操作失败");
         }
-        return new Message().error(1111, "服务器开小差");
+        return new Message().error(500, "服务器开小差");
     }
 
     /**
@@ -51,6 +51,6 @@ public class GlobalExceptionHandler {
     @ResponseStatus(HttpStatus.OK)
     public Message notFoundException(RuntimeException e) {
         LOGGER.error("运行时异常:",e);
-        return new Message().error(1111,"服务器开小差");
+        return new Message().error(500,"服务器开小差");
     }
 }
