@@ -20,12 +20,10 @@ import io.netty.channel.Channel;
  */
 public class LocalCache {
 	public static List<IProcessor> eventProcessorCache = null;
-	public static ConcurrentHashMap<String,RouteAll> intimeRouteCache = null;
 	public static ConcurrentHashMap<String,Channel> masterChannelCache = null;
 	public static ConcurrentHashMap<String,Channel> webChannelCache = null;
 	static{
 		eventProcessorCache = new ArrayList<>();
-		intimeRouteCache = new ConcurrentHashMap<>();
 		masterChannelCache = new ConcurrentHashMap<>();
 		webChannelCache = new ConcurrentHashMap<>();
 	}

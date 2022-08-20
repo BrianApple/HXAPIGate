@@ -39,8 +39,7 @@ public class RouteSelectUtil {
 	/**
 	 * 根据url以及轮寻策略 选择路由的Node
 	 * @param httpMethod 
-	 * @param url 路径名称
-	 * @return [0]为资源名称 [1]为节点对象;if not exists return null 
+	 * @return [0]为资源名称 [1]为节点对象;if not exists return null
 	 * @throws Exception 
 	 */
 	public static Object[] selectOneNode(String sourceUrl, HttpMethod httpMethod) throws SemphareException{
@@ -58,7 +57,7 @@ public class RouteSelectUtil {
 		return ret;
 	}
 	public static IgniteSemaphore selectRouteByUri(String patternUri,String version){
-		RouteAll routeAll = LocalCache.intimeRouteCache.get(patternUri);
+		RouteAll routeAll = getRouteAll4lvs( patternUri);
 		int len = routeAll.getRoutes().size();
 		for(int i = 0 ; i < len ; i ++) {
 			if(version.equals(routeAll.getRoutes().get(i).getVersion())) {
@@ -128,16 +127,7 @@ public class RouteSelectUtil {
 	public static RouteAll getRouteAll4lvs(String pattern) {
 		Map<String, RouteAll>  map = IgniteUtil.getAPIRouteCache().get("ALL_ROUTE");
 		RouteAll routeAll = map.get(pattern);
-		if(routeAll.isUpdated()) {
-			LocalCache.intimeRouteCache.put(pattern, routeAll);
-			routeAll.setUpdated(false);
-			map.put(pattern, routeAll);
-			IgniteUtil.getAPIRouteCache().putAsync("ALL_ROUTE", map);
-			return routeAll;
-		}else {
-			return LocalCache.intimeRouteCache.putIfAbsent(pattern, routeAll);
-		}
-		
+		return routeAll;
 	}
 	
 	/**
