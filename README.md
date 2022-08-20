@@ -1,6 +1,6 @@
 ## 简介
-### 操作文档
-操作文档目前正在整理中，后续会将网关的部署、接口发布等操作的详细说明贴出来，为大家参考
+### 更新说明
+本次对HXAPIGate管理平台进行了大量功能优化和功能升级，增加资源类型管理，去掉了“菜单”相关管理功能，操作界面优化，将远console工程整合，目前工程由三个缩减为两个，分别为网关和权限管理平台，文档后面会以博客形式提供链接
 
 ### 概念
 HXAPIGate（中文名：浩心API网关）——如果觉得可以请star本项目。
@@ -57,7 +57,7 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 ![API网关2000并发压测图（jvm=512M）](https://images.gitee.com/uploads/images/2019/1112/113504_8b9b126e_1038477.png "API网关2000并发压测图（jvm=512M）.png")
 
 ### 网关部署结构
-![输入图片说明](https://images.gitee.com/uploads/images/2020/1023/121327_3b9a4a3f_1038477.jpeg "HXAPIGate.jpg")
+![输入图片说明](HXBootShiro/src/main/resources/static/images/HXAPIGate3D%E7%BB%93%E6%9E%84%E5%9B%BE.png)
 
 ## 操作演示
 
@@ -94,10 +94,4 @@ shiro 项目及作者，项目地址：    https://github.com/apache/shiro
 dubbo 项目及作者，项目地址：    https://github.com/apache/dubbo
 bootshiro 项目及作者，项目地址：https://gitee.com/tomsun28/bootshiro 
 
-## 参与贡献
 
-当前项目仍处在研发过程中，由于目前只有两三个人贡献源码，且都是利用周末研发，导致目前研发进度缓慢，
-因此迫切希望有识之士一起参与到浩欣API网关的建设中来，共同推进该项目的研发进程，力争在2020年年底发
-布alpha版本，2021年3月发布第一个稳定版本，有意报名者请发送邮件至：ycheng155@gmail.com；邮件中简单
-描述一下自己对网络编程、网络通信协议的理解，注明自己目前主要使用的编程语言（java、golang等），前
-端研发的同学注明自己主要使用的前端框架技术（angular、vue等）。欢迎大家积极参与到HXAPIGate的项目建设中来。
