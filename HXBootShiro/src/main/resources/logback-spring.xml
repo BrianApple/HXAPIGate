@@ -3,7 +3,7 @@
 
 	<!-- 日志输出上下文名称 -->
 	<contextName>usThe</contextName>
-	<property name="LOG_HOME" value="/opt/HXAPIGate/HXBootShiro" />
+	<property name="LOG_HOME" value="./HXBootShiro" />
 	<property name="appName" value="HXBootShiro"></property>
 	<!-- 输出日志到控制台 ConsoleAppender -->
 	<appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">

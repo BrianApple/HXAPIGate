@@ -1,17 +1,21 @@
 package com.usthe.bootshiro.controller;
 
 import com.usthe.bootshiro.domain.bo.AuthUser;
+import com.usthe.bootshiro.domain.vo.Account;
 import com.usthe.bootshiro.domain.vo.JwtAccount;
 import com.usthe.bootshiro.domain.vo.Message;
 import com.usthe.bootshiro.ignite.IgniteAutoConfig;
 import com.usthe.bootshiro.service.AccountService;
 import com.usthe.bootshiro.service.UserService;
+import com.usthe.bootshiro.shiro.provider.AccountProvider;
+import com.usthe.bootshiro.shiro.token.PasswordToken;
 import com.usthe.bootshiro.support.factory.LogTaskFactory;
 import com.usthe.bootshiro.support.manager.LogExeManager;
 import com.usthe.bootshiro.util.*;
 import io.jsonwebtoken.SignatureAlgorithm;
 import io.swagger.annotations.ApiOperation;
 
+import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.web.util.WebUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -66,7 +70,8 @@ public class AccountController extends BaseAction {
     private UserService userService;
     @Autowired
     private IgniteAutoConfig igniteAutoConfig;
-    
+    @Autowired
+    private AccountProvider accountProvider;
 
     /**
      * description 登录签发 JWT ,这里已经在 passwordFilter 进行了登录认证
@@ -80,7 +85,18 @@ public class AccountController extends BaseAction {
     public Message accountLogin(HttpServletRequest request, HttpServletResponse response) {
         Map<String, String> params = RequestResponseUtil.getRequestBodyMap(request);
         String appId = params.get("userId");
+        String curPassword = params.get("password");
         // 根据appId获取其对应所拥有的角色(这里设计为角色对应资源，没有权限对应资源)
+        Account rAccount = accountProvider.loadAccount(appId);
+        if (rAccount != null) {
+            // 用盐对密码进行MD5加密
+            curPassword = Md5Util.md5((curPassword+rAccount.getSalt()));
+            if (!rAccount.getPassword().equals(curPassword)){
+                return new Message().ok(500, "password error");
+            }
+        }else {
+            return new Message().ok(500, "please regist first");
+        }
         String roles = accountService.loadAccountRole(appId);
         // 时间以秒计算,token有效刷新时间是token有效过期时间的2倍
         long refreshPeriodTime = 36000;//refreshPeriodTime右移一位是jwt中的过期时间。
