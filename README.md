@@ -4,8 +4,24 @@
 
 ### 概念
 HXAPIGate（中文名：浩心API网关）——如果觉得可以请star本项目。
-HXAPIGate基于Netty+Shiro开发的一款高性能API网关，对基于REST服务的细粒度API资源的权限管理平台，支持http,dubbo等多协议微服务接口代理。
+HXAPIGate基于Netty+Shiro开发的一款高性能API网关，对基于REST服务的细粒度API资源的权限管理平台，支持http,dubbo等多协议微服务接口代理。**——本软件著作权归原作者所有**
 ![输入图片说明](https://images.gitee.com/uploads/images/2019/1112/152324_e14eb0c7_1038477.png "屏幕截图.png")
+
+### 软件特色
+
+目前多数授权管理平台都只单单对api路径资源本身授权，而不能做到更细粒度的权限控制，HXAPIGate通过组合bootshiroPro实现了对“api资源+请求方式”的授权模式。
+如：
+新增如下四个接口
+
+| 接口路径 | 请求方式 |
+|--|--|
+|“/user/list”| GET |
+|“/user/list”| POST |
+|“/user/list”| DELETE |
+|“/user/list”| PUT |
+
+传统授权模式下，这四个接口会被当做一个接口（因为接口路径一致）授权给第三方，**而通过HXAPIGate可分别对每个资源进行授权，当仅仅授权“/user/list”+“GET”给第三方平台时，被授权放无法访问同一资源的POST、DELETE、PUT请求当时的接口！**
+
 
 ### MECHA--机甲
 电影阿凡达肯定很多人都看过，地球大军在潘多拉星球的穿着各种武装机甲（mecha）战斗的场面很是震撼！
@@ -34,41 +50,35 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 ## 项目文档
 项目文档请参加项目的Wiki，里面会介绍项目的使用方法已经路由的配置方法等信息。如果觉得项目不错，别忘了给个star！谢谢！
 
-### 特色
-
-目前多数授权管理平台都只单单对api路径资源本身授权，而不能做到更细粒度的权限控制，HXAPIGate通过组合bootshiroPro实现了对“api资源+请求方式”的授权模式。
-如：
-新增如下四个接口
-
-| 接口路径 | 请求方式 |
-|--|--|
-|“/user/list”| GET |
-|“/user/list”| POST |
-|“/user/list”| DELETE |
-|“/user/list”| PUT |
-
-传统授权模式下，这四个接口会被当做一个接口（因为接口路径一致）授权给第三方，而通过HXAPIGate可分别对每个资源进行授权，当仅仅授权“/user/list”+“GET”给第三方平台时，被授权放无法访问同一资源的POST、DELETE、PUT请求当时的接口！
 
 ### 授权认证时序图
-![授权流程](https://images.gitee.com/uploads/images/2020/1218/174437_d67a78db_1038477.jpeg "授权流程.jpg")
+![授权流程](HXBootShiro/src/main/resources/static/images/img.png "授权流程.jpg")
 
 ### 性能
 2000并发事务压测报告（jdk1.8，jvm堆内存512M）
 ![API网关2000并发压测图（jvm=512M）](https://images.gitee.com/uploads/images/2019/1112/113504_8b9b126e_1038477.png "API网关2000并发压测图（jvm=512M）.png")
 
 ### 网关部署结构
-![输入图片说明](HXBootShiro/src/main/resources/static/images/HXAPIGate3D%E7%BB%93%E6%9E%84%E5%9B%BE.png)
+HXAPIGate支持集群部署，支持被代理接口的分布式限流、负载等，分布式部署时建议部署zookeeper集群提供网关和HXBootshiro授权平台的节点发现机制，本软件所依赖的分布式特性，如分布式限流、分布式缓存
+等依靠ignite提供底层能力！
+![输入图片说明](HXBootShiro/src/main/resources/static/images/HXAPIGate3D.png)
 
 ## 操作演示
 
-### 登录（用户名密码为：admin/admin）
-![输入图片说明](https://images.gitee.com/uploads/images/2020/0914/122220_5765ed47_1038477.gif "登录.gif")
+### 首页（用户名密码为：admin/123456）
+![输入图片说明](HXBootShiro/src/main/resources/static/images/index.png "index.png")
 ### 新增接口类别
-![输入图片说明](https://images.gitee.com/uploads/images/2020/0914/122334_6e1cac3c_1038477.gif "新建API类别.gif")
+接口类别管理==项目管理，是一类API接口的集合
+
+![输入图片说明](HXBootShiro/src/main/resources/static/images/type.png "type.png")
 ### 新增接口
-![输入图片说明](https://images.gitee.com/uploads/images/2020/0914/122348_628ecd93_1038477.gif "新建API接口.gif")
+管理API接口，对API接口的基本信息（路由、负载策略、协议类型等等）进行管理
+![输入图片说明](HXBootShiro/src/main/resources/static/images/api.png "api.png")
+新增接口功能截图：
+![输入图片说明](HXBootShiro/src/main/resources/static/images/addApi.png "addApi.png")
 ### 接口授权
-![输入图片说明](https://images.gitee.com/uploads/images/2020/0914/122404_9b01e94b_1038477.gif "给用户角色授权ceshi接口.gif")
+以角色为桥梁，分别对用户、API接口进行授权
+![输入图片说明](HXBootShiro/src/main/resources/static/images/auth.png "auth.png")
 
 ### 目前网关已实现功能
 1. 授权、鉴权管理
@@ -80,7 +90,7 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 7. 接口降级
 
 ### 项目进度
- 目前HXAPIGate仍在继续进行项目重构和功能完善中，目前HXAPIGate的分布式特性只完成了一部分，由于作者和团队的精力实在有限，因此开发进度会比较缓慢，希望大家谅解，同时请star并持续关注本项目！
+ 目前HXAPIGate仍在继续进行项目重构和功能完善中，目前HXAPIGate的分布式特性只完成了一部分，由于作者精力有限，因此开发进度会比较缓慢，希望大家谅解，同时请star并持续关注本项目！
 
 ### 相关博文
 《netty整合shiro,报There is no session with id [xxxxxx]问题定位及解决》
@@ -88,10 +98,10 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 https://blog.csdn.net/sinat_28771747/article/details/105245229
 
 ## 感谢
-Netty 项目及作者，项目地址：    https://github.com/netty/netty
-ignite 项目及作者，项目地址：   https://github.com/apache/ignite
-shiro 项目及作者，项目地址：    https://github.com/apache/shiro
-dubbo 项目及作者，项目地址：    https://github.com/apache/dubbo
-bootshiro 项目及作者，项目地址：https://gitee.com/tomsun28/bootshiro 
+- Netty 项目及作者，项目地址：    https://github.com/netty/netty
+- ignite 项目及作者，项目地址：   https://github.com/apache/ignite
+- shiro 项目及作者，项目地址：    https://github.com/apache/shiro
+- dubbo 项目及作者，项目地址：    https://github.com/apache/dubbo
+- bootshiro 项目及作者，项目地址：https://gitee.com/tomsun28/bootshiro 
 
 
