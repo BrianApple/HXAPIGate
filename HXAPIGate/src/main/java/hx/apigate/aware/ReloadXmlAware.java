@@ -36,7 +36,7 @@ public class ReloadXmlAware implements IProcessor{
 		logger.info(" 88   88   .8'   `88. `8b   d8'    d8' `88b    88   8   `888      I");
 		logger.info("o88o o88o o88o   o888o Y8bod8P   o888o o8888o o88o o8o    `8");
 		logger.info("===================================================================");
-		logger.info("----------------------------------------------powered by yangcheng-");
+		logger.info("----------------------------------------------powered by uiotp.com-");
 		logger.info("===================================================================");
 		logger.info(MixAll.LOG_INFO_PRIFEX+String.format("HTTPServer is started ! Server port is %s", HXAPIGateConext.PORT));
 		
