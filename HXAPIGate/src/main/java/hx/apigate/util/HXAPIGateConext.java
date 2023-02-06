@@ -3,6 +3,11 @@ package hx.apigate.util;
 import com.google.common.util.concurrent.RateLimiter;
 
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.util.HashedWheelTimer;
+
+import java.util.concurrent.ThreadFactory;
+import java.util.concurrent.TimeUnit;
+
 /**
  * 
  * <p>Description: 浩心API网关上下文</p>
@@ -18,6 +23,17 @@ public class HXAPIGateConext {
 	private static String VERSION = "1.0.0";
 	public static NioEventLoopGroup boss = new NioEventLoopGroup(1);
 	public static RateLimiter rateLimiter = RateLimiter.create(TPS);
-	
+	public static HashedWheelTimer circleBreaktimer = null;
+	static {
+		circleBreaktimer = new HashedWheelTimer(new ThreadFactory() {
+
+			@Override
+			public Thread newThread(Runnable r) {
+
+				return new Thread(r , "circleBreadkThread");
+			}
+		}, 10, TimeUnit.SECONDS);
+
+	}
 
 }

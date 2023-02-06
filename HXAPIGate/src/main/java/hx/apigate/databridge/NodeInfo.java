@@ -20,16 +20,18 @@ public class NodeInfo implements Serializable{
 	private RouteNode routeNode;
 	private boolean needAuth;
 	private String requestUrl;
-	
-	public NodeInfo(String interfaceVserion, String protocalTemp, RouteNode routeNode,boolean needAuth) {
+	private String circleBreakKey;
+
+	public NodeInfo(String interfaceVserion, String protocalTemp, RouteNode routeNode,boolean needAuth,String circleBreakKey) {
 		super();
 		this.interfaceVserion = interfaceVserion;
 		this.protocalTemp = protocalTemp;
 		this.routeNode = routeNode;
 		this.needAuth = needAuth;
+		this.circleBreakKey = circleBreakKey;
 	}
 	
-	public NodeInfo(String interfaceVserion, String protocalTemp, String methodName, RouteNode routeNode,String requestUrl,boolean needAuth) {
+	public NodeInfo(String interfaceVserion, String protocalTemp, String methodName, RouteNode routeNode,String requestUrl,boolean needAuth,String circleBreakKey) {
 		super();
 		this.interfaceVserion = interfaceVserion;
 		this.protocalTemp = protocalTemp;
@@ -37,6 +39,7 @@ public class NodeInfo implements Serializable{
 		this.routeNode = routeNode;
 		this.requestUrl = requestUrl;
 		this.needAuth = needAuth;
+		this.circleBreakKey = circleBreakKey;
 	}
 
 	public String getInterfaceVserion() {
