@@ -22,7 +22,15 @@ public class NodeInfo implements Serializable{
 	private String requestUrl;
 	private String circleBreakKey;
 
-	public NodeInfo(String interfaceVserion, String protocalTemp, RouteNode routeNode,boolean needAuth,String circleBreakKey) {
+	/**
+	 * @param interfaceVserion
+	 * @param protocalTemp
+	 * @param routeNode
+	 * @param requestUrl APi接口重发时，需要该参数
+	 * @param needAuth
+	 * @param circleBreakKey
+	 */
+	public NodeInfo(String interfaceVserion, String protocalTemp, RouteNode routeNode,String requestUrl,boolean needAuth,String circleBreakKey) {
 		super();
 		this.interfaceVserion = interfaceVserion;
 		this.protocalTemp = protocalTemp;
@@ -93,6 +101,12 @@ public class NodeInfo implements Serializable{
 	public void setRequestUrl(String requestUrl) {
 		this.requestUrl = requestUrl;
 	}
-	
 
+	public String getCircleBreakKey() {
+		return circleBreakKey;
+	}
+
+	public void setCircleBreakKey(String circleBreakKey) {
+		this.circleBreakKey = circleBreakKey;
+	}
 }

@@ -115,7 +115,7 @@ public class RouteSelectUtil {
                                 route.getTps().release();
                                 throw e;
                             }
-                            return new NodeInfo(route.getVersion(),route.getProtocal(), node,route.isNeedAuth(),circleBreakKey);
+                            return new NodeInfo(route.getVersion(),route.getProtocal(), node,sourceUrl,route.isNeedAuth(),circleBreakKey);
                         }
                     }else{
                         if(routeNum > 0){
@@ -141,7 +141,7 @@ public class RouteSelectUtil {
                                     route.getTps().release();
                                     throw e;
                                 }
-                                return new NodeInfo(route.getVersion(),route.getProtocal(), node,route.isNeedAuth(),circleBreakKey);
+                                return new NodeInfo(route.getVersion(),route.getProtocal(), node,sourceUrl,route.isNeedAuth(),circleBreakKey);
                             }
                         }
                     }
