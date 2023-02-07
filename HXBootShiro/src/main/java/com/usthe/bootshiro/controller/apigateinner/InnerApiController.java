@@ -9,15 +9,13 @@ import com.usthe.bootshiro.domain.vo.RetData;
 import com.usthe.bootshiro.ignite.Constance;
 import com.usthe.bootshiro.ignite.IgniteAutoConfig;
 import com.usthe.bootshiro.service.ResourceService;
+import com.usthe.bootshiro.util.CommonUtil;
 import org.apache.ignite.IgniteCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.Date;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 @Controller
 @RequestMapping("/inner/api")
@@ -216,6 +214,10 @@ public class InnerApiController {
 			//传送到bootshiro的参数
 			
 			Map<String,String> data = reqArgs.getData();
+			if(isHXGateLocalAddressName( data)){
+				//如果被代理接口IP为本地ip且端口号为网关端口，不允许创建
+				return new RetData(500,"add api fail,There is a risk of duplicate names with gateway addresses");
+			}
 			AuthResource resource = new AuthResource();
 			//基本信息
 			resource.setName(data.remove("interface_name"));
@@ -271,6 +273,10 @@ public class InnerApiController {
 			headers.put("authorization", reqArgs.getJwt());
 			//传送到bootshiro的参数--需要map 因此多转一步
 			Map<String,String> data = reqArgs.getData();
+			if(isHXGateLocalAddressName( data)){
+				//如果被代理接口IP为本地ip且端口号为网关端口，不允许创建
+				return new RetData(500,"add api fail,There is a risk of duplicate names with gateway addresses");
+			}
 			AuthResource resource = new AuthResource();
 			resource.setId(Integer.parseInt(reqArgs.getStr()));
 			resource.setName(data.remove("interface_name"));
@@ -363,7 +369,29 @@ public class InnerApiController {
 		
 		return new RetData(500);
 	}
-	
-	
+
+	public boolean isHXGateLocalAddressName(Map requstData){
+		//{"all_tps":"20","api_version":"v1.0.0","api_version_balance":"1","balance":"1","isAuth":"1","pType":"http","rout_ipAddr1":"127.0.0.1","rout_order1":"1","rout_port1":"8081","rout_tps1":"10","rout_weight1":"2"}
+		ArrayList<String> localIP = CommonUtil.getLocalIpAddr();
+		int localIPSize = localIP.size();
+		Set<String> set = requstData.keySet();
+		Iterator<String> it = set.iterator();
+		while (it.hasNext()){
+			String key = it.next();
+			if(key.startsWith("rout_ipAddr")){
+				String ip = (String) requstData.get(key);
+				for(int i = 0 ; i <localIPSize ;i++){
+					if (localIP.get(i).equals(ip)){
+						String postKey = new StringBuilder("rout_port").append(key.substring(11)).toString();
+						String port = (String) requstData.get(postKey);
+						if ("18081".equals(port)){
+							return true;
+						}
+					}
+				}
+			}
+		}
+		return false;
+	}
 	
 }
