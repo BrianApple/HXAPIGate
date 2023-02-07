@@ -18,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  * @version 1.0
  */
 public class HXAPIGateConext {
-	public static int PORT = 8081;//HXAPIGate默认端口为8081，通过启动参数可修改
+	public static int PORT = 18081;//HXAPIGate默认端口为18081
 	public static int TPS = 2000;//网关全局限流
 	private static String VERSION = "1.0.0";
 	public static NioEventLoopGroup boss = new NioEventLoopGroup(1);
