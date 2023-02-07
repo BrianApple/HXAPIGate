@@ -11,19 +11,20 @@ import hx.apigate.util.LocalCache;
 /**
  * 浩心API网关入口程序
  * 基于springboot
- * 
+ *
  * 网关统一响应格式为：
-	{ 
-		"code": xxx,
-		"data": {...}, //微服务返回数据
-		"msg" : xxx,//异常信息
-		"timestamp": xxx 
-	} 
+	 {
+	 "code": xxx,
+	 "data": {...}, //微服务返回数据
+	 "msg" : xxx,//异常信息
+	 "timestamp": xxx
+	 }
  * code = 200  微服务调用成功，data为微服务值
  * code = 400  jwt鉴权异常
  * code = 403  无权限
- * code = 404  当前接口路径不存在
- * code = 500  微服务访问超限或其他服务异常
+ * code = 404  当前接口路径不存在或者接口服务被降级
+ * code = 502  代理接口访问异常
+ * code = 503  微服务访问超限（限流）或其他服务异常
  * @author yangcheng,hjj
  * @date
  */

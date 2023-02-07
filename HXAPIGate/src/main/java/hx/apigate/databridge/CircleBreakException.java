@@ -21,6 +21,11 @@ public class CircleBreakException extends RuntimeException{
 	public void setMsg(String msg) {
 		this.msg = msg;
 	}
-	
-	
+
+	@Override
+	public String toString() {
+		return "CircleBreakException{" +
+				"msg='" + msg + '\'' +
+				'}';
+	}
 }

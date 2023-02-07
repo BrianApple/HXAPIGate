@@ -16,6 +16,7 @@
 package hx.apigate.socket.handlers;
 
 
+import hx.apigate.databridge.CircleBreakException;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
@@ -88,7 +89,11 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
     			 }
     		 } catch (SemphareException e) {
     			 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(400, e.getMsg()));
-    		 }
+    		 } catch (CircleBreakException e) {
+				 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(503, e.getMsg()));
+			 } catch (NullPointerException e){
+				 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(404, "The path you accessed does not exist or does not work!"));
+			 }
     	 }
     }
 

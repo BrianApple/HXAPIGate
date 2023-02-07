@@ -3,6 +3,7 @@ package hx.apigate.socket.handlers;
 
 
 import hx.apigate.circuitBreaker.CBManager;
+import hx.apigate.databridge.CircleBreakException;
 import hx.apigate.util.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -110,7 +111,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     										 } else {
 												 manager.getState().ActUponException();//失败计数
     											 logger.error(MixAll.LOG_INFO_PRIFEX+String.format("网关[%s]访问url%s,切换路由至%s:%s重试失败 返回异常信息到web端 ",gateHost,msg.uri(),nodeInfo.getRouteNode().getIp(),nodeInfo.getRouteNode().getPort()) );
-    											 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(404, "The path you accessed does not work !"));
+    											 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(502, "The path you accessed does not work !"));
     										 }
     									 } finally {
     										 IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nextNodeInfo.getInterfaceVserion());
@@ -122,8 +123,14 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     								 }
     							 });
 							} catch (SemphareException e) {
-								 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(500, e.getMsg()));
-							}
+								 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(503, e.getMsg()));
+							} catch (CircleBreakException e) {
+								 IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
+								 if(semaphore != null) {
+									 semaphore.release();
+								 }
+								 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(503, e.getMsg()));
+							 }
     					 }
 					} finally {
 						IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
