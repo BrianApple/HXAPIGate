@@ -34,7 +34,7 @@ public class Entrance {
 	public static String nodeName = null;
 	public static String zkAddr = null;
 	public static void main(String[] args) {
-		
+		System.setProperty("org.jboss.netty.epollBugWorkaround", "true");
 		Reflections reflections = new Reflections("hx.apigate");
 		Set<Class<? extends IProcessor>> subTypes = reflections.getSubTypesOf(IProcessor.class);
 		IProcessor[] array = new IProcessor[subTypes.size()];
