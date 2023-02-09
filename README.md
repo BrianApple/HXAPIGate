@@ -90,9 +90,9 @@ HXAPIGate支持集群部署，支持被代理接口的分布式限流、负载�
 同时将对管理平台的功能进行扩展，提供更加丰富多元的管理功能
 
 ### 相关博文
-《netty整合shiro,报There is no session with id [xxxxxx]问题定位及解决》
 
-https://blog.csdn.net/sinat_28771747/article/details/105245229
+- [HXAPIGate系列——HXAPIGate快速入门](https://blog.csdn.net/sinat_28771747/article/details/126610401?spm=1001.2014.3001.5501)
+- [《netty整合shiro,报There is no session with id [xxxxxx]问题定位及解决》](https://blog.csdn.net/sinat_28771747/article/details/105245229)
 
 ## 感谢
 - Netty 项目及作者，项目地址：    https://github.com/netty/netty
