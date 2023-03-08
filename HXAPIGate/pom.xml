@@ -5,7 +5,7 @@
   <version>3.0.1-SNAPSHOT</version>
   <description>基于shiro+Netty鉴权的API网关</description>
   <properties>
-  		<dubbo.version>2.7.6</dubbo.version>
+  		<dubbo.version>2.7.21</dubbo.version>
   </properties>
   <dependencies>
   		<!-- <dependency>
