@@ -83,10 +83,10 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
 						transparent = false;
 					}
 					webChannel.attr(MixAll.ATTRIBUTEKEY_TRANSPARENT).set(transparent);
-					if("http".equals(node.getProtocalTemp())) {
-    					 msg.headers().set(hx.apigate.socket.Constance.HOST,new StringBuilder(node.getRouteNode().getIp())
-    							 .append(hx.apigate.socket.Constance.COLON).append(node.getRouteNode().getPort()));
-    				 }
+					if("http".equals(node.getProtocalTemp()) || "mcp".equals(node.getProtocalTemp())) {
+   					 msg.headers().set(hx.apigate.socket.Constance.HOST,new StringBuilder(node.getRouteNode().getIp())
+   							 .append(hx.apigate.socket.Constance.COLON).append(node.getRouteNode().getPort()));
+   				 }
     				 webChannel.attr(MixAll.ATTRIBUTEKEY_URL).set(ret[0].toString());
     				 webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).set(node);
     				 msg.retain();

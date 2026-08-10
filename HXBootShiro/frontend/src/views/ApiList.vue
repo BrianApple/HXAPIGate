@@ -16,6 +16,13 @@
         <template #default="{ row }"><el-tag size="small">{{ row.method }}</el-tag></template>
       </el-table-column>
       <el-table-column prop="version" label="版本" width="80" />
+      <el-table-column label="协议" width="90">
+        <template #default="{ row }">
+          <el-tag size="small" :type="protoType(row) === 'mcp' ? 'warning' : protoType(row) === 'tcp' ? 'danger' : ''">
+            {{ protoType(row) === 'dubbo' ? 'Dubbo' : protoType(row) === 'tcp' ? 'TCP' : protoType(row) === 'mcp' ? 'MCP' : 'HTTP' }}
+          </el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="status" label="状态" width="90">
         <template #default="{ row }">
           <el-tag :type="row.status === 1 ? 'success' : 'info'">{{ row.status === 1 ? '启用' : '停用' }}</el-tag>
@@ -72,6 +79,16 @@ async function load(page = pageIndex.value) {
 
 function openDialog(row) {
   dialogRef.value.open(row || null)
+}
+
+// 从 routeInfo JSON 解析代理协议类型（默认 http）
+function protoType(row) {
+  try {
+    const info = row.routeInfo ? JSON.parse(row.routeInfo) : null
+    return (info && info.pType) || 'http'
+  } catch {
+    return 'http'
+  }
 }
 
 async function onDelete(row) {

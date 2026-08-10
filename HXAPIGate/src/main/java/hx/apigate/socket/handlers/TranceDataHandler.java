@@ -45,6 +45,7 @@ import hx.apigate.databridge.xmlBean.RouteNode;
 import hx.apigate.dubbo.util.DubboServiceFactory;
 import hx.apigate.hxqueue.HXUnlockedMQ;
 import hx.apigate.socket.BackendHandlerInitializer;
+import hx.apigate.socket.TcpBackendHandlerInitializer;
 import hx.apigate.socket.Constance;
 
 /**
@@ -69,8 +70,8 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     	 final Channel webChannel = ctx.channel();
     	 String gateHost = msg.headers().get("Host");
     	 NodeInfo nodeInfo = webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get();
-    	
-    	 if(RouteSelectUtil.HTTP.equals(nodeInfo.getProtocalTemp())) {
+   	
+   	 if(RouteSelectUtil.HTTP.equals(nodeInfo.getProtocalTemp()) || RouteSelectUtil.MCP.equals(nodeInfo.getProtocalTemp())) {
     		 
     		 String patternUri = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
     		 Bootstrap b = new Bootstrap();
@@ -142,6 +143,39 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 					}
     			 }
     		 });
+    	 }else if(RouteSelectUtil.TCP.equals(nodeInfo.getProtocalTemp())) {
+    	 	final String patternUri = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
+    	 	final ByteBuf body = msg.content().retainedDuplicate();
+    	 	Bootstrap b = new Bootstrap();
+    	 	b.option(ChannelOption.SO_KEEPALIVE, false)
+    	 	 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+    	 	 .group(webChannel.eventLoop())
+    	 	 .channel(NioSocketChannel.class)
+    	 	 .handler(new TcpBackendHandlerInitializer(webChannel));
+    	 	ChannelFuture f = b.connect(nodeInfo.getRouteNode().getIp(), nodeInfo.getRouteNode().getPort());
+    	 	f.addListener(new ChannelFutureListener() {
+    	 		public void operationComplete(ChannelFuture future) throws Exception {
+    	 			try {
+    	 				if (future.isSuccess()) {
+    	 					RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey()).getState().postMethodExecute();
+    	 					future.channel().writeAndFlush(body);
+    	 				} else {
+    	 					body.release();
+    	 					RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey()).getState().ActUponException();
+    	 					webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(502, "The path you accessed does not work !"));
+    	 				}
+    	 			} catch (Exception e) {
+    	 				body.release();
+    	 				webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(502, "The path you accessed does not work !"));
+    	 			} finally {
+    	 				String routeLimitKey = RouteSelectUtil.selectRouteByUri(patternUri, nodeInfo.getInterfaceVserion());
+    	 				if(routeLimitKey != null) {
+    	 					RateLimiter.release(routeLimitKey);
+    	 				}
+    	 				RateLimiter.release(RouteSelectUtil.nodeLimitKey(webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode(), patternUri));
+    	 			}
+    	 		}
+    	 	});
     	 }else {
     		 //dubbo
     		 ByteBuf bufferContent = msg.content().copy();

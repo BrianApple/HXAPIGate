@@ -38,21 +38,23 @@
       <el-form-item label="代理类型">
         <el-radio-group v-model="form.pType" @change="onPTypeChange">
           <el-radio value="http">HTTP</el-radio>
+          <el-radio value="mcp">MCP</el-radio>
+          <el-radio value="tcp">TCP</el-radio>
           <el-radio value="dubbo">Dubbo</el-radio>
         </el-radio-group>
       </el-form-item>
-      <el-form-item v-if="form.pType === 'http'" label="负载均衡">
+      <el-form-item v-if="isNodeBased" label="负载均衡">
         <el-select v-model="form.balance" style="width: 100%">
           <el-option v-for="b in ['ROUND_ROBIN', 'RANDOM', 'WEIGHTED', 'TPS_LIMIT']" :key="b" :label="b" :value="b" />
         </el-select>
       </el-form-item>
-      <el-form-item v-if="form.pType === 'http'" label="总TPS限制">
+      <el-form-item v-if="isNodeBased" label="总TPS限制">
         <el-input v-model="form.all_tps" placeholder="如：1000" />
       </el-form-item>
-      <el-form-item v-if="form.pType === 'http'" label="单路由TPS">
+      <el-form-item v-if="isNodeBased" label="单路由TPS">
         <el-input v-model="form.route_tps" placeholder="如：500" />
       </el-form-item>
-      <template v-if="form.pType === 'http'">
+      <template v-if="isNodeBased">
         <el-form-item v-for="(r, i) in routes" :key="i" :label="`后端节点${i + 1}`">
           <div class="route-row">
             <el-input v-model="r.ip" placeholder="IP" style="width: 150px" />
@@ -89,7 +91,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { ElMessage } from 'element-plus'
 import { getApiTypes, getApiDetail, addApiResource, updateApiResource } from '../api'
 
@@ -98,6 +100,8 @@ const saving = ref(false)
 const types = ref([])
 const form = ref(emptyForm())
 const routes = ref([{ ip: '', port: '', weight: '', tps: '' }])
+// http/mcp/tcp 均为节点配置型协议（ip:port 列表 + 负载均衡 + TPS），dubbo 为接口服务名型
+const isNodeBased = computed(() => ['http', 'mcp', 'tcp'].includes(form.value.pType))
 
 function emptyForm() {
   return {
@@ -158,14 +162,14 @@ function buildData() {
     interface_name: form.value.interface_name,
     url_val: form.value.url_val,
     api_Type: String(form.value.api_Type),
-    sour_Type: form.value.pType === 'http' ? '1' : '2',
+    sour_Type: form.value.pType === 'dubbo' ? '2' : '1',
     request_method: form.value.request_method,
     api_version: form.value.api_version,
     state: String(form.value.state),
     isAuth: String(form.value.isAuth),
     pType: form.value.pType
   }
-  if (form.value.pType === 'http') {
+  if (isNodeBased.value) {
     d.balance = form.value.balance
     if (form.value.all_tps) d.all_tps = form.value.all_tps
     if (form.value.route_tps) d.route_tps = form.value.route_tps

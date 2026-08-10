@@ -235,7 +235,7 @@
 
     <select id="selectApiList" resultMap="BaseResultMap">
         select a.* from auth_resource a
-        where  (a.type = 2 or a.type = 0) and a.status = 1
+        where  (a.type = 2 or a.type = 0 or a.type = 1) and a.status = 1
     </select>
 
     <select id="selectApiListByTeamId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
