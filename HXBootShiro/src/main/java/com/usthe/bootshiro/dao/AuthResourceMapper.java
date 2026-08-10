@@ -141,37 +141,11 @@ public interface AuthResourceMapper {
      * @return java.util.List<com.usthe.bootshiro.domain.bo.AuthResource>
      * @throws DataAccessException when
      */
-    List<AuthResource> selectMenusByRoleId(Integer roleId) throws DataAccessException;
-
-    /**
-     * description TODO
-     *
-     * @param roleId 1
-     * @return java.util.List<com.usthe.bootshiro.domain.bo.AuthResource>
-     * @throws DataAccessException when
-     */
     List<AuthResource> selectNotAuthorityApisByRoleId(Integer roleId) throws DataAccessException;
-
-    /**
-     * description TODO
-     *
-     * @param roleId 1
-     * @return java.util.List<com.usthe.bootshiro.domain.bo.AuthResource>
-     * @throws DataAccessException when
-     */
-    List<AuthResource> selectNotAuthorityMenusByRoleId(Integer roleId) throws DataAccessException;
 
     /**
      * 通过资源名称查询资源，用于资源类型的去重
      * @param menu
      */
     List<AuthResource>  selectApiListByName(AuthResource menu);
-
-    /**
-     * 获取itmId对应资源类型下，所有没有和角色id关联的api
-     * @param itmId
-     * @param rId 角色id
-     * @return
-     */
-    List<AuthResource> selectNotAuthorityApisByTeamIdAndRID(int itmId, int rId);
 }

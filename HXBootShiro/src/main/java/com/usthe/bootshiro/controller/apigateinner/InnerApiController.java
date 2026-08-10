@@ -28,22 +28,6 @@ public class InnerApiController {
 	private ApiAuthCacheService apiAuthCacheService;
 
 	/**
-	 * 校验jwt是否已过期--放在这里的目的是为了走shiro鉴权，user默认走password
-	 * @param reqArgs
-	 * @return
-	 */
-	@PostMapping("/islogin")
-	@ResponseBody
-	public RetData islogin(ReqWebData reqArgs) {
-		Map<String,String> map = new HashMap<String, String>();
-		if(reqArgs.getJwt() != null && !"".equals(reqArgs.getJwt())){
-
-			return new RetData(200);
-		}else {
-			return new RetData(500);
-		}
-	}
-	/**
 	 * 获取所有的api类型
 	 * @param reqArgs
 	 * @return
@@ -70,28 +54,6 @@ public class InnerApiController {
 	}
 	
 	
-	/**
-	 * 获取所有的api
-	 * @param reqArgs
-	 * @return
-	 */
-	@PostMapping("/initApiList")
-	@ResponseBody
-    public RetData getApiList( ReqWebData reqArgs) {
-		try {
-
-			String currentPage = reqArgs.getPageIndex();
-			String size = reqArgs.getPageSize();
-			PageHelper.startPage(Integer.valueOf(currentPage), Integer.valueOf(size));
-			List<AuthResource> resources  = resourceService.getApiList();
-			PageInfo pageInfo = new PageInfo(resources);
-			return new RetData(200,pageInfo);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		
-		return new RetData(500);
-	}
 	/**
 	 * 根据Itemid(APi分类)获取分类下的所有api
 	 * @param reqArgs
@@ -125,42 +87,6 @@ public class InnerApiController {
 		return new RetData(500);
 	}
 
-	/**
-	 * 根据Itemid(APi分类)获取分类下未被角色关联过的api集合
-	 * @param reqArgs
-	 * @return
-	 */
-	@PostMapping("/initApiByItemIdAndRID")
-	@ResponseBody
-	public RetData getApiListByItemIdNotRelatedByRID(ReqWebData reqArgs) {
-		try {
-			Map<String,String> map = new HashMap<String, String>();
-			map.put("userId", "admin");
-			map.put("authorization", reqArgs.getJwt());
-			String id = reqArgs.getStr();//接口分类id
-			String ids[] = id.split("=");
-			int itmId = Integer.valueOf(ids[0]);
-			int RId = Integer.valueOf(ids[1]);
-			String currentPage = reqArgs.getPageIndex();
-			String size = reqArgs.getPageSize();
-			PageHelper.startPage(Integer.valueOf(currentPage), Integer.valueOf(size));
-			List<AuthResource> resources  = null;
-			// 其他查询teamId 对应分类下的apis
-			if(-1 == itmId){
-				//获取所有API
-				resources = resourceService.getApiListNotRelatedByRID(RId);
-			}else {
-				resources = resourceService.getApiListByTeamIdAndRID(itmId,RId);
-			}
-			PageInfo pageInfo = new PageInfo(resources);
-			return new RetData(200,pageInfo);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return new RetData(500);
-	}
-	
 	/**
 	 * 根据APIid获取对应的api
 	 * @param reqArgs

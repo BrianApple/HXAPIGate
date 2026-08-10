@@ -42,7 +42,6 @@ public class ShiroFilterRulesProviderImpl implements ShiroFilterRulesProvider {
      */
 	@Override
 	public RolePermRule loadRolePermRulesByResourceId(int resourceId) {
-		// TODO Auto-generated method stub
 		return authResourceMapper.selectRoleRulesByResouceId(String.valueOf(resourceId));
 	}
 

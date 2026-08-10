@@ -205,67 +205,6 @@ public class InnerAuthController {
 	}
 
 	/**
-	 * 获取角色(roleId)所被授权的menu资源
-	 * 
-	 * @param reqArgs
-	 * @return
-	 */
-	@PostMapping("/getMenusByRoleId")
-	@ResponseBody
-	public RetData getMenusByRoleId(ReqWebData reqArgs) {
-		try {
-			// header，固定格式
-			Map<String, String> headers = new HashMap<String, String>();
-			headers.put("userId", "admin");
-			headers.put("authorization", reqArgs.getJwt());
-			// 传送到bootshiro的参数--需要map 因此多转一步
-			String roleId = reqArgs.getStr();
-			String index = reqArgs.getPageIndex();
-			String size = reqArgs.getPageSize();
-
-			PageHelper.startPage(Integer.valueOf(index), Integer.valueOf(size));
-			List<AuthResource> authResources = resourceService.getAuthorityMenusByRoleId(Integer.valueOf(roleId));
-			PageInfo pageInfo = new PageInfo(authResources);
-			return new RetData(200, pageInfo);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return new RetData(500);
-	}
-
-	/**
-	 * 获取角色(roleId)未被授权的menu资源
-	 * 
-	 * @param reqArgs
-	 * @return
-	 */
-	@PostMapping("/getMenusExtendByRoleId")
-	@ResponseBody
-	public RetData getMenusExtendByRoleId(ReqWebData reqArgs) {
-		try {
-			// header，固定格式
-			Map<String, String> headers = new HashMap<String, String>();
-			headers.put("userId", "admin");
-			headers.put("authorization", reqArgs.getJwt());
-			// 传送到bootshiro的参数--需要map 因此多转一步
-			String roleId = reqArgs.getStr();
-			String index = reqArgs.getPageIndex();
-			String size = reqArgs.getPageSize();
-
-
-			PageHelper.startPage(Integer.valueOf(index), Integer.valueOf(size));
-			List<AuthResource> authResources = resourceService.getNotAuthorityMenusByRoleId(Integer.valueOf(roleId));
-			PageInfo pageInfo = new PageInfo(authResources);
-			return new RetData(200, pageInfo);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-
-		return new RetData(500);
-	}
-
-	/**
 	 * 添加角色
 	 * 
 	 * @param reqArgs

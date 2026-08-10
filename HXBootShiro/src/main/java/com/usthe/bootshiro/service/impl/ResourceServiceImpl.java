@@ -87,18 +87,8 @@ public class ResourceServiceImpl implements ResourceService {
     }
 
     @Override
-    public List<AuthResource> getAuthorityMenusByRoleId(Integer roleId) throws DataAccessException {
-        return authResourceMapper.selectMenusByRoleId(roleId);
-    }
-
-    @Override
     public List<AuthResource> getNotAuthorityApisByRoleId(Integer roleId) throws DataAccessException {
         return authResourceMapper.selectNotAuthorityApisByRoleId(roleId);
-    }
-
-    @Override
-    public List<AuthResource> getNotAuthorityMenusByRoleId(Integer roleId) throws DataAccessException {
-        return authResourceMapper.selectNotAuthorityMenusByRoleId(roleId);
     }
 
 	@Override
@@ -106,15 +96,5 @@ public class ResourceServiceImpl implements ResourceService {
 		// TODO Auto-generated method stub
 		return authResourceMapper.selectByPrimaryKey(apiId);
 	}
-
-    @Override
-    public List<AuthResource> getApiListNotRelatedByRID(int rId) {
-        return authResourceMapper.selectNotAuthorityApisByRoleId(rId);
-    }
-
-    @Override
-    public List<AuthResource> getApiListByTeamIdAndRID(int itmId, int rId) {
-        return authResourceMapper.selectNotAuthorityApisByTeamIdAndRID(itmId,rId);
-    }
 
 }

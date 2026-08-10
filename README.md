@@ -1,8 +1,11 @@
 ## 简介
 ### 更新说明
 - 当前：
-    
-    增加接口熔断功能，同时对新增接口的路由信息增加安全限制保障服务运行安全等
+    1. 安全加固：JWT 签名密钥外置化（环境变量 `HXAPI_JWT_SECRET` 注入，管理端与网关共用）、数据库口令环境变量化
+    2. 死代码清理：移除 5 个无调用接口（/account/login、/inner/api/islogin、/inner/api/initApiList、/inner/api/initApiByItemIdAndRID、/inner/role/getMenusByRoleId 等）及对应 Service/Mapper 层
+    3. 前端 Vue3 + Element Plus 全面改造（登录页粒子动画、API 两级类型、角色授权双栏等）
+    4. JDK21 + Shiro 3.0 + jjwt 0.12 升级，移除 Ignite 依赖
+    5. 增加接口熔断功能，同时对新增接口的路由信息增加安全限制保障服务运行安全等
 
 ### 概念
 HXAPIGate（中文名：浩心API网关）——如果觉得可以请star本项目。
@@ -55,8 +58,7 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 ![API网关2000并发压测图（jvm=512M）](https://images.gitee.com/uploads/images/2019/1112/113504_8b9b126e_1038477.png "API网关2000并发压测图（jvm=512M）.png")
 
 ### 网关部署结构
-HXAPIGate支持集群部署，支持被代理接口的分布式限流、负载等，分布式部署时建议部署zookeeper集群提供网关和HXBootshiro授权平台的节点发现机制，本软件所依赖的分布式特性，如分布式限流、分布式缓存
-等依靠ignite提供底层能力！
+HXAPIGate支持集群部署，支持被代理接口的分布式限流、负载等。分布式部署时网关节点通过 Redis 进行分布式限流与配置同步，管理平台（HXBootShiro）负责 API 路由与鉴权规则的统一管理（已移除对 Ignite 的依赖）。
 ![输入图片说明](HXBootShiro/src/main/resources/static/images/HXAPIGate3D.png)
 
 ## 操作演示
