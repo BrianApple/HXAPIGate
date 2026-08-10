@@ -34,6 +34,7 @@ import hx.apigate.util.HXAPIGateConext;
 import hx.apigate.util.HttpResponseUtil;
 import hx.apigate.util.MixAll;
 import hx.apigate.util.RouteSelectUtil;
+import hx.apigate.util.TraceUtil;
 /**
  * <p>Description: </p>
 　 * <p>Copyright: Copyright (c) 2019</p>
@@ -54,8 +55,12 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, final FullHttpRequest msg) {
     	 final Channel webChannel = ctx.channel();
+    	 // 请求溯源：优先复用调用方 X-Trace-Id，否则生成；写入 MDC 与 channel attr（供异步转发/日志使用）
+    	 String traceId = TraceUtil.putTraceId(msg.headers().get(TraceUtil.HEADER_X_TRACE_ID));
+    	 webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).set(traceId);
     	 if(msg.method().equals(HttpMethod.OPTIONS)) {
     		 HttpResponseUtil.responseMsg(webChannel, null);
+    		 TraceUtil.clear();
     	 }else {
     		 // 内置 MCP 协议转换端点（/mcp）：不参与路由匹配，构造伪节点走鉴权链后由 TranceDataHandler 分流
     		 String rawUri = msg.uri();
@@ -67,11 +72,14 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
     				 webChannel.attr(MixAll.ATTRIBUTEKEY_URL).set(hx.apigate.mcp.McpGatewayHandler.MCP_ENDPOINT + "==POST");
     				 webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).set(mcpNode);
     				 webChannel.attr(MixAll.ATTRIBUTEKEY_TRANSPARENT).set(true);
+    				 TraceUtil.putProto("mcp");
     				 msg.retain();
     				 ctx.fireChannelRead(msg);
+    				 TraceUtil.clear();
     				 return;
     			 } catch (Exception e) {
     				 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(500, "MCP gateway error: " + e.getMessage()));
+    				 TraceUtil.clear();
     				 return;
     			 }
     		 }
@@ -104,6 +112,8 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
 				}
 				if(ret != null && ret.length == 2 && ret[1] instanceof NodeInfo){
 					NodeInfo node = (NodeInfo)ret[1];
+					// 协议标识写入 MDC：http / mcp / tcp / websocket / dubbo
+					TraceUtil.putProto(node.getProtocalTemp());
 					// 透传模式：默认开启（HTTP 代理原样转发状态码/headers/body，支持 MCP/SSE 流式）
 					// 显式 X-HXAPI-Transparent: false 可回退旧行为（RetMessage 统一包装）
 					boolean transparent = true;
@@ -123,15 +133,18 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
     			 }else {
     				 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(404, "The path you accessed does not exist !"));
     			 }
-    		 } catch (SemphareException e) {
-    			 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(400, e.getMsg()));
-    		 } catch (CircleBreakException e) {
-				 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(503, e.getMsg()));
-			 } catch (NullPointerException e){
-				 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(404, "The path you accessed does not exist or does not work!"));
-			 }
-    	 }
-    }
+		 } catch (SemphareException e) {
+			 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(400, e.getMsg()));
+		 } catch (CircleBreakException e) {
+			 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(503, e.getMsg()));
+		 } catch (NullPointerException e){
+			 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(404, "The path you accessed does not exist or does not work!"));
+		 } finally {
+			 // 请求处理结束（或已转交异步链路），清理 MDC 防止线程复用串号
+			 TraceUtil.clear();
+		 }
+	 }
+}
 
     @Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {

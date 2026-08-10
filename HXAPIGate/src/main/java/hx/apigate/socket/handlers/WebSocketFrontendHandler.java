@@ -1,6 +1,8 @@
 package hx.apigate.socket.handlers;
 
 import hx.apigate.util.HXAPIGateConext;
+import hx.apigate.util.MixAll;
+import hx.apigate.util.TraceUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -21,6 +23,15 @@ import java.util.concurrent.TimeUnit;
  * 3. 前端断开 → 关闭后端（连接传播）。
  */
 public class WebSocketFrontendHandler extends ChannelInboundHandlerAdapter {
+
+    @Override
+    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+        // 连接级溯源：traceId 来自握手请求（GatewayServerHandler 生成），协议固定 websocket
+        String traceId = ctx.channel().attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get();
+        if (traceId != null) TraceUtil.putTraceId(traceId);
+        TraceUtil.putProto("websocket");
+        super.channelActive(ctx);
+    }
     private static final Logger logger = LoggerFactory.getLogger(WebSocketFrontendHandler.class);
     private final Channel backendChannel;
 

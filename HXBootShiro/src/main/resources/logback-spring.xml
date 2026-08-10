@@ -8,7 +8,7 @@
 	<property name="appName" value="HXBootShiro"></property>
 
 	<!-- 统一日志格式 -->
-	<property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} : %line - %msg%n" />
+	<property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level [%X{traceId:--}] [%X{proto:--}] %logger{50} : %line - %msg%n" />
 
 	<!-- 控制台输出 -->
 	<appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">

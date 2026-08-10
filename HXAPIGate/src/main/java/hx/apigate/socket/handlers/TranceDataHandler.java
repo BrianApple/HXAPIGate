@@ -72,6 +72,10 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     protected void channelRead0(ChannelHandlerContext ctx, final FullHttpRequest msg) {
     	 final Channel webChannel = ctx.channel();
     	 NodeInfo nodeInfo = webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get();
+    	 // 请求溯源：从 channel attr 恢复 traceId 与协议到 MDC（跨 handler 传递）
+    	 String traceId = webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get();
+    	 if (traceId != null) TraceUtil.putTraceId(traceId);
+    	 TraceUtil.putProto(nodeInfo == null ? "http" : nodeInfo.getProtocalTemp());
     	 // 内置 MCP 协议转换端点：不转发后端，由 MCP 网关处理器完成 JSON-RPC 分发
     	 if (nodeInfo != null && hx.apigate.mcp.McpGatewayHandler.MCP_GATEWAY_PROTOCOL.equals(nodeInfo.getProtocalTemp())) {
     		 hx.apigate.mcp.McpGatewayHandler.handle(webChannel, msg);
@@ -92,14 +96,16 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     		 msg.retain();
     		 ChannelFuture channelFuture = f.addListener(new ChannelFutureListener() {
     			 public void operationComplete(ChannelFuture future) throws Exception {
+    				 TraceUtil.putTraceId(webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get());
+    				 TraceUtil.putProto(nodeInfo.getProtocalTemp());
     				 try {
-    					 if (future.isSuccess()) {
-							 CBManager manager= RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
-							 manager.getState().postMethodExecute();
-    						 toMasterChannel.writeAndFlush(msg);
-    					 } else {
-    						 try {
-								 CBManager manager= RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
+				 if (future.isSuccess()) {
+					 CBManager manager= RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
+					 manager.getState().postMethodExecute();
+					 toMasterChannel.writeAndFlush(msg);
+				 } else {
+					 try {
+						 CBManager manager= RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
 								 manager.getState().ActUponException();
     							 NodeInfo nextNodeInfo = RouteSelectUtil.getRouteByPattern(nodeInfo.getRequestUrl(),null ,patternUri);
     							 logger.error(MixAll.LOG_INFO_PRIFEX+String.format("网关[%s]访问url%s 失败，请求再次转发至路由%s:%s ",gateHost,msg.uri(),nextNodeInfo.getRouteNode().getIp(),String.valueOf(nodeInfo.getRouteNode().getPort())) );
@@ -113,6 +119,8 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     							 msg.retain();
     							 ChannelFuture channelFuture = f.addListener(new ChannelFutureListener() {
     								 public void operationComplete(ChannelFuture future) throws Exception {
+    									 TraceUtil.putTraceId(webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get());
+    									 TraceUtil.putProto(nodeInfo.getProtocalTemp());
     									 try {
 											 CBManager manager= RedisUtil.getCircleBreakCache().get(nextNodeInfo.getCircleBreakKey());
     										 if (future.isSuccess()) {
@@ -129,6 +137,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     											 RateLimiter.release(routeLimitKey);
     										 }
 											 RateLimiter.release(RouteSelectUtil.nodeLimitKey(nextNodeInfo.getRouteNode(), patternUri));
+    									 TraceUtil.clear();
     									 }
     								 }
     							 });
@@ -148,6 +157,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 							 RateLimiter.release(routeLimitKey);
 						 }
 						RateLimiter.release(RouteSelectUtil.nodeLimitKey(webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode(), patternUri));
+					TraceUtil.clear();
 					}
     			 }
     		 });
@@ -163,6 +173,8 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     	 	ChannelFuture f = b.connect(nodeInfo.getRouteNode().getIp(), nodeInfo.getRouteNode().getPort());
     	 	f.addListener(new ChannelFutureListener() {
     	 		public void operationComplete(ChannelFuture future) throws Exception {
+    	 			TraceUtil.putTraceId(webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get());
+    	 			TraceUtil.putProto(nodeInfo.getProtocalTemp());
     	 			try {
     	 				if (future.isSuccess()) {
     	 					RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey()).getState().postMethodExecute();
@@ -181,6 +193,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     	 					RateLimiter.release(routeLimitKey);
     	 				}
     	 				RateLimiter.release(RouteSelectUtil.nodeLimitKey(webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode(), patternUri));
+    	 			TraceUtil.clear();
     	 			}
     	 		}
     	 	});
@@ -205,6 +218,8 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
    		 ChannelFuture f = b.connect(wsNode.getIp(), wsNode.getPort());
    		 f.addListener(new ChannelFutureListener() {
    			 public void operationComplete(ChannelFuture future) throws Exception {
+   				 TraceUtil.putTraceId(webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get());
+   				 TraceUtil.putProto(nodeInfo.getProtocalTemp());
    				 try {
    					 if (future.isSuccess()) {
    						 RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey()).getState().postMethodExecute();
@@ -222,6 +237,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
    						 RateLimiter.release(routeLimitKey);
    					 }
    					 RateLimiter.release(RouteSelectUtil.nodeLimitKey(wsNode, patternUri));
+   				 TraceUtil.clear();
    				 }
    			 }
    		 });
@@ -232,6 +248,8 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 				
 				@Override
 				public void run() {
+					 TraceUtil.putTraceId(webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get());
+					 TraceUtil.putProto("dubbo");
 					 DubboServiceFactory dubbo = DubboServiceFactory.getInstance();
 					if (/* genericService != null || */ dubbo != null) {
 		    			 
@@ -308,6 +326,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 								 RateLimiter.release(routeLimitKey);
 							 }
 							RateLimiter.release(RouteSelectUtil.nodeLimitKey(webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode(), patternUri));
+						TraceUtil.clear();
 						}
 		    		 }else {
 		    			 ReferenceCountUtil.release(bufferContent);
@@ -321,6 +340,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 								 RateLimiter.release(routeLimitKey);
 							 }
 							RateLimiter.release(RouteSelectUtil.nodeLimitKey(webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode(), patternUri));
+						TraceUtil.clear();
 						}
 		    		 }
 				}

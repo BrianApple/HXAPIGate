@@ -191,6 +191,20 @@ mvn -f HXAPIGate/pom.xml package -DskipTests      # 首次需打包
 - 管理端 dev 环境同样落盘（`--spring.profiles.active=dev` 也写文件）；prod/test 额外输出 SQL 日志
 - 配置文件：网关 `HXAPIGate/src/main/resources/logback.xml`、管理端 `HXBootShiro/src/main/resources/logback-spring.xml`
 
+### 日志溯源（traceId + 协议标识）
+
+所有日志行统一携带 **traceId（请求溯源 ID）** 与 **proto（代理协议）** 两个标识字段，格式示例：
+
+```
+2026-08-10 22:34:25.319 [nioEventLoopGroup-3-1] INFO  [wstest-final] [websocket] hx.apigate.socket.handlers.TranceDataHandler : 226 - WebSocket 代理后端连接成功: ...
+2026-08-10 22:34:25.345 [nioEventLoopGroup-3-1] INFO  [mytest-001] [http] hx.apigate.socket.handlers.GatewayServerHandler : 89 - ...
+```
+
+- **traceId**：网关在请求入口自动生成 16 位十六进制 ID；调用方也可通过请求头 `X-Trace-Id` 传入自定义 ID（跨服务链路联查），网关/管理端均通过响应头 `X-Trace-Id` 原样回传
+- **proto**：标识该请求命中的代理协议（`http` / `mcp` / `tcp` / `websocket` / `dubbo`），长连接（WS/TCP）按连接级标记，贯穿握手/转发/断开全生命周期
+- 实现方式：slf4j MDC（`%X{traceId}` / `%X{proto}`），HTTP 请求在 `GatewayServerHandler` 入口注入、异步转发回调中恢复、结束清理，杜绝线程复用串号
+- 配套代码：网关 `TraceUtil` + `TraceIdOutboundHandler`、管理端 `TraceIdFilter`
+
 ## 操作演示
 
 ### 登录（用户名密码为：admin/123456）

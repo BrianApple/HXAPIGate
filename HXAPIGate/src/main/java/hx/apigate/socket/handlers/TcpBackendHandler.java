@@ -12,6 +12,7 @@ import io.netty.handler.codec.http.HttpHeaderNames;
 import io.netty.handler.codec.http.HttpResponseStatus;
 import io.netty.handler.codec.http.HttpVersion;
 import org.slf4j.Logger;
+import hx.apigate.util.TraceUtil;
 import org.slf4j.LoggerFactory;
 
 /**
@@ -42,6 +43,7 @@ public class TcpBackendHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) {
+        TraceUtil.clear();
         logger.debug("tcp backend channel destroyed");
     }
 

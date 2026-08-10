@@ -45,6 +45,8 @@ public class MixAll {
 	public static final AttributeKey<String> WEB_SESSION_ID = AttributeKey.valueOf("web_seesion_id");//web（第三方客户端）http对应的唯一标识
 	public static final AttributeKey<NodeInfo> ATTRIBUTEKEY_ROUTE_NODE = AttributeKey.valueOf("node");//handler之间传递微服务Node节点信息
 	public static final AttributeKey<String> ATTRIBUTEKEY_URL = AttributeKey.valueOf("requestUrl");
+	/** 请求溯源 ID（traceId）：HTTP 请求在 GatewayServerHandler 入口生成，随 channel 传递到转发/日志环节 */
+	public static final AttributeKey<String> ATTRIBUTEKEY_TRACE_ID = AttributeKey.valueOf("traceId");
 	/** 透传模式标记（true=原始响应透传，不包装 RetMessage；由 Accept: text/event-stream 或 X-HXAPI-Transparent: true 触发，用于 MCP/SSE 流式代理） */
 	public static final AttributeKey<Boolean> ATTRIBUTEKEY_TRANSPARENT = AttributeKey.valueOf("transparent");
 	private static final String CLASS_SUFFIX = ".class";

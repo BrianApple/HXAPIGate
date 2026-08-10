@@ -1,6 +1,7 @@
 package hx.apigate.socket.handlers;
 
 import hx.apigate.util.MixAll;
+import hx.apigate.util.TraceUtil;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -73,6 +74,8 @@ public class WebSocketBackendHandler extends ChannelInboundHandlerAdapter {
                         p.remove(HttpObjectAggregator.class);
                     }
                     p.addLast(new WebSocketFrontendHandler(ctx.channel()));
+                    TraceUtil.putTraceId(inboundChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get());
+                    TraceUtil.putProto("websocket");
                     logger.info("WebSocket 代理握手成功: 前端 {} <-> 后端 {}", inboundChannel.remoteAddress(), ctx.channel().remoteAddress());
                 } else {
                     logger.error("WebSocket 前端握手失败", future.cause());

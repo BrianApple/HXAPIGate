@@ -41,6 +41,8 @@ public class GatewayServerInitializer extends ChannelInitializer<SocketChannel> 
         p.addLast(new HttpRequestDecoder());
         p.addLast(new HttpResponseEncoder());
         p.addLast(new HttpObjectAggregator(HXAPIGateConext.MAX_CONTENT_LENGTH));
+        // 出站响应统一附加 X-Trace-Id：置于 GatewayServerHandler 之前，保证 ctx.writeAndFlush 出站路径经过
+        p.addLast(new TraceIdOutboundHandler());
         p.addLast(new GatewayServerHandler());
         p.addLast(new AuthorizationHandler());
         p.addLast(new TranceDataHandler());
