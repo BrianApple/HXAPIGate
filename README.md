@@ -61,6 +61,51 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 HXAPIGate支持集群部署，支持被代理接口的分布式限流、负载等。分布式部署时网关节点通过 Redis 进行分布式限流与配置同步，管理平台（HXBootShiro）负责 API 路由与鉴权规则的统一管理（已移除对 Ignite 的依赖）。
 ![输入图片说明](HXBootShiro/src/main/resources/static/images/HXAPIGate3D.png)
 
+### MCP 协议转换网关架构
+
+HXAPIGate 内置 MCP（Model Context Protocol）支持，提供两种接入模式：
+
+- **模式①：MCP 透传**——协议类型选择 `MCP`，网关将 MCP 客户端的 JSON-RPC 请求**原样转发**给后端标准 MCP Server，网关仅承担鉴权/限流/熔断/负载均衡（后端必须自己实现 MCP 协议）。
+- **模式②：HTTP 接口映射为 MCP**——协议类型保持 `HTTP` 并勾选「暴露为MCP工具」，网关内置 `/mcp` 端点将 MCP JSON-RPC **协议转换**为 HTTP 请求（路径参数→URL、其余参数 POST 拼 JSON body / GET 拼 query），后端普通 REST 接口**零改造**即可被 MCP 客户端发现与调用。
+
+```mermaid
+flowchart LR
+    subgraph Client["🤖 MCP 客户端（Claude Desktop / Cursor / 任意 MCP SDK）"]
+        C["HTTP + JSON-RPC<br/>initialize / tools/list / tools/call"]
+    end
+
+    subgraph GW["HXAPIGate 网关（Netty :18081）"]
+        direction TB
+        A["路由匹配 + 鉴权链<br/>JWT 校验 / 限流 / 熔断 / 负载均衡"]
+        M1["/mcp 内置端点<br/>McpGatewayHandler<br/>（JSON-RPC 分发 + 协议转换）"]
+        M2["MCP 透传路由<br/>（protocal = mcp，原样转发）"]
+    end
+
+    subgraph REST["后端 REST 接口（零改造）"]
+        R1["POST /api/users"]
+        R2["GET /api/users/{id}"]
+    end
+
+    subgraph MS["后端标准 MCP Server"]
+        S1["tools/list / tools/call"]
+        S2["SSE 流式工具"]
+    end
+
+    C --> A
+    A --> M1 & M2
+    M1 -->|"模式② 协议转换<br/>McpInvoker 参数自动映射"| R1 & R2
+    M2 -->|"模式① 原样透传<br/>（流式 SSE 完整透传）"| S1 & S2
+```
+
+| 维度 | 模式①：MCP 透传 | 模式②：HTTP 接口映射为 MCP |
+|---|---|---|
+| 路由协议类型 | `MCP` | `HTTP` + 「暴露为MCP工具」开关 |
+| 后端要求 | 本身就是标准 MCP Server（MCP SDK 实现） | 普通 REST 接口，零改造 |
+| 网关动作 | 原样转发（不解析协议） | 协议转换：MCP JSON-RPC ⇄ HTTP |
+| 工具清单来源 | 后端自行管理 | 网关从 Redis 路由自动生成 tools/list |
+| 典型场景 | 已有 MCP Server 统一收口到网关 | 存量 REST API 资产暴露给 AI 客户端 |
+
+
 ## 本地启动
 
 ### 环境依赖
