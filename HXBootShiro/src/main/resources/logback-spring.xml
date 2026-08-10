@@ -1,127 +1,106 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!-- HXBootShiro 管理端日志配置：slf4j + logback，按天+大小滚动，历史最多保留 90 天 -->
 <configuration scan="true">
 
-	<!-- 日志输出上下文名称 -->
 	<contextName>usThe</contextName>
-	<property name="LOG_HOME" value="./HXBootShiro" />
+	<!-- 统一日志目录：<模块目录>/logs/<appName>/，按天+大小滚动，历史最多保留 90 天 -->
+	<property name="LOG_HOME" value="./logs" />
 	<property name="appName" value="HXBootShiro"></property>
-	<!-- 输出日志到控制台 ConsoleAppender -->
+
+	<!-- 统一日志格式 -->
+	<property name="LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} : %line - %msg%n" />
+
+	<!-- 控制台输出 -->
 	<appender name="ConsoleAppender" class="ch.qos.logback.core.ConsoleAppender">
-		<encoder>
-			<!--<pattern>%d %p (%file:%line\)- %m%n</pattern>-->
-			<!--格式化输出：%d:表示日期    %thread:表示线程名     %-5level:级别从左显示5个字符宽度  %msg:日志消息    %n:是换行符-->
-			<pattern>1-%d{yyyy-MM-dd HH:mm:ss} [%thread] %-5level %logger - %msg%n</pattern>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${LOG_PATTERN}</pattern>
 			<charset>UTF-8</charset>
 		</encoder>
 	</appender>
 
-	<!-- 输出日志到文件  每天一个文件 -->
-	<!--输出每天的运行日志到文件SystemOut.log-->
+	<!-- 全量运行日志：INFO/WARN（ERROR 单独进 ErrOut，避免重复），按天+大小滚动，保留 90 天 -->
 	<appender name="SystemOutFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<!-- 正在记录的日志文件的路径及文件名 -->
 		<file>${LOG_HOME}/${appName}/SystemOut.log</file>
-		<!-- 日志记录器的滚动策略，按日期，按大小记录 -->
+		<append>true</append>
+		<!-- 排除 ERROR（交给 ErrOutFileAppender），其余 INFO 及以上进入本文件 -->
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>DENY</onMatch>
+			<onMismatch>NEUTRAL</onMismatch>
+		</filter>
+		<filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+			<level>INFO</level>
+		</filter>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<!-- 归档的日志文件的路径。%d{yyyy-MM-dd}指定日期格式，%i指定索引 -->
 			<fileNamePattern>${LOG_HOME}/${appName}/SystemOut-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-			<!-- 除按日志记录之外，还配置了日志文件不能超过2M，若超过2M，日志文件会以索引0开始 -->
+			<maxHistory>90</maxHistory>
 			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-				<maxFileSize>2MB</maxFileSize>
+				<maxFileSize>50MB</maxFileSize>
 			</timeBasedFileNamingAndTriggeringPolicy>
 		</rollingPolicy>
-		<!-- 追加方式记录日志 -->
-		<append>true</append>
-		<!-- 日志文件的格式 -->
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-			<pattern>===%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger Line:%-3L - %msg%n</pattern>
-			<charset>utf-8</charset>
+			<pattern>${LOG_PATTERN}</pattern>
+			<charset>UTF-8</charset>
 		</encoder>
-		<!-- 此日志文件记录debug及以上级别的 -->
-		<filter class="ch.qos.logback.classic.filter.LevelFilter">
-			<level>debug</level>
-			<onMatch>ACCEPT</onMatch>
-			<onMismatch>DENY</onMismatch>
-		</filter>
 	</appender>
 
-	<!-- 输出日志到文件  每天一个文件 -->
-	<!--输出每天的运行日志到文件SystemErrOut.log-->
+	<!-- 错误日志：仅 ERROR，按天+大小滚动，保留 90 天 -->
 	<appender name="ErrOutFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<!-- 正在记录的日志文件的路径及文件名 -->
 		<file>${LOG_HOME}/${appName}/SystemErrOut.log</file>
-		<!-- 日志记录器的滚动策略，按日期，按大小记录 -->
+		<append>true</append>
+		<filter class="ch.qos.logback.classic.filter.LevelFilter">
+			<level>ERROR</level>
+			<onMatch>ACCEPT</onMatch>
+			<onMismatch>DENY</onMismatch>
+		</filter>
 		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<!-- 归档的日志文件的路径。%d{yyyy-MM-dd}指定日期格式，%i指定索引 -->
 			<fileNamePattern>${LOG_HOME}/${appName}/SystemErrOut-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-			<!-- 除按日志记录之外，还配置了日志文件不能超过2M，若超过2M，日志文件会以索引0开始 -->
+			<maxHistory>90</maxHistory>
 			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-				<maxFileSize>2MB</maxFileSize>
+				<maxFileSize>50MB</maxFileSize>
 			</timeBasedFileNamingAndTriggeringPolicy>
 		</rollingPolicy>
-		<!-- 追加方式记录日志 -->
-		<append>true</append>
-		<!-- 日志文件的格式 -->
 		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-			<pattern>===%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger Line:%-3L - %msg%n</pattern>
-			<charset>utf-8</charset>
+			<pattern>${LOG_PATTERN}</pattern>
+			<charset>UTF-8</charset>
 		</encoder>
-		<!-- 此日志文件记录error及以上级别的 -->
-		<filter class="ch.qos.logback.classic.filter.LevelFilter">
-			<level>error</level>
-			<onMatch>ACCEPT</onMatch>
-			<onMismatch>DENY</onMismatch>
-		</filter>
 	</appender>
 
-	<!-- 输出日志到文件  文件大小到达指定尺寸的时候文件会自动回滚 -->
-	<!-- 输出运行的SQL语句日志到文件SqlOut.log -->
+	<!-- SQL 日志：DEBUG（配合 mybatis mapper 调试），按天+大小滚动，保留 90 天 -->
 	<appender name="SqlOutFileAppender" class="ch.qos.logback.core.rolling.RollingFileAppender">
-		<!-- 正在记录的日志文件的路径及文件名 -->
 		<file>${LOG_HOME}/${appName}/SystemSqlOut.log</file>
-		<!-- 日志记录器的滚动策略，按日期，按大小记录 -->
-		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-			<!-- 归档的日志文件的路径。%d{yyyy-MM-dd}指定日期格式，%i指定索引 -->
-			<fileNamePattern>${LOG_HOME}/${appName}/SystemSqlOut-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
-			<!-- 除按日志记录之外，还配置了日志文件不能超过2M，若超过2M，日志文件会以索引0开始 -->
-			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-				<maxFileSize>2MB</maxFileSize>
-			</timeBasedFileNamingAndTriggeringPolicy>
-		</rollingPolicy>
-		<!-- 追加方式记录日志 -->
 		<append>true</append>
-		<!-- 日志文件的格式 -->
-		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
-			<pattern>===%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger Line:%-3L - %msg%n</pattern>
-			<charset>utf-8</charset>
-		</encoder>
-		<!-- 此日志文件记录sql trace -->
 		<filter class="ch.qos.logback.classic.filter.LevelFilter">
-			<level>debug</level>
+			<level>DEBUG</level>
 			<onMatch>ACCEPT</onMatch>
 			<onMismatch>DENY</onMismatch>
 		</filter>
+		<rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+			<fileNamePattern>${LOG_HOME}/${appName}/SystemSqlOut-%d{yyyy-MM-dd}.%i.log</fileNamePattern>
+			<maxHistory>90</maxHistory>
+			<timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
+				<maxFileSize>50MB</maxFileSize>
+			</timeBasedFileNamingAndTriggeringPolicy>
+		</rollingPolicy>
+		<encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+			<pattern>${LOG_PATTERN}</pattern>
+			<charset>UTF-8</charset>
+		</encoder>
 	</appender>
 
-
-
-	<!--这个logger的设置是：举例在org.springframework包下面的所有输出日志必须级别level在info及以上级别才会被输出！-->
-	<!--这样可以避免输出一些spring框架的许多常见debug信息!-->
+	<!-- 框架日志级别控制 -->
 	<logger name="org.springframework" level="info"/>
 	<logger name="org.json" level="error"/>
 	<logger name="io.netty" level="info"/>
 	<logger name="org.slf4j" level="info"/>
 	<logger name="ch.qos.logback" level="info"/>
 
-
-	<!-- 生产环境配置文件 -->
+	<!-- 生产环境 -->
 	<springProfile name="prod">
-
-		<!-- 下面是打印 mybatis sql语句日志的配置 -->
 		<logger name="com.usthe.bootshiro.dao">
 			<level value="DEBUG"/>
 			<appender-ref ref="SqlOutFileAppender"/>
 		</logger>
-
 		<root level="INFO">
 			<appender-ref ref="ErrOutFileAppender"/>
 			<appender-ref ref="SystemOutFileAppender"/>
@@ -129,15 +108,12 @@
 		</root>
 	</springProfile>
 
-	<!-- 测试环境配置文件 -->
+	<!-- 测试环境 -->
 	<springProfile name="test">
-
-		<!-- 下面是打印 mybatis sql语句日志的配置 -->
 		<logger name="com.usthe.bootshiro.dao">
 			<level value="DEBUG"/>
 			<appender-ref ref="SqlOutFileAppender"/>
 		</logger>
-
 		<root level="INFO">
 			<appender-ref ref="ErrOutFileAppender"/>
 			<appender-ref ref="SystemOutFileAppender"/>
@@ -145,9 +121,11 @@
 		</root>
 	</springProfile>
 
-	 <!--开发环境配置文件-->
+	<!-- 开发环境（同样写文件，保证本地也有完整日志） -->
 	<springProfile name="dev">
 		<root level="INFO">
+			<appender-ref ref="ErrOutFileAppender"/>
+			<appender-ref ref="SystemOutFileAppender"/>
 			<appender-ref ref="ConsoleAppender"/>
 		</root>
 	</springProfile>

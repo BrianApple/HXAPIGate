@@ -175,6 +175,22 @@ mvn -f HXAPIGate/pom.xml package -DskipTests      # 首次需打包
 | `HXAPI_JWT_SECRET` | JWT 签名密钥，**生产环境务必设置强随机值**，管理端与网关必须一致；本地开发可写入 `~/.hxapigate_jwt_secret` |
 | `HXAPI_DB_USERNAME` / `HXAPI_DB_PASSWORD` | 数据库凭据（默认取 application.yml dev 配置） |
 
+### 日志管理（slf4j + logback）
+
+网关与管理端统一使用 **slf4j + logback** 记录日志，按天 + 大小滚动，**历史日志最多保留 90 天**（超期自动清理）：
+
+| 模块 | 日志目录 | 文件 | 说明 |
+|---|---|---|---|
+| 网关 HXAPIGate | `HXAPIGate/logs/HXAPIGate/` | `sys.log` | INFO 及以上全量日志（单文件最大 50MB） |
+| 网关 HXAPIGate | `HXAPIGate/logs/HXAPIGate/` | `sys-error.log` | 仅 ERROR 错误日志 |
+| 管理端 HXBootShiro | `HXBootShiro/logs/HXBootShiro/` | `SystemOut.log` | INFO/WARN 运行日志（ERROR 不重复记录） |
+| 管理端 HXBootShiro | `HXBootShiro/logs/HXBootShiro/` | `SystemErrOut.log` | 仅 ERROR 错误日志 |
+| 管理端 HXBootShiro | `HXBootShiro/logs/HXBootShiro/` | `SystemSqlOut.log` | MyBatis SQL 调试日志（prod/test 环境） |
+
+- 归档规则：`<文件名>-yyyy-MM-dd.%i.log`，单文件超过 50MB 触发滚动，历史保留 90 天
+- 管理端 dev 环境同样落盘（`--spring.profiles.active=dev` 也写文件）；prod/test 额外输出 SQL 日志
+- 配置文件：网关 `HXAPIGate/src/main/resources/logback.xml`、管理端 `HXBootShiro/src/main/resources/logback-spring.xml`
+
 ## 操作演示
 
 ### 登录（用户名密码为：admin/123456）

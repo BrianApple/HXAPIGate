@@ -24,6 +24,7 @@ scripts/ws_shots/
 
 # 运行时日志
 *.log
+logs/
 HXAPIGATE_LOGS/
 SystemOut.log
 SystemErrOut.log

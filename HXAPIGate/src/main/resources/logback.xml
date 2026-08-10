@@ -1,56 +1,63 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<configuration scan="false" scanPeriod="60 seconds" debug="false">
-    <property name="LOG_HOME" value="./HXBootShiro" />
-    <property name="appName" value="HXAPIGATE_LOGS"></property>
-     
+<!-- HXAPIGate 网关日志配置：slf4j + logback，按天+大小滚动，历史最多保留 90 天 -->
+<configuration scan="true" scanPeriod="60 seconds" debug="false">
+    <!-- 统一日志目录：<模块目录>/logs/<appName>/，按天+大小滚动，历史最多保留 90 天 -->
+    <property name="LOG_HOME" value="./logs" />
+    <property name="appName" value="HXAPIGate"></property>
+
+    <!-- 控制台输出 -->
     <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
-        <layout class="ch.qos.logback.classic.PatternLayout">
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
             <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n</pattern>
-        </layout>
+            <charset>UTF-8</charset>
+        </encoder>
     </appender>
- 
+
+    <!-- 全量日志文件：INFO 及以上（按天滚动，单文件最大 50MB，保留 90 天） -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/${appName}/sys.log</file>
-        <filter class="ch.qos.logback.classic.filter.LevelFilter">
-            <level>ERROR</level>
-        </filter>
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <level>DEBUG</level>
+            <level>INFO</level>
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOG_HOME}/${appName}/sys-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
-            <MaxHistory>180</MaxHistory>
+            <maxHistory>90</maxHistory>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>100MB</maxFileSize>
+                <maxFileSize>50MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
         </rollingPolicy>
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [ %thread ] - [ %-5level ] [ %logger{50} : %line ] - %msg%n</pattern>
-        </layout>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} : %line - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
     </appender>
+
+    <!-- 错误日志文件：仅 ERROR（按天滚动，单文件最大 50MB，保留 90 天） -->
     <appender name="FILE-ERROR" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_HOME}/${appName}/sys-error.log</file>
         <filter class="ch.qos.logback.classic.filter.LevelFilter">
             <level>ERROR</level>
+            <onMatch>ACCEPT</onMatch>
+            <onMismatch>DENY</onMismatch>
         </filter>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
             <fileNamePattern>${LOG_HOME}/${appName}/sys-error-%d{yyyy-MM-dd}-%i.log</fileNamePattern>
-            <MaxHistory>180</MaxHistory>
+            <maxHistory>90</maxHistory>
             <timeBasedFileNamingAndTriggeringPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedFNATP">
-                <maxFileSize>100MB</maxFileSize>
+                <maxFileSize>50MB</maxFileSize>
             </timeBasedFileNamingAndTriggeringPolicy>
-        </rollingPolicy> 
-        <layout class="ch.qos.logback.classic.PatternLayout">
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [ %thread ] - [ %-5level ] [ %logger{50} : %line ] - %msg%n</pattern>
-        </layout>
+        </rollingPolicy>
+        <encoder class="ch.qos.logback.classic.encoder.PatternLayoutEncoder">
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} : %line - %msg%n</pattern>
+            <charset>UTF-8</charset>
+        </encoder>
     </appender>
- 
-    
+
+    <!-- 业务/框架日志级别控制 -->
     <logger name="learnLog" level="error" />
-    <!-- mybatis logger -->
-    <!-- Spring framework logger -->
-    <logger name="org.springframework" level="error" additivity="false"></logger>
- 
+    <logger name="org.springframework" level="error" additivity="false" />
+    <logger name="io.netty.handler.logging" level="warn" additivity="false" />
+
     <root level="info">
         <appender-ref ref="STDOUT"/>
         <appender-ref ref="FILE"/>
