@@ -19,6 +19,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class HXAPIGateConext {
 	public static int PORT = 18081;//HXAPIGate默认端口为18081
+	/** 请求体聚合上限（默认 16MB）：MCP 工具调用参数可能较大，原 1MB 会截断 */
+	public static int MAX_CONTENT_LENGTH = 16 * 1024 * 1024;
 	public static int TPS = 2000;//网关全局限流
 	private static String VERSION = "1.0.0";
 	public static NioEventLoopGroup boss = new NioEventLoopGroup(1);

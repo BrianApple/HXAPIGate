@@ -6,7 +6,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.handler.codec.http.HttpClientCodec;
-import io.netty.handler.codec.http.HttpObjectAggregator;
 
 /**
  * 响应http请求的socket初始化时pipeline初始化工具类
@@ -27,8 +26,9 @@ public class BackendHandlerInitializer extends ChannelInitializer<SocketChannel>
 
     @Override
     public void initChannel(SocketChannel ch) throws Exception {
+        // 注意：响应侧不加 HttpObjectAggregator——MCP/SSE 需要流式透传 HttpResponse/HttpContent，
+        // 聚合由 MasterBackHandler 按透传/包装模式自行处理
         ch.pipeline().addLast(new HttpClientCodec())
-                .addLast(new HttpObjectAggregator(1024 * 1024))
                 .addLast(new MasterBackHandler(inboundChannel));
     }
 }

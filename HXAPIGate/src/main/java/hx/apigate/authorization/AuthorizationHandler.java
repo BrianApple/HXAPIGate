@@ -123,7 +123,8 @@ public class AuthorizationHandler extends SimpleChannelInboundHandler<FullHttpRe
         String ipHost = webAddress.getHostString();
         String jwt = headers.get(Constance.AUTHORIZATION);
         if(jwt == null) {
-        	throw new RuntimeException("jwt is not exist!");
+        	// 修复：原抛 RuntimeException 未被 catch(AuthenticationException) 捕获，异常穿透 pipeline 导致客户端挂起无响应
+        	throw new AuthenticationException("jwt is not exist!");
         }
         String deviceInfo = headers.get(Constance.DEVICEINFO);
         return new JwtToken(ipHost,deviceInfo,jwt,userId);

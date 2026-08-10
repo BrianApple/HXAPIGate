@@ -84,8 +84,9 @@ public class RouteCacheService {
                     : Integer.parseInt(String.valueOf(routeInfo.get("cb_timeout"))));
 
             List<RouteNode> nodes = new ArrayList<>();
-            if ("http".equals(routeInfo.get("pType"))) {
-                int routeNum = (routeInfo.size() - 6) / 5;
+            if ("http".equals(routeInfo.get("pType")) || "tcp".equals(routeInfo.get("pType"))) {
+                // 节点数优先取 routeNum 字段，缺失时按字段数推算（兼容旧数据）
+                int routeNum = parseRouteNum(routeInfo, 5);
                 for (int i = 1; i <= routeNum; i++) {
                     RouteNode node = new RouteNode();
                     String rout_ipAddr = (String) routeInfo.get("rout_ipAddr" + i);
@@ -103,7 +104,7 @@ public class RouteCacheService {
                     nodes.add(node);
                 }
             } else if ("dubbo".equals(routeInfo.get("pType"))) {
-                int routeNum = (routeInfo.size() - 6) / 2;
+                int routeNum = parseRouteNum(routeInfo, 2);
                 for (int i = 1; i <= routeNum; i++) {
                     RouteNode node = new RouteNode();
                     String route_InterfaceName = (String) routeInfo.get("route_InterfaceName" + i);
@@ -189,8 +190,9 @@ public class RouteCacheService {
                 : Integer.parseInt(String.valueOf(routeInfo.get("cb_timeout"))));
 
         List<RouteNode> nodes = new ArrayList<>();
-        if ("http".equals(routeInfo.get("pType"))) {
-            int routeNum = (routeInfo.size() - 6) / 5;
+        if ("http".equals(routeInfo.get("pType")) || "tcp".equals(routeInfo.get("pType"))) {
+            // 节点数优先取 routeNum 字段，缺失时按字段数推算（兼容旧数据）
+            int routeNum = parseRouteNum(routeInfo, 5);
             for (int i = 1; i <= routeNum; i++) {
                 RouteNode node = new RouteNode();
                 String rout_ipAddr = (String) routeInfo.get("rout_ipAddr" + i);
@@ -208,7 +210,7 @@ public class RouteCacheService {
                 nodes.add(node);
             }
         } else if ("dubbo".equals(routeInfo.get("pType"))) {
-            int routeNum = (routeInfo.size() - 6) / 2;
+            int routeNum = parseRouteNum(routeInfo, 2);
             for (int i = 1; i <= routeNum; i++) {
                 RouteNode node = new RouteNode();
                 String route_InterfaceName = (String) routeInfo.get("route_InterfaceName" + i);
@@ -227,6 +229,24 @@ public class RouteCacheService {
         saveAllRoute(allRoute);
         publishRouteChange(RedisConstance.RouteCacheUpdate_SIG, uri, jsonStr);
         return true;
+    }
+
+    /**
+     * 解析路由节点数：优先取 routeNum 字段，缺失时按字段数推算（每节点占 fieldsPerNode 个字段）
+     * @param routeInfo 路由信息 map
+     * @param fieldsPerNode http/tcp=5，dubbo=2
+     */
+    private int parseRouteNum(Map<String, Object> routeInfo, int fieldsPerNode) {
+        Object routeNumObj = routeInfo.get("routeNum");
+        if (routeNumObj != null && !"".equals(String.valueOf(routeNumObj))) {
+            try {
+                return Integer.parseInt(String.valueOf(routeNumObj));
+            } catch (NumberFormatException ignored) {
+                // 非法值走兜底推算
+            }
+        }
+        int size = routeInfo.size();
+        return size > 6 ? (size - 6) / fieldsPerNode : 0;
     }
 
     /**

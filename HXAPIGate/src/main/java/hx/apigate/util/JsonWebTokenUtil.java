@@ -51,12 +51,14 @@ public class JsonWebTokenUtil {
      */
     public static SecretKey generateKey(String key) {
         try {
-            // 将任意长度密钥通过 SHA-256 固定为 256bit，满足 HS256 要求
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
+            // 将任意长度密钥通过 SHA-512 固定为 512bit，满足 HS512 签名要求
+            // 注意：必须与管理端 HXBootShiro 保持一致（P0 后管理端已改 SHA-512），
+            // 否则管理端签发的 JWT 网关验签失败（errJwt）。原 SHA-256 实现已废弃。
+            MessageDigest digest = MessageDigest.getInstance("SHA-512");
             byte[] hash = digest.digest(key.getBytes(StandardCharsets.UTF_8));
             return Keys.hmacShaKeyFor(hash);
         } catch (NoSuchAlgorithmException e) {
-            throw new IllegalStateException("SHA-256 算法不可用", e);
+            throw new IllegalStateException("SHA-512 算法不可用", e);
         }
     }
 

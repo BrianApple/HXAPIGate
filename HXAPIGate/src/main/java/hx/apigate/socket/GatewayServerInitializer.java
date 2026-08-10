@@ -18,6 +18,7 @@ package hx.apigate.socket;
 import hx.apigate.authorization.AuthorizationHandler;
 import hx.apigate.socket.handlers.GatewayServerHandler;
 import hx.apigate.socket.handlers.TranceDataHandler;
+import hx.apigate.util.HXAPIGateConext;
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
 import io.netty.channel.socket.SocketChannel;
@@ -39,7 +40,7 @@ public class GatewayServerInitializer extends ChannelInitializer<SocketChannel> 
         ChannelPipeline p = ch.pipeline();
         p.addLast(new HttpRequestDecoder());
         p.addLast(new HttpResponseEncoder());
-        p.addLast(new HttpObjectAggregator(1024 * 1024));
+        p.addLast(new HttpObjectAggregator(HXAPIGateConext.MAX_CONTENT_LENGTH));
         p.addLast(new GatewayServerHandler());
         p.addLast(new AuthorizationHandler());
         p.addLast(new TranceDataHandler());

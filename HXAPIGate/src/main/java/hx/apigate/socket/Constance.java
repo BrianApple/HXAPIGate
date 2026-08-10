@@ -10,6 +10,8 @@ package hx.apigate.socket;
 public class Constance {
 	
 	public static final String HXAPIGate_SOURCE_ID = "HXAPIGate-SOURCE-ID";//访问网关的源请求对应的唯一id
+	/** 强制透传模式请求头：X-HXAPI-Transparent: true（MCP/SSE 等需要原始流式响应的场景） */
+	public static final String HXAPI_TRANSPARENT = "X-HXAPI-Transparent";
 	public static final String X_FORWARDED_FOR = "x-forwarded-for";
 	public static final String COLON = ":";
 	public static final String DELIMER = ",";

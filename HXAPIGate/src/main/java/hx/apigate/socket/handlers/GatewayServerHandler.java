@@ -34,7 +34,6 @@ import hx.apigate.util.HXAPIGateConext;
 import hx.apigate.util.HttpResponseUtil;
 import hx.apigate.util.MixAll;
 import hx.apigate.util.RouteSelectUtil;
-
 /**
  * <p>Description: </p>
 　 * <p>Copyright: Copyright (c) 2019</p>
@@ -71,12 +70,20 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
     		 msg.headers().set(hx.apigate.socket.Constance.X_FORWARDED_FOR, sb.toString());
     		 msg.headers().set(hx.apigate.socket.Constance.HXAPIGate_SOURCE_ID,webChannel.id().asLongText() );
     		 
-    		 Object[] ret = null;
-    		 try {
-    			 ret = matchUrl(msg.uri(),msg.method());
-    			 if(ret != null && ret.length == 2 && ret[1] instanceof NodeInfo){
-    				 NodeInfo node = (NodeInfo)ret[1];
-    				 if("http".equals(node.getProtocalTemp())) {
+			Object[] ret = null;
+			try {
+				ret = matchUrl(msg.uri(),msg.method());
+				if(ret != null && ret.length == 2 && ret[1] instanceof NodeInfo){
+					NodeInfo node = (NodeInfo)ret[1];
+					// 透传模式：默认开启（HTTP 代理原样转发状态码/headers/body，支持 MCP/SSE 流式）
+					// 显式 X-HXAPI-Transparent: false 可回退旧行为（RetMessage 统一包装）
+					boolean transparent = true;
+					String t = msg.headers().get(hx.apigate.socket.Constance.HXAPI_TRANSPARENT);
+					if ("false".equalsIgnoreCase(t)) {
+						transparent = false;
+					}
+					webChannel.attr(MixAll.ATTRIBUTEKEY_TRANSPARENT).set(transparent);
+					if("http".equals(node.getProtocalTemp())) {
     					 msg.headers().set(hx.apigate.socket.Constance.HOST,new StringBuilder(node.getRouteNode().getIp())
     							 .append(hx.apigate.socket.Constance.COLON).append(node.getRouteNode().getPort()));
     				 }
