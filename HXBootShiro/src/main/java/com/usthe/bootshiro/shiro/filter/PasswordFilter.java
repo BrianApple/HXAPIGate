@@ -4,7 +4,6 @@ package com.usthe.bootshiro.shiro.filter;
 import com.alibaba.fastjson2.JSON;
 import com.usthe.bootshiro.domain.vo.Message;
 import com.usthe.bootshiro.shiro.token.PasswordToken;
-import com.usthe.bootshiro.util.CommonUtil;
 import com.usthe.bootshiro.util.IpUtil;
 import com.usthe.bootshiro.util.RequestResponseUtil;
 

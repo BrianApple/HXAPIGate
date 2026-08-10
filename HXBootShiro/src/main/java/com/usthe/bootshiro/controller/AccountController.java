@@ -21,13 +21,11 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.redis.core.StringRedisTemplate;
-import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
 
@@ -138,71 +136,6 @@ public class AccountController extends BaseAction {
         LogExeManager.getInstance().executeLogTask(LogTaskFactory.loginLog(appId, IpUtil.getAllIpFromRequest(WebUtils.toHttp(request)), (short) 1, "登录成功"));
 
         return new Message().ok(200, "issue jwt success").addData("jwt", jwt).addData("user", authUser);
-    }
-
-
-    /**
-     * description 用户账号的注册
-     *
-     * @param request 1
-     * @param response 2
-     * @return com.usthe.bootshiro.domain.vo.Message
-     */
-    @Operation(summary = "用户注册", description = "POST用户注册")
-    @PostMapping("/register")
-    public Message accountRegister(HttpServletRequest request, HttpServletResponse response) {
-
-        Map<String, String> params = RequestResponseUtil.getRequestBodyMap(request);
-        AuthUser authUser = new AuthUser();
-        String uid = params.get("userId");//uid,用户账号,主键
-        String password = params.get("password");
-//        String userKey = params.get("userKey");
-        if (StringUtils.isEmpty(uid) || StringUtils.isEmpty(password)) {
-            // 必须信息缺一不可,返回注册账号信息缺失
-            return new Message().error(400, "账户信息缺失");
-        }
-        authUser.setUid(uid);
-        // 从Redis取出密码传输加密解密秘钥
-        String salt = CommonUtil.getRandomString(6);
-        // 存储到数据库的密码为 MD5(原密码+盐值)
-        authUser.setPassword(Md5Util.md5(password + salt));
-        authUser.setSalt(salt);
-        authUser.setCreateTime(new Date());
-        if (!StringUtils.isEmpty(params.get(STR_USERNAME))) {//用户名(nick_name)
-            authUser.setUsername(params.get(STR_USERNAME));
-        }
-        if (!StringUtils.isEmpty(params.get(STR_REALNAME))) {//用户真名
-            authUser.setRealName(params.get(STR_REALNAME));
-        }
-        if (!StringUtils.isEmpty(params.get(STR_AVATAR))) {//头像
-            authUser.setAvatar(params.get(STR_AVATAR));
-        }
-        if (!StringUtils.isEmpty(params.get(STR_PHONE))) {//phone
-            authUser.setPhone(params.get(STR_PHONE));
-        }
-        if (!StringUtils.isEmpty(params.get(STR_EMAIL))) {//邮件地址(唯一)
-            authUser.setEmail(params.get(STR_EMAIL));
-        }
-        if (!StringUtils.isEmpty(params.get(STR_SEX))) {//性别(1.男 2.女)
-            authUser.setSex(Byte.valueOf(params.get(STR_SEX)));
-        }
-        if (!StringUtils.isEmpty(params.get(STR_WHERE))) {
-            authUser.setCreateWhere(Byte.valueOf(params.get(STR_WHERE)));//创建来源(1.web 2.android 3.ios 4.win 5.macos 6.ubuntu)
-        }
-        authUser.setStatus((byte) 1);
-        String msg = accountService.isAccountExist(authUser) ;
-        if (msg != null ){
-            // 账户已存在
-            return new Message().error(400, msg);
-        }
-        
-        if (accountService.registerAccount(authUser)) {
-            LogExeManager.getInstance().executeLogTask(LogTaskFactory.registerLog(uid, IpUtil.getIpFromRequest(WebUtils.toHttp(request)), (short) 1, "注册成功"));
-            return new Message().ok(200, "注册成功");
-        } else {
-            LogExeManager.getInstance().executeLogTask(LogTaskFactory.registerLog(uid, IpUtil.getIpFromRequest(WebUtils.toHttp(request)), (short) 0, "注册失败"));
-            return new Message().ok(400, "注册失败");
-        }
     }
 
 }

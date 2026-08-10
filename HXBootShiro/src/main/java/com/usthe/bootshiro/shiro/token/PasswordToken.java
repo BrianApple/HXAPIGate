@@ -1,6 +1,5 @@
 package com.usthe.bootshiro.shiro.token;
 
-import com.usthe.bootshiro.util.AesUtil;
 import org.apache.shiro.authc.AuthenticationToken;
 
 /**

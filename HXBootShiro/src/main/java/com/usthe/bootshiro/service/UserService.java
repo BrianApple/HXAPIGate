@@ -21,13 +21,6 @@ public interface UserService {
     /**
      * description TODO
      *
-     * @return java.util.List<com.usthe.bootshiro.domain.bo.AuthUser>
-     */
-    List<AuthUser> getUserList();
-
-    /**
-     * description TODO
-     *
      * @param roleId 1
      * @return java.util.List<com.usthe.bootshiro.domain.bo.AuthUser>
      */
@@ -66,12 +59,4 @@ public interface UserService {
      * @return java.util.List<com.usthe.bootshiro.domain.bo.AuthUser>
      */
     List<AuthUser> getNotAuthorityUserListByRoleId(Integer roleId);
-
-    /**
-     * description 更改用户名密码
-     *
-     * @param authUser  主要判断uid  phone和email
-     * @return String 错误信息
-     */
-    String updatePassword(AuthUser authUser);
 }

@@ -39,35 +39,6 @@ public class LogTaskFactory {
         };
     }
 
-    public static TimerTask exitLog(String userId, String ip, Short succeed, String message) {
-        return new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    AuthAccountLog accountLog = LogFactory.createAccountLog(userId, "用户退出日志", ip, succeed, message);
-                    accountLogMapper.insertSelective(accountLog);
-                } catch (Exception e) {
-                    LOGGER.error("写入用户退出日志异常", e.getCause().getMessage());
-                }
-            }
-        };
-    }
-
-    public static TimerTask registerLog(String userId, String ip, Short succeed, String message) {
-        return new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    AuthAccountLog accountLog = LogFactory.createAccountLog(userId, "用户注册日志", ip, succeed, message);
-                    accountLogMapper.insertSelective(accountLog);
-                } catch (Exception e) {
-                	System.err.println("写入用户注册日志异常"+e.getCause().getMessage());
-                    LOGGER.error("写入用户注册日志异常", e.getCause().getMessage());
-                }
-            }
-        };
-    }
-
     public static TimerTask bussinssLog(String userId, String api, String method, Short succeed, String message) {
         return new TimerTask() {
             @Override
@@ -78,20 +49,6 @@ public class LogTaskFactory {
                 } catch (Exception e) {
                 	System.err.println("写入用户注册日志异常"+e.getCause().getMessage());
                     LOGGER.error("写入业务操作日志异常", e.getCause().getMessage());
-                }
-            }
-        };
-    }
-
-    public static TimerTask exceptionLog(String userId, String api, String method, Short succeed, String message) {
-        return new TimerTask() {
-            @Override
-            public void run() {
-                try {
-                    AuthOperationLog exceptionLog = LogFactory.createOperationLog(userId, "业务异常日志", api, method, succeed, message);
-                    operationLogMapper.insertSelective(exceptionLog);
-                } catch (Exception e) {
-                    LOGGER.error("写入业务异常日志异常", e.getCause().getMessage());
                 }
             }
         };

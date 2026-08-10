@@ -16,21 +16,6 @@ public interface AccountService {
      * @return com.usthe.bootshiro.domain.vo.Account
      */
     Account loadAccount(String appId);
-    
-    /**
-     * description 判断当前用户是否存在
-     *
-     * @param authUser  主要判断uid  phone和email
-     * @return String 错误信息
-     */
-    String isAccountExist(AuthUser authUser);
-    /**
-     * description TODO
-     *
-     * @param account 1
-     * @return boolean
-     */
-    boolean registerAccount(AuthUser account);
     /**
      * description TODO
      *

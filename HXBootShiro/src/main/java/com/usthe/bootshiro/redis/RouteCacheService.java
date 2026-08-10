@@ -68,7 +68,9 @@ public class RouteCacheService {
             route.setProtocal(pType);
             route.setVersion(api_version);
             if (isWeight) {
-                route.setVersionWeight(Integer.parseInt(String.valueOf(routeInfo.get("api_version_weightNum"))));
+                // 防御：api_version_weightNum 缺失/为空时默认 1，避免新类型(routeInfo 不完整)启动崩溃
+                Object weightNum = routeInfo.get("api_version_weightNum");
+                route.setVersionWeight(weightNum == null ? 1 : Integer.parseInt(String.valueOf(weightNum)));
             }
             route.setNeedAuth("1".equals(isAuth));
             route.setStratege("1".equals(balance) ? "circle" : "weight");
