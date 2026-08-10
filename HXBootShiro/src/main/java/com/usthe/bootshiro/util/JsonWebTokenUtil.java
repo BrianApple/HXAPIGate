@@ -24,7 +24,21 @@ import java.util.*;
  */
 public class JsonWebTokenUtil {
 
-    public static final String SECRET_KEY = "?::4343fdf4fdf6cvf):";
+    /**
+     * JWT 签名密钥（P0 安全加固：不再硬编码固定值）
+     * 优先取环境变量 HXAPI_JWT_SECRET / 系统属性 hxapigate.jwt.secret，
+     * 由 JwtSecretConfiguration 在启动时注入；下方为纯开发环境兜底值，
+     * 生产环境必须通过 HXAPI_JWT_SECRET 提供强随机密钥。
+     */
+    public static volatile String SECRET_KEY = "HXAPIGate_DEV_ONLY_DEFAULT_SECRET_9daf6b06758fcb0259a2eb0bf24879a0";
+
+    /** 启动时注入 JWT 密钥（Spring 调用） */
+    public static void setSecretKey(String secret) {
+        if (secret != null && !secret.isBlank()) {
+            SECRET_KEY = secret;
+        }
+    }
+
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final int COUNT_2 = 2;
 

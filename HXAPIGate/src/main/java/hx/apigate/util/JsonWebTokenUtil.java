@@ -20,7 +20,24 @@ import java.util.*;
  */
 public class JsonWebTokenUtil {
 
-    public static final String SECRET_KEY = "?::4343fdf4fdf6cvf):";
+    /**
+     * JWT 签名密钥（P0 安全加固：不再硬编码固定值）
+     * 优先级：环境变量 HXAPI_JWT_SECRET > 系统属性 hxapigate.jwt.secret > 开发兜底值。
+     * 必须与管理端 HXBootShiro 使用同一密钥（管理端签发、网关验签）。
+     */
+    public static volatile String SECRET_KEY = initSecretKey();
+
+    private static String initSecretKey() {
+        String env = System.getenv("HXAPI_JWT_SECRET");
+        if (env != null && !env.isBlank()) {
+            return env;
+        }
+        String prop = System.getProperty("hxapigate.jwt.secret");
+        if (prop != null && !prop.isBlank()) {
+            return prop;
+        }
+        return "HXAPIGate_DEV_ONLY_DEFAULT_SECRET_9daf6b06758fcb0259a2eb0bf24879a0";
+    }
     private static final int COUNT_2 = 2;
 
     private JsonWebTokenUtil() {

@@ -1,17 +1,18 @@
 #!/bin/bash
-# HXBootShiro 本地测试启动脚本（不修改提交的 application.yml）
-# --add-opens: Ignite 2.8 在 JDK 21 下需要开放模块访问（P0 过渡期；P4 移除 Ignite 后可去掉）
-export JAVA_HOME=/opt/jdk-21
-cd /data/hermes_files/HXAPIGate/HXBootShiro
+# HXBootShiro 本地开发启动脚本（dev profile）
+# 用法：./start_bootshiro.sh
+# 环境变量（可选）：
+#   HXAPI_JWT_SECRET   生产环境务必设置强随机 JWT 签名密钥（管理端与网关必须一致）
+#   HXAPI_DB_USERNAME  数据库用户名（默认取 application.yml dev 配置）
+#   HXAPI_DB_PASSWORD  数据库口令（默认取 application.yml dev 配置）
+set -e
+cd "$(dirname "$0")/HXBootShiro"
+
+# 生成本地开发 JWT 密钥（首次运行需手动创建 ~/.hxapigate_jwt_secret；生产请用独立强密钥）
+if [ -z "${HXAPI_JWT_SECRET:-}" ] && [ -f ~/.hxapigate_jwt_secret ]; then
+  export HXAPI_JWT_SECRET="$(cat ~/.hxapigate_jwt_secret)"
+fi
+
 exec /opt/jdk-21/bin/java \
-  --add-opens java.base/java.nio=ALL-UNNAMED \
-  --add-opens java.base/java.lang=ALL-UNNAMED \
-  --add-opens java.base/java.util=ALL-UNNAMED \
-  --add-opens java.base/java.lang.reflect=ALL-UNNAMED \
-  --add-opens java.base/sun.nio.ch=ALL-UNNAMED \
-  --add-opens java.base/java.net=ALL-UNNAMED \
   -jar target/HXBootShiro.jar \
-  --spring.datasource.url='jdbc:mysql://127.0.0.1:13306/hxapigate?useUnicode=true&characterEncoding=utf-8&useSSL=false' \
-  --spring.datasource.username=root \
-  --spring.datasource.password=iotgate123 \
-  --server.port=18080
+  --spring.profiles.active=dev

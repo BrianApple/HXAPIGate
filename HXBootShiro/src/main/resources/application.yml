@@ -101,6 +101,12 @@ jasypt:
   encryptor:
     password: e!swhdg&d763jo
 
+# JWT 签名密钥：生产环境必须设置环境变量 HXAPI_JWT_SECRET（64位hex强随机密钥）
+# 默认值为开发环境兜底，严禁用于生产
+hxapigate:
+  jwt:
+    secret: "${HXAPI_JWT_SECRET:}"
+
 
 ---
 # 开发环境配置(配置项只包括环境不同项)
@@ -110,8 +116,8 @@ spring:
         on-profile: dev
     datasource:
       url: jdbc:mysql://127.0.0.1:13306/hxapigate?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true
-      username: hxapigate
-      password: hxapigate2026
+      username: ${HXAPI_DB_USERNAME:hxapigate}
+      password: ${HXAPI_DB_PASSWORD:hxapigate2026}
       driver-class-name: com.mysql.cj.jdbc.Driver
     data:
       redis:
