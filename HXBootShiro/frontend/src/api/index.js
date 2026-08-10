@@ -66,7 +66,7 @@ export function login(appId, password) {
 }
 
 // ---------- API 类型 ----------
-export const getApiTypes = () => postForm('/inner/api/initApiType', { str: 'true' })
+export const getApiTypes = (str = 'true') => postForm('/inner/api/initApiType', { str })
 export const addApiResource = (data, str) => postForm('/inner/api/addApiResource', { data, str })
 export const updateApiResource = (data, str) => postForm('/inner/api/updateApiResource', { data, str })
 export const deleteApiResource = (str) => postForm('/inner/api/deleteApiResource', { str })
