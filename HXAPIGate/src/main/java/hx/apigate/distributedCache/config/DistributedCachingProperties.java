@@ -22,8 +22,8 @@ public class DistributedCachingProperties implements Serializable{
 	 */
 	private String BASIC_SERIALIZATION = "fastJsonSerialize";//当前使用的序列化器
 	
-	//单节点
-	private RedisNodes redis_host = new RedisNodes("127.0.0.1",16379);//节点
+	//单节点（注意：PropertiesFactory 直接 new 本类，DistributeCacheInfo.xml 实际不参与解析，此处即生效配置）
+	private RedisNodes redis_host = new RedisNodes("127.0.0.1",6379);//节点
 	private String redis_password = "OFF";
 	private int redis_timeout = 10000;
 	private int redis_maxIdle =  299;
