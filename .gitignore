@@ -20,6 +20,7 @@ target/
 
 # 临时备份文件
 *.bak
+scripts/ws_shots/
 
 # 运行时日志
 *.log

@@ -87,7 +87,7 @@ public class RouteCacheService {
                     : Integer.parseInt(String.valueOf(routeInfo.get("cb_timeout"))));
 
             List<RouteNode> nodes = new ArrayList<>();
-            if ("http".equals(routeInfo.get("pType")) || "tcp".equals(routeInfo.get("pType")) || "mcp".equals(routeInfo.get("pType"))) {
+            if ("http".equals(routeInfo.get("pType")) || "tcp".equals(routeInfo.get("pType")) || "mcp".equals(routeInfo.get("pType")) || "websocket".equals(routeInfo.get("pType"))) {
                 // 节点数优先取 routeNum 字段，缺失时按字段数推算（兼容旧数据）
                 int routeNum = parseRouteNum(routeInfo, 5);
                 for (int i = 1; i <= routeNum; i++) {
@@ -196,7 +196,7 @@ public class RouteCacheService {
                 : Integer.parseInt(String.valueOf(routeInfo.get("cb_timeout"))));
 
         List<RouteNode> nodes = new ArrayList<>();
-        if ("http".equals(routeInfo.get("pType")) || "tcp".equals(routeInfo.get("pType")) || "mcp".equals(routeInfo.get("pType"))) {
+        if ("http".equals(routeInfo.get("pType")) || "tcp".equals(routeInfo.get("pType")) || "mcp".equals(routeInfo.get("pType")) || "websocket".equals(routeInfo.get("pType"))) {
             // 节点数优先取 routeNum 字段，缺失时按字段数推算（兼容旧数据）
             int routeNum = parseRouteNum(routeInfo, 5);
             for (int i = 1; i <= routeNum; i++) {

@@ -90,7 +90,18 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
     		 
 			Object[] ret = null;
 			try {
-				ret = matchUrl(msg.uri(),msg.method());
+				// WebSocket 握手请求（HTTP GET + Upgrade: websocket）：优先按 WS 协议路由匹配（uri==WS），
+				// 未注册 WS 路由时回退到普通 GET 匹配（例如管理端静态资源/普通接口）
+				HttpMethod matchMethod = msg.method();
+				String upgrade = msg.headers().get("Upgrade");
+				if (upgrade != null && "websocket".equalsIgnoreCase(upgrade)) {
+					matchMethod = HttpMethod.valueOf("WS");
+				}
+				ret = matchUrl(msg.uri(), matchMethod);
+				if(ret == null && !matchMethod.equals(msg.method())) {
+					// WS 路由未命中，回退 GET 匹配
+					ret = matchUrl(msg.uri(), msg.method());
+				}
 				if(ret != null && ret.length == 2 && ret[1] instanceof NodeInfo){
 					NodeInfo node = (NodeInfo)ret[1];
 					// 透传模式：默认开启（HTTP 代理原样转发状态码/headers/body，支持 MCP/SSE 流式）

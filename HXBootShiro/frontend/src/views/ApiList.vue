@@ -18,8 +18,8 @@
       <el-table-column prop="version" label="版本" width="80" />
       <el-table-column label="协议" width="150">
         <template #default="{ row }">
-          <el-tag size="small" :type="protoType(row) === 'mcp' ? 'warning' : protoType(row) === 'tcp' ? 'danger' : ''">
-            {{ protoType(row) === 'dubbo' ? 'Dubbo' : protoType(row) === 'tcp' ? 'TCP' : protoType(row) === 'mcp' ? 'MCP' : 'HTTP' }}
+          <el-tag size="small" :type="protoType(row) === 'mcp' ? 'warning' : protoType(row) === 'tcp' ? 'danger' : protoType(row) === 'websocket' ? 'primary' : ''">
+            {{ protoType(row) === 'dubbo' ? 'Dubbo' : protoType(row) === 'tcp' ? 'TCP' : protoType(row) === 'mcp' ? 'MCP' : protoType(row) === 'websocket' ? 'WebSocket' : 'HTTP' }}
           </el-tag>
           <el-tag v-if="mcpExposed(row)" size="small" type="success" effect="plain" style="margin-left: 4px">MCP工具</el-tag>
         </template>

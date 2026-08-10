@@ -40,6 +40,7 @@
           <el-radio value="http">HTTP</el-radio>
           <el-radio value="mcp">MCP</el-radio>
           <el-radio value="tcp">TCP</el-radio>
+          <el-radio value="websocket">WebSocket</el-radio>
           <el-radio value="dubbo">Dubbo</el-radio>
         </el-radio-group>
       </el-form-item>
@@ -104,8 +105,8 @@ const saving = ref(false)
 const types = ref([])
 const form = ref(emptyForm())
 const routes = ref([{ ip: '', port: '', weight: '', tps: '' }])
-// http/mcp/tcp 均为节点配置型协议（ip:port 列表 + 负载均衡 + TPS），dubbo 为接口服务名型
-const isNodeBased = computed(() => ['http', 'mcp', 'tcp'].includes(form.value.pType))
+// http/mcp/tcp/websocket 均为节点配置型协议（ip:port 列表 + 负载均衡 + TPS），dubbo 为接口服务名型
+const isNodeBased = computed(() => ['http', 'mcp', 'tcp', 'websocket'].includes(form.value.pType))
 
 function emptyForm() {
   return {

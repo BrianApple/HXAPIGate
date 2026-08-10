@@ -21,6 +21,8 @@ public class HXAPIGateConext {
 	public static int PORT = 18081;//HXAPIGate默认端口为18081
 	/** 请求体聚合上限（默认 16MB）：MCP 工具调用参数可能较大，原 1MB 会截断 */
 	public static int MAX_CONTENT_LENGTH = 16 * 1024 * 1024;
+	/** WebSocket 代理空闲超时（秒）：连接空闲超过该时长自动断开，默认 60，可用环境变量 HXAPI_WS_IDLE_TIMEOUT 或 -Dws.idle.timeout 覆盖 */
+	public static int WS_IDLE_TIMEOUT_SECONDS = loadWsIdleTimeout();
 	public static int TPS = 2000;//网关全局限流
 	private static String VERSION = "1.0.0";
 	public static NioEventLoopGroup boss = new NioEventLoopGroup(1);
@@ -36,6 +38,18 @@ public class HXAPIGateConext {
 			}
 		}, 10, TimeUnit.SECONDS);
 
+	}
+
+	private static int loadWsIdleTimeout() {
+		String env = System.getenv("HXAPI_WS_IDLE_TIMEOUT");
+		if (env != null && !env.isBlank()) {
+			return Integer.parseInt(env.trim());
+		}
+		String prop = System.getProperty("ws.idle.timeout");
+		if (prop != null && !prop.isBlank()) {
+			return Integer.parseInt(prop.trim());
+		}
+		return 60;
 	}
 
 }

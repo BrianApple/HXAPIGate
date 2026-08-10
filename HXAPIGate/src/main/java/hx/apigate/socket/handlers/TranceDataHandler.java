@@ -46,7 +46,10 @@ import hx.apigate.dubbo.util.DubboServiceFactory;
 import hx.apigate.hxqueue.HXUnlockedMQ;
 import hx.apigate.socket.BackendHandlerInitializer;
 import hx.apigate.socket.TcpBackendHandlerInitializer;
+import hx.apigate.socket.WebSocketBackendInitializer;
 import hx.apigate.socket.Constance;
+import io.netty.handler.codec.http.websocketx.WebSocketFrame;
+import io.netty.handler.timeout.IdleStateHandler;
 
 /**
  * <p>Description: 透传数据，
@@ -181,8 +184,49 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     	 			}
     	 		}
     	 	});
-    	 }else {
-    		 //dubbo
+   	 }else if(RouteSelectUtil.WEBSOCKET.equals(nodeInfo.getProtocalTemp())) {
+   		 // WebSocket 透传：前端标准 WS ⇄ 后端标准 WS 服务（帧原样透传，TEXT/BINARY 均支持）
+   		 final String patternUri = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
+   		 // 取前端请求路径（去掉 query）作为后端 WS 连接路径
+   		 String rawUri = msg.uri();
+   		 final String backendPath = rawUri.contains("?") ? rawUri.substring(0, rawUri.indexOf('?')) : rawUri;
+   		 final RouteNode wsNode = nodeInfo.getRouteNode();
+   		 // 握手请求 msg 跨 channelRead0 生命周期使用（WebSocketBackendHandler 服务端握手需要），retain 一次，
+   		 // 由 WebSocketBackendHandler 在握手完成/连接断开时 release
+   		 msg.retain();
+   		 // 前端 pipeline 挂空闲超时（可配，默认 60s），超时后由 WebSocketFrontendHandler 关闭双向连接
+   		 webChannel.pipeline().addLast(new IdleStateHandler(HXAPIGateConext.WS_IDLE_TIMEOUT_SECONDS, 0, 0, java.util.concurrent.TimeUnit.SECONDS));
+   		 Bootstrap b = new Bootstrap();
+   		 b.option(ChannelOption.SO_KEEPALIVE, false)
+   		  .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
+   		  .group(webChannel.eventLoop())
+   		  .channel(NioSocketChannel.class)
+   		  .handler(new WebSocketBackendInitializer(webChannel, msg, backendPath));
+   		 ChannelFuture f = b.connect(wsNode.getIp(), wsNode.getPort());
+   		 f.addListener(new ChannelFutureListener() {
+   			 public void operationComplete(ChannelFuture future) throws Exception {
+   				 try {
+   					 if (future.isSuccess()) {
+   						 RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey()).getState().postMethodExecute();
+   						 logger.info("WebSocket 代理后端连接成功: {}:{} -> path {}", wsNode.getIp(), wsNode.getPort(), backendPath);
+   					 } else {
+   						 RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey()).getState().ActUponException();
+   						 logger.error("WebSocket 代理后端连接失败: {}:{}", wsNode.getIp(), wsNode.getPort(), future.cause());
+   						 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(502, "backend websocket connect fail !"));
+   					 }
+   				 } catch (Exception e) {
+   					 logger.error("WebSocket 代理后端连接处理异常", e);
+   				 } finally {
+   					 String routeLimitKey = RouteSelectUtil.selectRouteByUri(patternUri, nodeInfo.getInterfaceVserion());
+   					 if(routeLimitKey != null) {
+   						 RateLimiter.release(routeLimitKey);
+   					 }
+   					 RateLimiter.release(RouteSelectUtil.nodeLimitKey(wsNode, patternUri));
+   				 }
+   			 }
+   		 });
+   	 }else {
+   		 //dubbo
     		 ByteBuf bufferContent = msg.content().copy();
     		 HXUnlockedMQ.sendRunnable(new Runnable() {
 				

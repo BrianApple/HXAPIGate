@@ -1,11 +1,12 @@
 ## 简介
 ### 更新说明
 - 当前：
-    1. 安全加固：JWT 签名密钥外置化（环境变量 `HXAPI_JWT_SECRET` 注入，管理端与网关共用）、数据库口令环境变量化
-    2. 死代码清理：移除 5 个无调用接口（/account/login、/inner/api/islogin、/inner/api/initApiList、/inner/api/initApiByItemIdAndRID、/inner/role/getMenusByRoleId 等）及对应 Service/Mapper 层
-    3. 前端 Vue3 + Element Plus 全面改造（登录页粒子动画、API 两级类型、角色授权双栏等）
-    4. JDK21 + Shiro 3.0 + jjwt 0.12 升级，移除 Ignite 依赖
-    5. 增加接口熔断功能，同时对新增接口的路由信息增加安全限制保障服务运行安全等
+    1. 新增 WebSocket 双向透传代理：管理端协议类型新增 `WebSocket`（节点配置型，含负载均衡/TPS/熔断），网关自动识别 `Upgrade: websocket` 握手并按 WS 方法匹配路由，支持双向帧转发、后端推送、断开传播与可配置空闲超时（`HXAPI_WS_IDLE_TIMEOUT`，默认 60s）
+    2. 安全加固：JWT 签名密钥外置化（环境变量 `HXAPI_JWT_SECRET` 注入，管理端与网关共用）、数据库口令环境变量化
+    3. 死代码清理：移除 5 个无调用接口（/account/login、/inner/api/islogin、/inner/api/initApiList、/inner/api/initApiByItemIdAndRID、/inner/role/getMenusByRoleId 等）及对应 Service/Mapper 层
+    4. 前端 Vue3 + Element Plus 全面改造（登录页粒子动画、API 两级类型、角色授权双栏等）
+    5. JDK21 + Shiro 3.0 + jjwt 0.12 升级，移除 Ignite 依赖
+    6. 增加接口熔断功能，同时对新增接口的路由信息增加安全限制保障服务运行安全等
 
 ### 概念
 HXAPIGate（中文名：浩心API网关）——如果觉得可以请star本项目。
@@ -105,6 +106,46 @@ flowchart LR
 | 工具清单来源 | 后端自行管理 | 网关从 Redis 路由自动生成 tools/list |
 | 典型场景 | 已有 MCP Server 统一收口到网关 | 存量 REST API 资产暴露给 AI 客户端 |
 
+### WebSocket 双向透传代理
+
+HXAPIGate 支持 WebSocket 协议代理：管理端协议类型选择 `WebSocket` 并配置后端节点（IP:端口 + 权重/TPS），网关识别客户端 `Upgrade: websocket` 握手后，与后端建立 WebSocket 连接并双向透传数据帧。
+
+```mermaid
+flowchart LR
+    subgraph C["🧑‍💻 客户端"]
+        W1["WebSocket 客户端<br/>wss://gateway:18081/ws/echo"]
+    end
+
+    subgraph GW2["HXAPIGate 网关（Netty :18081）"]
+        direction TB
+        H1["GatewayServerHandler<br/>识别 Upgrade: websocket<br/>按 WS 方法匹配路由"]
+        F1["WebSocketFrontendHandler<br/>（前端帧转发 + 空闲超时）"]
+        B1["WebSocketBackendHandler<br/>（后端握手完成 → 触发前端升级<br/>帧转发 + 引用释放）"]
+        I1["WebSocketBackendInitializer<br/>（后端 WS 客户端握手）"]
+    end
+
+    subgraph BE["后端服务"]
+        E1["业务 WS 服务<br/>（echo / 推送 / 聊天等）"]
+    end
+
+    C -->|"HTTP Upgrade 请求"| H1
+    H1 -->|"路由匹配（WS 方法）"| F1
+    F1 <-->|"双向帧透传"| B1
+    B1 --> I1
+    I1 -->|"后端 WS 握手"| E1
+```
+
+**特性：**
+
+| 能力 | 说明 |
+|---|---|
+| 双向帧透传 | 客户端 ⇄ 网关 ⇄ 后端全双工转发（文本/二进制帧原样透传） |
+| 后端主动推送 | 后端 WebSocket 主动下发的消息可经网关透传到达客户端 |
+| 断开传播 | 任一端断开，网关自动关闭另一端连接（引用计数释放，无泄漏） |
+| 空闲超时 | 可配置：环境变量 `HXAPI_WS_IDLE_TIMEOUT`（或 JVM 参数 `-Dws.idle.timeout`，默认 60s），超时无消息自动断开双向连接 |
+| 网关能力复用 | 走标准路由链：鉴权 / 限流 / 熔断 / 负载均衡（ROUND_ROBIN / RANDOM / WEIGHTED / TPS_LIMIT） |
+
+**使用方式：** 管理平台 → 接口管理 → 新增API，代理类型选择 `WebSocket`，填写请求路径（如 `/ws/echo`）与后端节点（如 `127.0.0.1:18085`），保存后网关自动生效；客户端直接连接 `ws://网关地址:18081/ws/echo` 即可。
 
 ## 本地启动
 
@@ -154,6 +195,12 @@ mvn -f HXAPIGate/pom.xml package -DskipTests      # 首次需打包
 新增接口功能截图：
 ![新增接口](HXBootShiro/src/main/resources/static/images/addApi.png "addApi.png")
 
+WebSocket 协议接口（接口列表协议标签）：
+![WebSocket 接口列表](HXBootShiro/src/main/resources/static/images/api-list-ws.png "api-list-ws.png")
+
+WebSocket 接口编辑（代理类型选择 WebSocket + 后端节点配置）：
+![WebSocket 接口编辑](HXBootShiro/src/main/resources/static/images/ws-edit-protocol.png "ws-edit-protocol.png")
+
 ### 角色管理
 ![角色管理](HXBootShiro/src/main/resources/static/images/role.png "role.png")
 
@@ -165,7 +212,7 @@ mvn -f HXAPIGate/pom.xml package -DskipTests      # 首次需打包
 1. 授权、鉴权管理（JWT 密钥支持环境变量外置注入）
 2. 路由配置（支持熔断参数 UI 可视化配置：失败阈值/成功阈值/超时毫秒）
 3. 路由负载（轮询和赋权值）
-4. HTTP、dubbo多协议协议
+4. HTTP、dubbo、MCP、TCP、WebSocket 多协议代理（WebSocket 支持双向透传/后端推送/断开传播/可配置空闲超时）
 5. 接口分布式限流（Redis 计数信号量）
 6. 金丝雀发布
 7. 接口熔断（状态机管理，配置值优先于 TPS 自动推导）
