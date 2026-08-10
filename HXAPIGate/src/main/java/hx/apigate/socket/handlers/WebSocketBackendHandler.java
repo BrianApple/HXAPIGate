@@ -93,6 +93,15 @@ public class WebSocketBackendHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof WebSocketFrame) {
             WebSocketFrame frame = (WebSocketFrame) msg;
+            // 后端帧：优先沿用最近请求帧号（一帧=一次业务往返，链路完整）；无则新分配
+            String traceId = inboundChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get();
+            if (traceId != null) TraceUtil.putTraceId(traceId);
+            TraceUtil.putProto("websocket");
+            String lastFrameId = inboundChannel.attr(MixAll.ATTRIBUTEKEY_LAST_FRAME_ID).get();
+            String frameId = (lastFrameId != null && !lastFrameId.isEmpty())
+                    ? TraceUtil.putFrameId(lastFrameId)
+                    : TraceUtil.putNextFrameId(traceId, MixAll.getOrCreateFrameSeq(inboundChannel));
+            logger.info("WS后端帧[{}] {} -> 前端, 内容: {}", frameId, frame.getClass().getSimpleName(), MixAll.describeFrame(frame));
             // 帧引用计数：retain 后跨 channel 转发
             inboundChannel.writeAndFlush(frame.retain());
         } else {

@@ -30,9 +30,20 @@ public class TcpBackendHandler extends ChannelInboundHandlerAdapter {
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         ByteBuf data = (ByteBuf) msg;
+        // 先描述内容再消费（readBytes 会移动 readerIndex）
+        String contentDesc = MixAll.describeBytes(data);
         byte[] bytes = new byte[data.readableBytes()];
         data.readBytes(bytes);
         data.release();
+        // 响应帧沿用请求帧号（一帧=一次请求-响应往返）；无则新分配
+        String connTraceId = inboundChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get();
+        if (connTraceId != null) TraceUtil.putTraceId(connTraceId);
+        TraceUtil.putProto("tcp");
+        String lastFrameId = inboundChannel.attr(MixAll.ATTRIBUTEKEY_LAST_FRAME_ID).get();
+        String frameId = (lastFrameId != null && !lastFrameId.isEmpty())
+                ? TraceUtil.putFrameId(lastFrameId)
+                : TraceUtil.putNextFrameId(connTraceId, MixAll.getOrCreateFrameSeq(inboundChannel));
+        logger.info("TCP响应帧[{}] 内容: {}", frameId, contentDesc);
         FullHttpResponse resp = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK,
                 Unpooled.wrappedBuffer(bytes));
         resp.headers().set(HttpHeaderNames.CONTENT_TYPE, "application/octet-stream");

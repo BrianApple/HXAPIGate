@@ -32,7 +32,7 @@ public class InnerLogController {
     /**
      * 条件搜索日志（分页）
      * 参数（ReqWebData）：
-     *   data[traceId] / data[proto] / data[level] / data[keyword] / data[startTime] / data[endTime]
+     *   data[traceId] / data[proto] / data[level] / data[keyword] / data[startTime] / data[endTime] / data[frameId]
      *   pageIndex / pageSize
      */
     @PostMapping("/search")
@@ -46,10 +46,11 @@ public class InnerLogController {
             String keyword = val(data, "keyword");
             String startTime = val(data, "startTime");
             String endTime = val(data, "endTime");
+            String frameId = val(data, "frameId");
             int pageIndex = parseInt(reqArgs.getPageIndex(), 1);
             int pageSize = parseInt(reqArgs.getPageSize(), 20);
 
-            List<LogEntry> all = logQueryService.search(traceId, proto, level, keyword, startTime, endTime);
+            List<LogEntry> all = logQueryService.search(traceId, proto, level, keyword, startTime, endTime, frameId);
             int total = all.size();
             int from = Math.min((pageIndex - 1) * pageSize, total);
             int to = Math.min(from + pageSize, total);
@@ -64,7 +65,7 @@ public class InnerLogController {
     }
 
     /**
-     * 按 traceId 查询完整请求链路（str=traceId）
+     * 查询完整链路（str=traceId 或 frameId，如 abc123-F0001；帧 ID 自动回溯所属连接链路）
      */
     @PostMapping("/trace")
     @ResponseBody

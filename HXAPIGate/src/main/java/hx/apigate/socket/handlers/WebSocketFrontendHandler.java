@@ -43,12 +43,20 @@ public class WebSocketFrontendHandler extends ChannelInboundHandlerAdapter {
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
         if (msg instanceof WebSocketFrame) {
             WebSocketFrame frame = (WebSocketFrame) msg;
+            // 恢复连接级 traceId / proto（心跳帧不分配帧号，非业务消息）
+            String traceId = ctx.channel().attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get();
+            if (traceId != null) TraceUtil.putTraceId(traceId);
+            TraceUtil.putProto("websocket");
             if (frame instanceof PingWebSocketFrame) {
                 // 前端心跳：回 Pong + 透传后端（保持后端连接活性）
                 ctx.writeAndFlush(new PongWebSocketFrame(frame.content().retain()));
                 backendChannel.writeAndFlush(frame.retain());
                 return;
             }
+            // 业务帧分配帧号（帧级溯源），记录为最近请求帧（后端响应帧沿用）
+            String frameId = TraceUtil.putNextFrameId(traceId, MixAll.getOrCreateFrameSeq(ctx.channel()));
+            ctx.channel().attr(MixAll.ATTRIBUTEKEY_LAST_FRAME_ID).set(frameId);
+            logger.info("WS前端帧[{}] {} -> 后端, 内容: {}", frameId, frame.getClass().getSimpleName(), MixAll.describeFrame(frame));
             // 帧引用计数：retain 后跨 channel 转发
             backendChannel.writeAndFlush(frame.retain());
         } else {

@@ -102,6 +102,8 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 				 if (future.isSuccess()) {
 					 CBManager manager= RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
 					 manager.getState().postMethodExecute();
+					 // HTTP 请求帧：打印方法/URI/请求体内容（与 TCP/WebSocket/Dubbo 帧日志同风格，链路可查具体数据）
+					 logger.info("HTTP请求[{}] {} {} -> 后端 {}:{}, 内容: {}", traceId, msg.method().name(), msg.uri(), nodeInfo.getRouteNode().getIp(), nodeInfo.getRouteNode().getPort(), MixAll.describeBytes(msg.content()));
 					 toMasterChannel.writeAndFlush(msg);
 				 } else {
 					 try {
@@ -176,10 +178,15 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     	 			TraceUtil.putTraceId(webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get());
     	 			TraceUtil.putProto(nodeInfo.getProtocalTemp());
     	 			try {
-    	 				if (future.isSuccess()) {
-    	 					RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey()).getState().postMethodExecute();
-    	 					future.channel().writeAndFlush(body);
-    	 				} else {
+				if (future.isSuccess()) {
+					RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey()).getState().postMethodExecute();
+				// TCP 请求帧：分配帧号并记录（后端响应帧沿用，一帧=一次请求-响应往返）
+				String connTraceId = webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get();
+				String frameId = TraceUtil.putNextFrameId(connTraceId, MixAll.getOrCreateFrameSeq(webChannel));
+				webChannel.attr(MixAll.ATTRIBUTEKEY_LAST_FRAME_ID).set(frameId);
+				logger.info("TCP请求帧[{}] 内容: {} -> 后端 {}:{}", frameId, MixAll.describeBytes(body), nodeInfo.getRouteNode().getIp(), nodeInfo.getRouteNode().getPort());
+					future.channel().writeAndFlush(body);
+				} else {
     	 					body.release();
     	 					RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey()).getState().ActUponException();
     	 					webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(502, "The path you accessed does not work !"));
@@ -247,10 +254,14 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     		 HXUnlockedMQ.sendRunnable(new Runnable() {
 				
 				@Override
-				public void run() {
-					 TraceUtil.putTraceId(webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get());
-					 TraceUtil.putProto("dubbo");
-					 DubboServiceFactory dubbo = DubboServiceFactory.getInstance();
+			public void run() {
+				 TraceUtil.putTraceId(webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get());
+				 TraceUtil.putProto("dubbo");
+			 // Dubbo 调用帧：分配帧号（请求级 traceId + 帧号，可查单次调用链路）
+			 String connTraceId = webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get();
+			 String frameId = TraceUtil.putNextFrameId(connTraceId, MixAll.getOrCreateFrameSeq(webChannel));
+				 logger.info("Dubbo调用帧[{}] -> 服务 {}, 方法 {}", frameId, nodeInfo.getRouteNode().getInterfaceName(), nodeInfo.getMethodName());
+				 DubboServiceFactory dubbo = DubboServiceFactory.getInstance();
 					if (/* genericService != null || */ dubbo != null) {
 		    			 
 		    			 Map<String,Object> allRequestParams = new HashMap();

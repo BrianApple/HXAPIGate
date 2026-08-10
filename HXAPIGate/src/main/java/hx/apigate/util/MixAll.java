@@ -17,6 +17,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
@@ -47,6 +48,86 @@ public class MixAll {
 	public static final AttributeKey<String> ATTRIBUTEKEY_URL = AttributeKey.valueOf("requestUrl");
 	/** 请求溯源 ID（traceId）：HTTP 请求在 GatewayServerHandler 入口生成，随 channel 传递到转发/日志环节 */
 	public static final AttributeKey<String> ATTRIBUTEKEY_TRACE_ID = AttributeKey.valueOf("traceId");
+	/** 连接内帧计数器（AtomicLong）：长连接（websocket/tcp/dubbo）每帧消息递增，生成帧号 frameId（<traceId>-F<序号>） */
+	public static final AttributeKey<AtomicLong> ATTRIBUTEKEY_FRAME_SEQ = AttributeKey.valueOf("frameSeq");
+	/** 最近一次请求帧号（String）：后端响应帧沿用该帧号，实现请求-响应对同帧号（一帧=一次业务往返） */
+	public static final AttributeKey<String> ATTRIBUTEKEY_LAST_FRAME_ID = AttributeKey.valueOf("lastFrameId");
+
+	/** 获取连接内帧计数器（不存在则创建并绑定到 channel attr） */
+	public static AtomicLong getOrCreateFrameSeq(io.netty.channel.Channel ch) {
+		AtomicLong seq = ch.attr(ATTRIBUTEKEY_FRAME_SEQ).get();
+		if (seq == null) {
+			seq = new AtomicLong(0);
+			ch.attr(ATTRIBUTEKEY_FRAME_SEQ).set(seq);
+		}
+		return seq;
+	}
+
+	/** 帧内容描述：文本帧显示 UTF-8 文本（超 200 字符截断），二进制帧显示 hex 预览（超 64 字节截断），控制帧仅显示类型 */
+	public static String describeFrame(io.netty.handler.codec.http.websocketx.WebSocketFrame frame) {
+		if (frame == null) {
+			return "";
+		}
+		if (frame instanceof io.netty.handler.codec.http.websocketx.CloseWebSocketFrame) {
+			return "<close>";
+		}
+		if (frame instanceof io.netty.handler.codec.http.websocketx.PingWebSocketFrame) {
+			return "<ping>";
+		}
+		if (frame instanceof io.netty.handler.codec.http.websocketx.PongWebSocketFrame) {
+			return "<pong>";
+		}
+		io.netty.buffer.ByteBuf buf = frame.content();
+		int len = buf.readableBytes();
+		if (len == 0) {
+			return "<empty>";
+		}
+		if (frame instanceof io.netty.handler.codec.http.websocketx.TextWebSocketFrame) {
+			String text = buf.toString(io.netty.util.CharsetUtil.UTF_8);
+			return len > 200 ? text.substring(0, 200) + "...(" + len + "B)" : text + " (" + len + "B)";
+		}
+		// 二进制帧：hex 预览
+		int show = Math.min(len, 64);
+		byte[] bytes = new byte[show];
+		buf.getBytes(buf.readerIndex(), bytes);
+		StringBuilder sb = new StringBuilder();
+		for (byte b : bytes) {
+			sb.append(String.format("%02X ", b));
+		}
+		return sb.toString().trim() + (len > 64 ? "...(" + len + "B)" : " (" + len + "B)");
+	}
+
+	/** ByteBuf 内容描述：UTF-8 文本（超 200 字符截断）或 hex 预览（超 64 字节截断），用于 TCP 帧日志 */
+	public static String describeBytes(io.netty.buffer.ByteBuf buf) {
+		if (buf == null) {
+			return "";
+		}
+		int len = buf.readableBytes();
+		if (len == 0) {
+			return "<empty>";
+		}
+		byte[] bytes = new byte[len];
+		buf.getBytes(buf.readerIndex(), bytes);
+		// 尝试按 UTF-8 文本显示（可打印字符占比高时）
+		int printable = 0;
+		for (int i = 0; i < Math.min(len, 64); i++) {
+			byte b = bytes[i];
+			if ((b >= 0x20 && b < 0x7F) || b == '\n' || b == '\r' || b == '\t') {
+				printable++;
+			}
+		}
+		if (printable * 10 >= Math.min(len, 64) * 8) {
+			String text = new String(bytes, io.netty.util.CharsetUtil.UTF_8);
+			return len > 200 ? text.substring(0, 200) + "...(" + len + "B)" : text + " (" + len + "B)";
+		}
+		// 二进制：hex 预览
+		int show = Math.min(len, 64);
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < show; i++) {
+			sb.append(String.format("%02X ", bytes[i]));
+		}
+		return sb.toString().trim() + (len > 64 ? "...(" + len + "B)" : " (" + len + "B)");
+	}
 	/** 透传模式标记（true=原始响应透传，不包装 RetMessage；由 Accept: text/event-stream 或 X-HXAPI-Transparent: true 触发，用于 MCP/SSE 流式代理） */
 	public static final AttributeKey<Boolean> ATTRIBUTEKEY_TRANSPARENT = AttributeKey.valueOf("transparent");
 	private static final String CLASS_SUFFIX = ".class";

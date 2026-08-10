@@ -6,6 +6,7 @@ import org.slf4j.LoggerFactory;
 
 import hx.apigate.util.HttpResponseUtil;
 import hx.apigate.util.MixAll;
+import hx.apigate.util.TraceUtil;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
@@ -92,6 +93,12 @@ public class MasterBackHandler extends SimpleChannelInboundHandler<HttpObject> {
     		copyTransparentHeaders(resp.headers(), out.headers());
     		inboundChannel.writeAndFlush(out);
     		headersSent = true;
+    		// 响应链路可查：透传模式打印状态码（body 流式逐 chunk 转发，见 handleContent）
+    		String traceId = inboundChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get();
+    		if (traceId != null) TraceUtil.putTraceId(traceId);
+    		TraceUtil.putProto("http");
+    		logger.info("HTTP响应[{}] 状态 {}（透传流式）", traceId == null ? "--" : traceId, resp.status().code());
+    		TraceUtil.clear();
     	} else {
     		pendingStatus = resp.status();
     		pendingBody = Unpooled.buffer();
@@ -125,6 +132,12 @@ public class MasterBackHandler extends SimpleChannelInboundHandler<HttpObject> {
     		pendingBody.writeBytes(content.content());
     		if (content instanceof LastHttpContent) {
     			HttpResponseStatus status = pendingStatus != null ? pendingStatus : HttpResponseStatus.OK;
+    			// 响应链路可查：聚合模式打印状态码 + 响应体内容（截断预览）
+    			String traceId = inboundChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get();
+    			if (traceId != null) TraceUtil.putTraceId(traceId);
+    			TraceUtil.putProto("http");
+    			logger.info("HTTP响应[{}] 状态 {}, 内容: {}", traceId == null ? "--" : traceId, status.code(), MixAll.describeBytes(pendingBody));
+    			TraceUtil.clear();
     			FullHttpResponse full = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, status, pendingBody);
     			try {
     				// 旧逻辑：RetMessage 统一包装（JSON）
