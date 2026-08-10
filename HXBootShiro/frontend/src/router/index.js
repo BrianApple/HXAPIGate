@@ -11,6 +11,7 @@ const routes = [
       { path: 'welcome', component: () => import('../views/Welcome.vue'), meta: { title: '首页' } },
       { path: 'apiType', component: () => import('../views/ApiType.vue'), meta: { title: 'API类型管理' } },
       { path: 'api', component: () => import('../views/ApiList.vue'), meta: { title: 'API管理' } },
+      { path: 'log', component: () => import('../views/LogSearch.vue'), meta: { title: '日志查询' } },
       { path: 'role', component: () => import('../views/RoleList.vue'), meta: { title: '角色管理' } },
       { path: 'roleAuth/:id', component: () => import('../views/RoleAuth.vue'), meta: { title: '角色授权' } }
     ]

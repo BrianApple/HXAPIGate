@@ -6,6 +6,7 @@
         <el-menu-item index="/welcome"><el-icon><HomeFilled /></el-icon><span>首页</span></el-menu-item>
         <el-menu-item index="/apiType"><el-icon><FolderOpened /></el-icon><span>API类型管理</span></el-menu-item>
         <el-menu-item index="/api"><el-icon><Connection /></el-icon><span>API管理</span></el-menu-item>
+        <el-menu-item index="/log"><el-icon><Document /></el-icon><span>日志查询</span></el-menu-item>
         <el-menu-item index="/role"><el-icon><UserFilled /></el-icon><span>角色管理</span></el-menu-item>
       </el-menu>
     </el-aside>

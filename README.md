@@ -225,6 +225,17 @@ mvn -f HXAPIGate/pom.xml package -DskipTests      # 首次需打包
 新增接口功能截图：
 ![新增接口](HXBootShiro/src/main/resources/static/images/addApi.png "addApi.png")
 
+### 日志查询（请求链路追踪）
+参考主流网关（APISIX/ShenYu）日志页：支持按 **TraceId / 协议 / 级别 / 关键词 / 时间范围** 多条件搜索网关与管理端日志，点击「链路」查看单个请求的完整处理路径（时间线视图，按时间升序贯穿网关转发 + 管理端调用）
+
+![日志查询](HXBootShiro/src/main/resources/static/images/log-search.png "log-search.png")
+
+按 TraceId 检索（示例：websocket 请求的 2 条链路日志）：
+![日志查询-按TraceId检索](HXBootShiro/src/main/resources/static/images/log-search-trace.png "log-search-trace.png")
+
+请求完整链路（时间线：连接建立 → 握手成功，含级别/协议/来源标注）：
+![请求链路](HXBootShiro/src/main/resources/static/images/log-trace-drawer.png "log-trace-drawer.png")
+
 WebSocket 协议接口（接口列表协议标签）：
 ![WebSocket 接口列表](HXBootShiro/src/main/resources/static/images/api-list-ws.png "api-list-ws.png")
 

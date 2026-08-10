@@ -84,6 +84,11 @@ export const updateRoleById = (data, str) => postForm('/inner/role/updateRoleByI
 export const deleteRoleById = (str) => postForm('/inner/role/deleteRoleById', { str })
 export const initRoleByroleId = (str) => postForm('/inner/role/initRoleByroleId', { str })
 
+// ---------- 日志查询 ----------
+export const searchLogs = (data, pageIndex, pageSize) =>
+  postForm('/inner/log/search', { data, pageIndex, pageSize })
+export const traceLogs = (str) => postForm('/inner/log/trace', { str })
+
 // 角色-API 授权
 export const getRestApiByRoleId = (str, pageIndex, pageSize) =>
   postForm('/inner/role/getRestApiByRoleId', { str, pageIndex, pageSize })
