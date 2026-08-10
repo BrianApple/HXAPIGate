@@ -61,20 +61,30 @@ HXAPIGate支持集群部署，支持被代理接口的分布式限流、负载�
 
 ## 操作演示
 
-### 首页（用户名密码为：admin/123456）
-![输入图片说明](HXBootShiro/src/main/resources/static/images/index.png "index.png")
-### 新增接口类别
-接口类别管理==项目管理，是一类API接口的集合
+### 登录（用户名密码为：admin/123456）
+![登录页](HXBootShiro/src/main/resources/static/images/login.png "login.png")
 
-![输入图片说明](HXBootShiro/src/main/resources/static/images/type.png "type.png")
-### 新增接口
+### 首页
+![首页](HXBootShiro/src/main/resources/static/images/index.png "index.png")
+
+### 接口类型管理
+接口类型管理==项目管理，是一类API接口的集合，支持两级结构（父类型 + 子类型）
+
+![类型管理](HXBootShiro/src/main/resources/static/images/type.png "type.png")
+
+### 接口管理
 管理API接口，对API接口的基本信息（路由、负载策略、协议类型等等）进行管理
-![输入图片说明](HXBootShiro/src/main/resources/static/images/api.png "api.png")
+![接口管理](HXBootShiro/src/main/resources/static/images/api.png "api.png")
+
 新增接口功能截图：
-![输入图片说明](HXBootShiro/src/main/resources/static/images/addApi.png "addApi.png")
+![新增接口](HXBootShiro/src/main/resources/static/images/addApi.png "addApi.png")
+
+### 角色管理
+![角色管理](HXBootShiro/src/main/resources/static/images/role.png "role.png")
+
 ### 接口授权
 以角色为桥梁，分别对用户、API接口进行授权
-![输入图片说明](HXBootShiro/src/main/resources/static/images/auth.png "auth.png")
+![接口授权](HXBootShiro/src/main/resources/static/images/auth.png "auth.png")
 
 ### 目前网关已实现功能
 1. 授权、鉴权管理
