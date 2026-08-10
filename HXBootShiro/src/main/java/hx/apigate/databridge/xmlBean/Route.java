@@ -46,6 +46,10 @@ public class Route implements Serializable{
 	 */
 	private boolean needAuth;
 	/**
+	 * 是否暴露为 MCP 工具（MCP 协议转换网关，仅 http 类型支持）
+	 */
+	private boolean mcpExpose;
+	/**
 	 * 配置所有路由
 	 */
 	private List<RouteNode> routeNodes;
@@ -147,6 +151,12 @@ public class Route implements Serializable{
 	}
 	public void setNeedAuth(boolean needAuth) {
 		this.needAuth = needAuth;
+	}
+	public boolean isMcpExpose() {
+		return mcpExpose;
+	}
+	public void setMcpExpose(boolean mcpExpose) {
+		this.mcpExpose = mcpExpose;
 	}
 	public AtomicInteger getIndex() {
 

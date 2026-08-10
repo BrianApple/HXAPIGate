@@ -68,8 +68,13 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     @Override
     protected void channelRead0(ChannelHandlerContext ctx, final FullHttpRequest msg) {
     	 final Channel webChannel = ctx.channel();
-    	 String gateHost = msg.headers().get("Host");
     	 NodeInfo nodeInfo = webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get();
+    	 // 内置 MCP 协议转换端点：不转发后端，由 MCP 网关处理器完成 JSON-RPC 分发
+    	 if (nodeInfo != null && hx.apigate.mcp.McpGatewayHandler.MCP_GATEWAY_PROTOCOL.equals(nodeInfo.getProtocalTemp())) {
+    		 hx.apigate.mcp.McpGatewayHandler.handle(webChannel, msg);
+    		 return;
+    	 }
+    	 String gateHost = msg.headers().get("Host");
    	
    	 if(RouteSelectUtil.HTTP.equals(nodeInfo.getProtocalTemp()) || RouteSelectUtil.MCP.equals(nodeInfo.getProtocalTemp())) {
     		 

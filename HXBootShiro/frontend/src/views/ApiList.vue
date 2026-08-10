@@ -16,11 +16,12 @@
         <template #default="{ row }"><el-tag size="small">{{ row.method }}</el-tag></template>
       </el-table-column>
       <el-table-column prop="version" label="版本" width="80" />
-      <el-table-column label="协议" width="90">
+      <el-table-column label="协议" width="150">
         <template #default="{ row }">
           <el-tag size="small" :type="protoType(row) === 'mcp' ? 'warning' : protoType(row) === 'tcp' ? 'danger' : ''">
             {{ protoType(row) === 'dubbo' ? 'Dubbo' : protoType(row) === 'tcp' ? 'TCP' : protoType(row) === 'mcp' ? 'MCP' : 'HTTP' }}
           </el-tag>
+          <el-tag v-if="mcpExposed(row)" size="small" type="success" effect="plain" style="margin-left: 4px">MCP工具</el-tag>
         </template>
       </el-table-column>
       <el-table-column prop="status" label="状态" width="90">
@@ -88,6 +89,16 @@ function protoType(row) {
     return (info && info.pType) || 'http'
   } catch {
     return 'http'
+  }
+}
+
+// 是否暴露为 MCP 工具（协议转换）
+function mcpExposed(row) {
+  try {
+    const info = row.routeInfo ? JSON.parse(row.routeInfo) : null
+    return !!(info && info.mcp_expose === '1')
+  } catch {
+    return false
   }
 }
 

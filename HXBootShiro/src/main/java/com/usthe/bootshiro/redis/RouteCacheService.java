@@ -73,6 +73,9 @@ public class RouteCacheService {
                 route.setVersionWeight(weightNum == null ? 1 : Integer.parseInt(String.valueOf(weightNum)));
             }
             route.setNeedAuth("1".equals(isAuth));
+            // 是否暴露为 MCP 工具（协议转换，默认不暴露）
+            Object mcpExposeVal = routeInfo.get("mcp_expose");
+            route.setMcpExpose(mcpExposeVal != null && "1".equals(String.valueOf(mcpExposeVal)));
             route.setStratege("1".equals(balance) ? "circle" : "weight");
             route.setAllTps(Integer.parseInt(all_tps));
             // 熔断配置（可选，0=网关自动推导）
@@ -179,6 +182,9 @@ public class RouteCacheService {
             route.setVersionWeight(weightNum == null ? 1 : Integer.parseInt(String.valueOf(weightNum)));
         }
         route.setNeedAuth("1".equals(isAuth));
+        // 是否暴露为 MCP 工具（协议转换，默认不暴露）
+        Object mcpExposeVal = routeInfo.get("mcp_expose");
+        route.setMcpExpose(mcpExposeVal != null && "1".equals(String.valueOf(mcpExposeVal)));
         route.setStratege("1".equals(balance) ? "circle" : "weight");
         route.setAllTps(Integer.parseInt(all_tps));
         // 熔断配置（可选，0=网关自动推导）

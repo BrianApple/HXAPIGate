@@ -57,6 +57,24 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
     	 if(msg.method().equals(HttpMethod.OPTIONS)) {
     		 HttpResponseUtil.responseMsg(webChannel, null);
     	 }else {
+    		 // 内置 MCP 协议转换端点（/mcp）：不参与路由匹配，构造伪节点走鉴权链后由 TranceDataHandler 分流
+    		 String rawUri = msg.uri();
+    		 String pathOnly = rawUri.contains("?") ? rawUri.substring(0, rawUri.indexOf('?')) : rawUri;
+    		 if (hx.apigate.mcp.McpGatewayHandler.MCP_ENDPOINT.equals(pathOnly) && msg.method().equals(HttpMethod.POST)) {
+    			 try {
+    				 NodeInfo mcpNode = new NodeInfo("v1.0", hx.apigate.mcp.McpGatewayHandler.MCP_GATEWAY_PROTOCOL,
+    						 new RouteNode(), rawUri, true, "mcp-gateway-cb");
+    				 webChannel.attr(MixAll.ATTRIBUTEKEY_URL).set(hx.apigate.mcp.McpGatewayHandler.MCP_ENDPOINT + "==POST");
+    				 webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).set(mcpNode);
+    				 webChannel.attr(MixAll.ATTRIBUTEKEY_TRANSPARENT).set(true);
+    				 msg.retain();
+    				 ctx.fireChannelRead(msg);
+    				 return;
+    			 } catch (Exception e) {
+    				 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(500, "MCP gateway error: " + e.getMessage()));
+    				 return;
+    			 }
+    		 }
     		 String localHost = msg.headers().get(hx.apigate.socket.Constance.HOST);
     		 InetSocketAddress webAddress = (InetSocketAddress)webChannel.remoteAddress();
     		 StringBuilder sb ;

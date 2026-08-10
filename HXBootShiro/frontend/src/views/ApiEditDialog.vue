@@ -43,6 +43,10 @@
           <el-radio value="dubbo">Dubbo</el-radio>
         </el-radio-group>
       </el-form-item>
+      <el-form-item v-if="form.pType === 'http'" label="暴露为MCP工具">
+        <el-switch v-model="form.mcp_expose" active-value="1" inactive-value="0" />
+        <span class="mcp-tip">开启后，MCP 客户端可通过网关 /mcp 端点调用此接口（自动协议转换）</span>
+      </el-form-item>
       <el-form-item v-if="isNodeBased" label="负载均衡">
         <el-select v-model="form.balance" style="width: 100%">
           <el-option v-for="b in ['ROUND_ROBIN', 'RANDOM', 'WEIGHTED', 'TPS_LIMIT']" :key="b" :label="b" :value="b" />
@@ -108,6 +112,7 @@ function emptyForm() {
     id: null, interface_name: '', url_val: '', api_Type: null,
     request_method: 'POST', api_version: 'v1.0', state: 1, isAuth: 1,
     pType: 'http', balance: 'ROUND_ROBIN', all_tps: '', route_tps: '',
+    mcp_expose: '0',
     route_InterfaceName: '',
     cb_fail_threshold: '', cb_success_threshold: '', cb_timeout: ''
   }
@@ -135,6 +140,7 @@ function open(row) {
         if (info.all_tps !== undefined) form.value.all_tps = info.all_tps
         if (info.route_tps !== undefined) form.value.route_tps = info.route_tps
         if (info.route_InterfaceName) form.value.route_InterfaceName = info.route_InterfaceName
+        if (info.mcp_expose !== undefined) form.value.mcp_expose = String(info.mcp_expose)
         if (info.cb_fail_threshold !== undefined && info.cb_fail_threshold !== null) form.value.cb_fail_threshold = info.cb_fail_threshold
         if (info.cb_success_threshold !== undefined && info.cb_success_threshold !== null) form.value.cb_success_threshold = info.cb_success_threshold
         if (info.cb_timeout !== undefined && info.cb_timeout !== null) form.value.cb_timeout = info.cb_timeout
@@ -168,6 +174,9 @@ function buildData() {
     state: String(form.value.state),
     isAuth: String(form.value.isAuth),
     pType: form.value.pType
+  }
+  if (form.value.pType === 'http' && form.value.mcp_expose === '1') {
+    d.mcp_expose = '1'
   }
   if (isNodeBased.value) {
     d.balance = form.value.balance
@@ -227,4 +236,5 @@ defineExpose({ open })
 
 <style scoped>
 .route-row { display: flex; gap: 8px; width: 100%; align-items: center; }
+.mcp-tip { margin-left: 8px; font-size: 12px; color: #909399; }
 </style>
