@@ -75,6 +75,13 @@ public class RouteCacheService {
             route.setNeedAuth("1".equals(isAuth));
             route.setStratege("1".equals(balance) ? "circle" : "weight");
             route.setAllTps(Integer.parseInt(all_tps));
+            // 熔断配置（可选，0=网关自动推导）
+            route.setCbFailThreshold(routeInfo.get("cb_fail_threshold") == null ? 0
+                    : Integer.parseInt(String.valueOf(routeInfo.get("cb_fail_threshold"))));
+            route.setCbSuccessThreshold(routeInfo.get("cb_success_threshold") == null ? 0
+                    : Integer.parseInt(String.valueOf(routeInfo.get("cb_success_threshold"))));
+            route.setCbTimeout(routeInfo.get("cb_timeout") == null ? 0
+                    : Integer.parseInt(String.valueOf(routeInfo.get("cb_timeout"))));
 
             List<RouteNode> nodes = new ArrayList<>();
             if ("http".equals(routeInfo.get("pType"))) {
@@ -166,11 +173,20 @@ public class RouteCacheService {
         route.setProtocal(pType);
         route.setVersion(api_version);
         if (isWeight) {
-            route.setVersionWeight(Integer.parseInt(String.valueOf(routeInfo.get("api_version_weightNum"))));
+            // 防御：api_version_weightNum 缺失/为空时默认 1（与 initApiRouteInfo 全量方法保持一致）
+            Object weightNum = routeInfo.get("api_version_weightNum");
+            route.setVersionWeight(weightNum == null ? 1 : Integer.parseInt(String.valueOf(weightNum)));
         }
         route.setNeedAuth("1".equals(isAuth));
         route.setStratege("1".equals(balance) ? "circle" : "weight");
         route.setAllTps(Integer.parseInt(all_tps));
+        // 熔断配置（可选，0=网关自动推导）
+        route.setCbFailThreshold(routeInfo.get("cb_fail_threshold") == null ? 0
+                : Integer.parseInt(String.valueOf(routeInfo.get("cb_fail_threshold"))));
+        route.setCbSuccessThreshold(routeInfo.get("cb_success_threshold") == null ? 0
+                : Integer.parseInt(String.valueOf(routeInfo.get("cb_success_threshold"))));
+        route.setCbTimeout(routeInfo.get("cb_timeout") == null ? 0
+                : Integer.parseInt(String.valueOf(routeInfo.get("cb_timeout"))));
 
         List<RouteNode> nodes = new ArrayList<>();
         if ("http".equals(routeInfo.get("pType"))) {

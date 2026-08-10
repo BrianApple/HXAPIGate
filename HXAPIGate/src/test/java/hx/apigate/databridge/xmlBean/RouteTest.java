@@ -101,5 +101,22 @@ public class RouteTest {
         assertEquals("权重 5 保持 5", 5, c3);
     }
 
+    @Test
+    public void testCircuitBreakerFieldsDefaultZero() {
+        List<RouteNode> nodes = new ArrayList<>();
+        nodes.add(node("10.0.0.1", 8081, 1, 50));
+        Route route = routeWithNodes(nodes, WEIGHT_VALUE);
+        assertEquals("熔断失败阈值默认 0（自动推导）", 0, route.getCbFailThreshold());
+        assertEquals("熔断成功阈值默认 0（自动推导）", 0, route.getCbSuccessThreshold());
+        assertEquals("熔断超时默认 0（自动推导）", 0, route.getCbTimeout());
+
+        route.setCbFailThreshold(5);
+        route.setCbSuccessThreshold(3);
+        route.setCbTimeout(2000);
+        assertEquals(5, route.getCbFailThreshold());
+        assertEquals(3, route.getCbSuccessThreshold());
+        assertEquals(2000, route.getCbTimeout());
+    }
+
     private static final String WEIGHT_VALUE = "weight";
 }

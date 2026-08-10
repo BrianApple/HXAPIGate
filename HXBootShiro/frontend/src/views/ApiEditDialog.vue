@@ -69,6 +69,17 @@
       <el-form-item v-if="form.pType === 'dubbo'" label="接口服务名">
         <el-input v-model="form.route_InterfaceName" placeholder="如：com.hx.api.DeviceService" />
       </el-form-item>
+
+      <el-divider content-position="left">熔断配置（留空=网关按TPS自动推导）</el-divider>
+      <el-form-item label="失败阈值">
+        <el-input v-model="form.cb_fail_threshold" placeholder="如：10（连续失败N次后熔断）" />
+      </el-form-item>
+      <el-form-item label="恢复成功阈值">
+        <el-input v-model="form.cb_success_threshold" placeholder="如：5（半开状态连续成功N次恢复）" />
+      </el-form-item>
+      <el-form-item label="熔断超时(ms)">
+        <el-input v-model="form.cb_timeout" placeholder="如：3000（熔断打开持续时间）" />
+      </el-form-item>
     </el-form>
     <template #footer>
       <el-button @click="visible = false">取消</el-button>
@@ -93,7 +104,8 @@ function emptyForm() {
     id: null, interface_name: '', url_val: '', api_Type: null,
     request_method: 'POST', api_version: 'v1.0', state: 1, isAuth: 1,
     pType: 'http', balance: 'ROUND_ROBIN', all_tps: '', route_tps: '',
-    route_InterfaceName: ''
+    route_InterfaceName: '',
+    cb_fail_threshold: '', cb_success_threshold: '', cb_timeout: ''
   }
 }
 
@@ -119,6 +131,9 @@ function open(row) {
         if (info.all_tps !== undefined) form.value.all_tps = info.all_tps
         if (info.route_tps !== undefined) form.value.route_tps = info.route_tps
         if (info.route_InterfaceName) form.value.route_InterfaceName = info.route_InterfaceName
+        if (info.cb_fail_threshold !== undefined && info.cb_fail_threshold !== null) form.value.cb_fail_threshold = info.cb_fail_threshold
+        if (info.cb_success_threshold !== undefined && info.cb_success_threshold !== null) form.value.cb_success_threshold = info.cb_success_threshold
+        if (info.cb_timeout !== undefined && info.cb_timeout !== null) form.value.cb_timeout = info.cb_timeout
         const rs = []
         for (let i = 1; i <= (info.routeNum || 0); i++) {
           rs.push({
@@ -165,6 +180,10 @@ function buildData() {
   } else {
     if (form.value.route_InterfaceName) d.route_InterfaceName = form.value.route_InterfaceName
   }
+  // 熔断配置（可选）
+  if (form.value.cb_fail_threshold !== '') d.cb_fail_threshold = form.value.cb_fail_threshold
+  if (form.value.cb_success_threshold !== '') d.cb_success_threshold = form.value.cb_success_threshold
+  if (form.value.cb_timeout !== '') d.cb_timeout = form.value.cb_timeout
   return d
 }
 

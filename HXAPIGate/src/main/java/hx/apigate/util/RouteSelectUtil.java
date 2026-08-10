@@ -80,6 +80,35 @@ public class RouteSelectUtil {
         return null;
     }
     /**
+     * 构建节点熔断管理器（P2 增强：优先使用 route 配置的熔断参数，未配置则按 tps 自动推导）
+     * @param circleBreakKey 熔断缓存 key
+     * @param node           路由节点
+     * @param route          路由（可含 cbFailThreshold/cbSuccessThreshold/cbTimeout 配置，0=自动）
+     * @return CBManager
+     */
+    private static CBManager buildCBManager(String circleBreakKey, RouteNode node, Route route) {
+        int failThreshold = route != null && route.getCbFailThreshold() > 0 ? route.getCbFailThreshold()
+                : (node.getIntTps() < 2 ? 1 : (node.getIntTps() > 100 ? 50 : node.getIntTps() >> 1));
+        int successThreshold = route != null && route.getCbSuccessThreshold() > 0 ? route.getCbSuccessThreshold()
+                : (node.getIntTps() < 5 ? 1 : (node.getIntTps() > 100 ? 20 : node.getIntTps() >> 2));
+        int timeout = route != null && route.getCbTimeout() > 0 ? route.getCbTimeout() : 1000;
+        return new CBManager(circleBreakKey, failThreshold, successThreshold, timeout);
+    }
+
+    /**
+     * 获取（或创建）节点熔断管理器，带缓存
+     */
+    private static CBManager getOrCreateCBManager(String circleBreakKey, RouteNode node, Route route) {
+        CBManager manager = RedisUtil.getCircleBreakCache().get(circleBreakKey);
+        if (manager == null) {
+            manager = buildCBManager(circleBreakKey, node, route);
+            RedisUtil.getCircleBreakCache().putIfAbsent(circleBreakKey, manager);
+            manager = RedisUtil.getCircleBreakCache().get(circleBreakKey);
+        }
+        return manager;
+    }
+
+    /**
      * 根据获取到的url的pattern 获取规约类型并返回路由信息
      * @param sourceUrl  请求的url(全路径，包含get请求的参数)
      * @param sourceUrlTemp  将get请求的url中的参数截取掉，剩下简单的路径<br>
@@ -105,14 +134,7 @@ public class RouteSelectUtil {
                         if(RateLimiter.tryAcquire(nodeLimitKey, node.getIntTps())) {
                             String circleBreakKey = new StringBuilder(route.getMatchUrl()).append(route.getVersion())
                                     .append(node.getIp()).append(node.getPort()).toString();
-                            CBManager manager = null;
-                            if(!RedisUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
-                                manager = new CBManager(circleBreakKey,node.getIntTps() < 2 ? 1 : (node.getIntTps() > 100 ? 50 : node.getIntTps() >> 1),
-                                        node.getIntTps() < 5? 1 : (node.getIntTps() > 100 ? 20 : node.getIntTps() >> 2), 1000);
-                                RedisUtil.getCircleBreakCache().putIfAbsent(circleBreakKey, manager);
-                            }else {
-                                manager = RedisUtil.getCircleBreakCache().get(circleBreakKey);
-                            }
+                            CBManager manager = getOrCreateCBManager(circleBreakKey, node, route);
                             try {
                                 manager.getState().preMethodExecute();
                             } catch (CircleBreakException e) {
@@ -132,14 +154,7 @@ public class RouteSelectUtil {
                             if(RateLimiter.tryAcquire(nodeLimitKey, node.getIntTps())) {
                                 String circleBreakKey = new StringBuilder(route.getMatchUrl()).append(route.getVersion())
                                         .append(node.getIp()).append(node.getPort()).toString();
-                                CBManager manager = null;
-                                if(!RedisUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
-                                    manager = new CBManager(circleBreakKey,node.getIntTps() < 2 ? 1 : (node.getIntTps() > 100 ? 50 : node.getIntTps() >> 1),
-                                            node.getIntTps() < 5? 1 : (node.getIntTps() > 100 ? 20 : node.getIntTps() >> 2), 1000);
-                                    RedisUtil.getCircleBreakCache().putIfAbsent(circleBreakKey, manager);
-                                }else {
-                                    manager = RedisUtil.getCircleBreakCache().get(circleBreakKey);
-                                }
+                                CBManager manager = getOrCreateCBManager(circleBreakKey, node, route);
                                 try {
                                     manager.getState().preMethodExecute();
                                 } catch (CircleBreakException e) {
@@ -164,14 +179,7 @@ public class RouteSelectUtil {
                         if(RateLimiter.tryAcquire(nodeLimitKey, node.getIntTps())) {
                             String circleBreakKey = new StringBuilder(route.getMatchUrl()).append(route.getVersion())
                                     .append(node.getInterfaceName()).toString();
-                            CBManager manager = null;
-                            if(!RedisUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
-                                manager = new CBManager(circleBreakKey,node.getIntTps() < 2 ? 1 : (node.getIntTps() > 100 ? 50 : node.getIntTps() >> 1),
-                                        node.getIntTps() < 5? 1 : (node.getIntTps() > 100 ? 20 : node.getIntTps() >> 2), 1000);
-                                RedisUtil.getCircleBreakCache().putIfAbsent(circleBreakKey, manager);
-                            }else {
-                                manager = RedisUtil.getCircleBreakCache().get(circleBreakKey);
-                            }
+                            CBManager manager = getOrCreateCBManager(circleBreakKey, node, route);
                             try {
                                 manager.getState().preMethodExecute();
                             } catch (CircleBreakException e) {
@@ -189,14 +197,7 @@ public class RouteSelectUtil {
                     if(RateLimiter.tryAcquire(nodeLimitKey, node.getIntTps())) {
                         String circleBreakKey = new StringBuilder(route.getMatchUrl()).append(route.getVersion())
                                 .append(node.getInterfaceName()).toString();
-                        CBManager manager = null;
-                        if(!RedisUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
-                            manager = new CBManager(circleBreakKey,node.getIntTps() < 2 ? 1 : (node.getIntTps() > 100 ? 50 : node.getIntTps() >> 1),
-                                    node.getIntTps() < 5? 1 : (node.getIntTps() > 100 ? 20 : node.getIntTps() >> 2), 1000);
-                            RedisUtil.getCircleBreakCache().putIfAbsent(circleBreakKey, manager);
-                        }else {
-                            manager = RedisUtil.getCircleBreakCache().get(circleBreakKey);
-                        }
+                        CBManager manager = getOrCreateCBManager(circleBreakKey, node, route);
                         try {
                             manager.getState().preMethodExecute();
                         } catch (CircleBreakException e) {

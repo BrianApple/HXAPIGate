@@ -26,6 +26,15 @@ public class Route implements Serializable{
 	 */
 	private String stratege;
 	/**
+	 * 熔断配置（P2 增强：0=自动推导，>0 时优先使用）
+	 *  - cbFailThreshold: 熔断失败阈值（默认 = tps<2?1:(tps>100?50:tps>>1)）
+	 *  - cbSuccessThreshold: 半开连续成功恢复阈值（默认 = tps<5?1:(tps>100?20:tps>>2)）
+	 *  - cbTimeout: 熔断打开持续时间 ms（默认 1000）
+	 */
+	private int cbFailThreshold;
+	private int cbSuccessThreshold;
+	private int cbTimeout;
+	/**
 	 * 通讯规约--http/dubbo
 	 * 当规约类型未dubbo时，不再需要配置路径routeNodes，dubbo本身自动实现路由发现和负载等特性
 	 */
@@ -161,6 +170,30 @@ public class Route implements Serializable{
 
 	public void setAllTps(int allTps) {
 		this.allTps = allTps;
+	}
+
+	public int getCbFailThreshold() {
+		return cbFailThreshold;
+	}
+
+	public void setCbFailThreshold(int cbFailThreshold) {
+		this.cbFailThreshold = cbFailThreshold;
+	}
+
+	public int getCbSuccessThreshold() {
+		return cbSuccessThreshold;
+	}
+
+	public void setCbSuccessThreshold(int cbSuccessThreshold) {
+		this.cbSuccessThreshold = cbSuccessThreshold;
+	}
+
+	public int getCbTimeout() {
+		return cbTimeout;
+	}
+
+	public void setCbTimeout(int cbTimeout) {
+		this.cbTimeout = cbTimeout;
 	}
 
 
