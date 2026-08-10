@@ -61,6 +61,34 @@ springCloud的原因就是因为考虑到很多公司遗留的一些历史问题
 HXAPIGate支持集群部署，支持被代理接口的分布式限流、负载等。分布式部署时网关节点通过 Redis 进行分布式限流与配置同步，管理平台（HXBootShiro）负责 API 路由与鉴权规则的统一管理（已移除对 Ignite 的依赖）。
 ![输入图片说明](HXBootShiro/src/main/resources/static/images/HXAPIGate3D.png)
 
+## 本地启动
+
+### 环境依赖
+- **JDK 21**（网关与管理端均要求）
+- **MySQL**（默认 127.0.0.1:13306，库名 `hxapigate`，脚本 `HXBootShiro/hxapigatev2.0.sql`）
+- **Redis**（默认 127.0.0.1:6379，路由缓存与分布式限流）
+
+### 1. 启动管理端（HXBootShiro）
+```bash
+mvn -f HXBootShiro/pom.xml package -DskipTests   # 首次需打包
+./start_bootshiro.sh
+```
+- 管理平台地址：http://localhost:18080/static/index.html
+- 默认账号：`admin / 123456`
+
+### 2. 启动网关（HXAPIGate）
+```bash
+mvn -f HXAPIGate/pom.xml package -DskipTests      # 首次需打包
+./start_gateway.sh
+```
+- 网关启动后自动从 Redis 拉取管理端下发的 API 路由与熔断/限流配置
+
+### 环境变量（可选）
+| 变量 | 说明 |
+|---|---|
+| `HXAPI_JWT_SECRET` | JWT 签名密钥，**生产环境务必设置强随机值**，管理端与网关必须一致；本地开发可写入 `~/.hxapigate_jwt_secret` |
+| `HXAPI_DB_USERNAME` / `HXAPI_DB_PASSWORD` | 数据库凭据（默认取 application.yml dev 配置） |
+
 ## 操作演示
 
 ### 登录（用户名密码为：admin/123456）
@@ -89,17 +117,21 @@ HXAPIGate支持集群部署，支持被代理接口的分布式限流、负载�
 ![接口授权](HXBootShiro/src/main/resources/static/images/auth.png "auth.png")
 
 ### 目前网关已实现功能
-1. 授权、鉴权管理
-2. 路由配置
-3. 路由负载（轮寻和赋权值）
+1. 授权、鉴权管理（JWT 密钥支持环境变量外置注入）
+2. 路由配置（支持熔断参数 UI 可视化配置：失败阈值/成功阈值/超时毫秒）
+3. 路由负载（轮询和赋权值）
 4. HTTP、dubbo多协议协议
-5. 接口分布式限流
+5. 接口分布式限流（Redis 计数信号量）
 6. 金丝雀发布
-7. 接口熔断
+7. 接口熔断（状态机管理，配置值优先于 TPS 自动推导）
+8. 管理平台首页统计（ECharts 类型分布/接口状态图表）
+9. 网关核心单元测试（限流/负载均衡/熔断状态机）
 
 ### 项目进度
- 目前HXAPIGate网关对API接口的管理已经基本开发完成，后续主要对API接口支持代理的协议以及网关bug进行扩展和完善
+目前HXAPIGate网关对API接口的管理已经基本开发完成，后续主要对API接口支持代理的协议以及网关bug进行扩展和完善
 同时将对管理平台的功能进行扩展，提供更加丰富多元的管理功能
+
+已完成一轮安全加固与质量优化：JWT 密钥与数据库口令环境变量化、死代码清理（−423 行）、网关核心单测补充（14 用例全通过）、API 熔断配置 UI 全链路打通、首页统计可视化升级。
 
 ### 相关博文
 
