@@ -1,8 +1,8 @@
 package com.usthe.bootshiro.shiro.filter;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.usthe.bootshiro.domain.vo.Message;
-import com.usthe.bootshiro.ignite.IgniteAutoConfig;
+import com.usthe.bootshiro.redis.RouteCacheService;
 import com.usthe.bootshiro.service.AccountService;
 import com.usthe.bootshiro.shiro.token.JwtToken;
 import com.usthe.bootshiro.support.factory.LogTaskFactory;
@@ -20,9 +20,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.util.StringUtils;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +41,7 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
 
     private StringRedisTemplate redisTemplate;
     
-    private IgniteAutoConfig igniteAutoConfig;
+    private RouteCacheService routeCacheService;
     private AccountService accountService;
 
     @Override
@@ -72,7 +72,7 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
                     String userId = map.get("userId");
                     String jwt = map.get("jwt");
                     
-                    Object refreshJwt = igniteAutoConfig.getJWTSessionData("JWT-SESSION-"+userId);
+                    Object refreshJwt = routeCacheService.getJWTSessionData("JWT-SESSION:"+userId);
 //                    String refreshJwt = redisTemplate.opsForValue().get("JWT-SESSION-"+userId);
                     if (null != refreshJwt && refreshJwt.equals(jwt)) {
                         // 重新申请新的JWT
@@ -82,8 +82,8 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
                         long refreshPeriodTime = 36000L;
                         String newJwt = JsonWebTokenUtil.issueJWT(UUID.randomUUID().toString(),userId,
                                 "token-server",refreshPeriodTime >> 1,roles,null, SignatureAlgorithm.HS512);
-                        // 将签发的JWT存储到ignite： {JWT-SESSION-{userId} , jwt}
-                        igniteAutoConfig.cacheJWTSessionData(refreshPeriodTime, "JWT-SESSION-"+userId, newJwt);
+                        // 将签发的JWT存储到redis： {JWT-SESSION:{userId} , jwt}
+                        routeCacheService.cacheJWTSessionData(refreshPeriodTime, "JWT-SESSION:"+userId, newJwt);
                         Message message = new Message().ok(201,"new jwt").addData("jwt",newJwt);
                         RequestResponseUtil.responseWrite(JSON.toJSONString(message),servletResponse);
                         return false;
@@ -177,8 +177,8 @@ public class BonJwtFilter extends AbstractPathMatchingFilter {
     }
 
 
-	public void setIgniteAutoConfig(IgniteAutoConfig igniteAutoConfig) {
-		this.igniteAutoConfig = igniteAutoConfig;
+	public void setRouteCacheService(RouteCacheService routeCacheService) {
+		this.routeCacheService = routeCacheService;
 	}
     
     

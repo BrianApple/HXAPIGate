@@ -13,11 +13,9 @@ import java.net.SocketAddress;
 import java.util.Map;
 import java.util.stream.Stream;
 
-import javax.servlet.ServletRequest;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 
-import org.apache.ignite.IgniteCache;
-import org.apache.ignite.IgniteSemaphore;
 import org.apache.shiro.SecurityUtils;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -32,8 +30,9 @@ import hx.apigate.authorization.shiro.databridge.JwtToken;
 import hx.apigate.databridge.NodeInfo;
 import hx.apigate.databridge.xmlBean.RouteNode;
 import hx.apigate.util.CacheUtil;
-import hx.apigate.util.IgniteUtil;
 import hx.apigate.util.MixAll;
+import hx.apigate.util.RateLimiter;
+import hx.apigate.util.RedisUtil;
 import hx.apigate.util.RouteSelectUtil;
 import hx.apigate.util.StringUtils;
 
@@ -65,18 +64,18 @@ public class AuthorizationHandler extends SimpleChannelInboundHandler<FullHttpRe
         		 sub.login(token);
         		 StringBuilder sb = new StringBuilder(Constance.API_RESOURCE_ROLE);
             	 sb.append(url);
-            	 IgniteCache<String,String> cache =IgniteUtil.getAPIAuthCache();
-            	 String roles = cache.get(sb.toString());
+            	 String roles = RedisUtil.getAuthRule(sb.toString());
         		 /**
         		  * 无权访问
         		  */
         		 if(roles == null || !checkRoles(sub,roles)) {
         			 String patternUri = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
-        			 IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
-					 if(semaphore != null) {
-						 semaphore.release();
+        			 String routeLimitKey = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
+					 if(routeLimitKey != null) {
+						 RateLimiter.release(routeLimitKey);
 					 }
-					 webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode().getTps().release();
+					 RouteNode routeNode = webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode();
+					 RateLimiter.release(RouteSelectUtil.nodeLimitKey(routeNode, patternUri));
         			 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(403, "对不起，您无权进行此操作 !"));
         		 }else {
         			 msg.retain();
@@ -85,11 +84,12 @@ public class AuthorizationHandler extends SimpleChannelInboundHandler<FullHttpRe
     		 }catch(AuthenticationException e) {
     			 e.printStackTrace();
     			 String patternUri = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
-    			 IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
-				 if(semaphore != null) {
-					 semaphore.release();
+    			 String routeLimitKey = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
+				 if(routeLimitKey != null) {
+					 RateLimiter.release(routeLimitKey);
 				 }
-				webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode().getTps().release();
+				 RouteNode routeNode = webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode();
+				 RateLimiter.release(RouteSelectUtil.nodeLimitKey(routeNode, patternUri));
     			 ctx.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(400, e.getMessage()));
     		 }
     	 }else {

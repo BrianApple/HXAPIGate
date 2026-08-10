@@ -14,31 +14,21 @@
 	<parent>
 		<groupId>org.springframework.boot</groupId>
 		<artifactId>spring-boot-starter-parent</artifactId>
-		<version>2.1.8.RELEASE</version>
+		<version>3.5.16</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
 
 	<properties>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 		<project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-		<java.version>1.8</java.version>
-		<mybatis.spring.boot.version>1.3.1</mybatis.spring.boot.version>
-		<druid.version>1.1.6</druid.version>
-		<pagehelper.version>1.2.4</pagehelper.version>
-		<mybatis-generator.version>2.0.1</mybatis-generator.version>
-		<shiro.version>1.3.2</shiro.version>
-		<fastjson.version>1.2.38</fastjson.version>
-		<jjwt.version>0.9.0</jjwt.version>
-		<mysql.version>5.1.6</mysql.version>
-
-
-		<junit.version>4.12</junit.version>
-		<log4j.version>1.2.16</log4j.version>
-		<slf4j.version>1.7.5</slf4j.version>
-		<commons-logging.version>1.2</commons-logging.version>
-		<commons-fileupload.version>1.2.1</commons-fileupload.version>
-		<commons-io.version>1.3.2</commons-io.version>
-		<commons-lang.version>2.6</commons-lang.version>
+		<java.version>21</java.version>
+		<mybatis.spring.boot.version>3.0.4</mybatis.spring.boot.version>
+		<druid.version>1.2.28</druid.version>
+		<pagehelper.version>6.1.1</pagehelper.version>
+		<shiro.version>3.0.0</shiro.version>
+		<fastjson2.version>2.0.64</fastjson2.version>
+		<jjwt.version>0.12.6</jjwt.version>
+		<commons-codec.version>1.18.0</commons-codec.version>
 	</properties>
 
 	<dependencies>
@@ -46,6 +36,13 @@
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-data-redis</artifactId>
+		</dependency>
+
+		<!-- guava (LogExeManager 线程工厂使用；原由 ignite/curator 传递引入) -->
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>33.4.0-jre</version>
 		</dependency>
 
 		<dependency>
@@ -70,10 +67,9 @@
 			<version>${mybatis.spring.boot.version}</version>
 		</dependency>
 		<dependency>
-			<groupId>mysql</groupId>
-			<artifactId>mysql-connector-java</artifactId>
-			<version>${mysql.version}</version>
-			<!--<scope>runtime</scope>-->
+			<groupId>com.mysql</groupId>
+			<artifactId>mysql-connector-j</artifactId>
+			<scope>runtime</scope>
 		</dependency>
 		<dependency>
 			<groupId>com.alibaba</groupId>
@@ -84,81 +80,67 @@
 		<dependency>
 		    <groupId>org.mariadb.jdbc</groupId>
 		    <artifactId>mariadb-java-client</artifactId>
-		    <version>2.1.1</version>
 		</dependency>
-		<!-- 分页支持pageHelper -->
+		<!-- 分页支持pageHelper（核心库，与Spring Boot 3解耦） -->
 		<dependency>
 			<groupId>com.github.pagehelper</groupId>
-			<artifactId>pagehelper-spring-boot-starter</artifactId>
+			<artifactId>pagehelper</artifactId>
 			<version>${pagehelper.version}</version>
 		</dependency>
-		<!-- mybatis 逆向工程 -->
-		<!-- <dependency>
-			<groupId>org.mybatis.generator</groupId>
-			<artifactId>mybatis-generator-core</artifactId>
-			<version>${mybatis-generator.version}</version>
-		</dependency> -->
 
 		<!-- shiro安全框架 -->
-		<!--<dependency>-->
-			<!--<groupId>org.apache.shiro</groupId>-->
-			<!--<artifactId>shiro-core</artifactId>-->
-			<!--<version>${shiro.version}</version>-->
-		<!--</dependency>-->
-		<!--<dependency>-->
-			<!--<groupId>org.apache.shiro</groupId>-->
-			<!--<artifactId>shiro-web</artifactId>-->
-			<!--<version>${shiro.version}</version>-->
-		<!--</dependency>-->
-
-		<!--<dependency>-->
-			<!--<groupId>org.apache.shiro</groupId>-->
-			<!--<artifactId>shiro-quartz</artifactId>-->
-			<!--<version>${shiro.version}</version>-->
-		<!--</dependency>-->
 		<dependency>
 			<groupId>org.apache.shiro</groupId>
 			<artifactId>shiro-spring</artifactId>
 			<version>${shiro.version}</version>
 		</dependency>
-
 		<dependency>
-			<groupId>io.jsonwebtoken</groupId>
-			<artifactId>jjwt</artifactId>
-			<version>${jjwt.version}</version>
+			<groupId>org.apache.shiro</groupId>
+			<artifactId>shiro-web</artifactId>
+			<version>${shiro.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>org.apache.shiro</groupId>
+			<artifactId>shiro-core</artifactId>
+			<version>${shiro.version}</version>
 		</dependency>
 
 		<dependency>
-			<groupId>commons-lang</groupId>
-			<artifactId>commons-lang</artifactId>
-			<version>${commons-lang.version}</version>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-api</artifactId>
+			<version>${jjwt.version}</version>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-impl</artifactId>
+			<version>${jjwt.version}</version>
+			<scope>runtime</scope>
+		</dependency>
+		<dependency>
+			<groupId>io.jsonwebtoken</groupId>
+			<artifactId>jjwt-jackson</artifactId>
+			<version>${jjwt.version}</version>
+			<scope>runtime</scope>
 		</dependency>
 
 		<!--json-->
 		<dependency>
-			<groupId>com.alibaba</groupId>
-			<artifactId>fastjson</artifactId>
-			<version>${fastjson.version}</version>
+			<groupId>com.alibaba.fastjson2</groupId>
+			<artifactId>fastjson2</artifactId>
+			<version>${fastjson2.version}</version>
 		</dependency>
 
-		<!-- restful api 文档 swagger2 -->
+		<!-- restful api 文档 springdoc（2.x 支持 Boot 3，3.x 仅支持 Boot 4） -->
 		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger2</artifactId>
-			<version>2.6.1</version>
-		</dependency>
-
-		<dependency>
-			<groupId>io.springfox</groupId>
-			<artifactId>springfox-swagger-ui</artifactId>
-			<version>2.6.1</version>
+			<groupId>org.springdoc</groupId>
+			<artifactId>springdoc-openapi-starter-webmvc-ui</artifactId>
+			<version>2.9.0</version>
 		</dependency>
 
 		<!-- lombok表达式 -->
 		<dependency>
 			<groupId>org.projectlombok</groupId>
 			<artifactId>lombok</artifactId>
-			<version>1.18.6</version>
 			<scope>provided</scope>
 		</dependency>
 
@@ -166,20 +148,13 @@
 		<dependency>
 			<groupId>com.github.ulisesbocchio</groupId>
 			<artifactId>jasypt-spring-boot-starter</artifactId>
-			<version>2.0.0</version>
+			<version>4.0.4</version>
 		</dependency>
 		<!-- apache 使用其base64工具 -->
 		<dependency>
 			<groupId>commons-codec</groupId>
 			<artifactId>commons-codec</artifactId>
-			<version>1.11</version>
-		</dependency>
-
-		<!-- java版本升级少包-->
-		<dependency>
-			<groupId>javax.xml.bind</groupId>
-			<artifactId>jaxb-api</artifactId>
-			<version>2.3.0</version>
+			<version>${commons-codec.version}</version>
 		</dependency>
 
         <!--test-->
@@ -187,43 +162,6 @@
 			<groupId>org.springframework.boot</groupId>
 			<artifactId>spring-boot-starter-test</artifactId>
 			<scope>test</scope>
-		</dependency>
-		<!-- ignite的zk模块需要，由于版本号原因此处单独引入 -->
-		<dependency>
-			<groupId>org.apache.curator</groupId>
-	      	<artifactId>curator-x-discovery</artifactId>
-			<version>2.8.0</version>
-		</dependency>
-		<dependency>
-		    <groupId>org.apache.curator</groupId>
-		    <artifactId>curator-recipes</artifactId>
-		    <version>2.8.0</version>
-		</dependency>
-		<!-- ignite -->
-		<dependency>
-		    <groupId>org.apache.ignite</groupId>
-		    <artifactId>ignite-core</artifactId>
-		    <version>2.8.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.ignite</groupId>
-			<artifactId>ignite-slf4j</artifactId>
-			<version>2.8.0</version>
-		</dependency>
-		<dependency>
-			<groupId>org.apache.ignite</groupId>
-			<artifactId>ignite-zookeeper</artifactId>
-			<version>2.8.0</version>
-			<exclusions>
-				<exclusion>
-					<groupId>org.apache.curator</groupId>
-		    		<artifactId>curator-recipes</artifactId>
-				</exclusion>
-				<exclusion>
-					<groupId>org.apache.curator</groupId>
-	      			<artifactId>curator-x-discovery</artifactId>
-				</exclusion>
-			</exclusions>
 		</dependency>
 	</dependencies>
 
@@ -234,52 +172,14 @@
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 			</plugin>
-			<!-- java code style check -->
 			<plugin>
 				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-pmd-plugin</artifactId>
-				<version>3.8</version>
+				<artifactId>maven-compiler-plugin</artifactId>
 				<configuration>
-					<rulesets>
-						<ruleset>rulesets/java/ali-comment.xml</ruleset>
-						<ruleset>rulesets/java/ali-concurrent.xml</ruleset>
-						<ruleset>rulesets/java/ali-constant.xml</ruleset>
-						<ruleset>rulesets/java/ali-exception.xml</ruleset>
-						<ruleset>rulesets/java/ali-flowcontrol.xml</ruleset>
-						<ruleset>rulesets/java/ali-naming.xml</ruleset>
-						<ruleset>rulesets/java/ali-oop.xml</ruleset>
-						<ruleset>rulesets/java/ali-orm.xml</ruleset>
-						<ruleset>rulesets/java/ali-other.xml</ruleset>
-						<ruleset>rulesets/java/ali-set.xml</ruleset>
-					</rulesets>
-					<printFailingErrors>true</printFailingErrors>
+					<release>21</release>
+					<parameters>true</parameters>
 				</configuration>
-				<!-- <executions>
-					<execution>
-						<id>validate</id>
-						<phase>validate</phase>
-						<goals>
-							<goal>check</goal>
-						</goals>
-					</execution>
-				</executions> -->
-				<dependencies>
-					<!-- 需要使用阿里的一些xml文件，因此需要这里增加p3c的依赖 -->
-					<dependency>
-						<groupId>com.alibaba.p3c</groupId>
-						<artifactId>p3c-pmd</artifactId>
-						<version>1.3.0</version>
-					</dependency>
-				</dependencies>
-			</plugin>
-			<!-- java doc 生成 -->
-			<plugin>
-				<groupId>org.apache.maven.plugins</groupId>
-				<artifactId>maven-javadoc-plugin</artifactId>
-				<version>3.0.0</version>
 			</plugin>
 		</plugins>
 	</build>
-
-
 </project>

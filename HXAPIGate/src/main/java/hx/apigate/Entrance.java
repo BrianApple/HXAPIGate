@@ -32,7 +32,8 @@ public class Entrance {
 	public static int gateNum = 1;//默认为1
 	public static boolean isCluster;
 	public static String nodeName = null;
-	public static String zkAddr = null;
+	/** 注册中心地址（dubbo registry：redis://host:port，替代原 zookeeper://） */
+	public static String registryAddr = null;
 	public static void main(String[] args) {
 		System.setProperty("org.jboss.netty.epollBugWorkaround", "true");
 		Reflections reflections = new Reflections("hx.apigate");

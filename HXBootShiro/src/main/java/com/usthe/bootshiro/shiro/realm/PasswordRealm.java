@@ -26,7 +26,7 @@ public class PasswordRealm extends AuthorizingRealm {
      * @return java.lang.Class<?>
      */
     @Override
-    public Class<?> getAuthenticationTokenClass() {
+    public Class<? extends AuthenticationToken> getAuthenticationTokenClass() {
         return PasswordToken.class;
     }
 

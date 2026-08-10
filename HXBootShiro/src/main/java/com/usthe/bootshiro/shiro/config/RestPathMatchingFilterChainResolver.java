@@ -9,10 +9,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
-import javax.servlet.FilterChain;
-import javax.servlet.FilterConfig;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.FilterConfig;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
 import java.util.Iterator;
 import java.util.Map;
 
@@ -46,7 +46,7 @@ public class RestPathMatchingFilterChainResolver extends PathMatchingFilterChain
      * @param request 1
      * @param response 2
      * @param originalChain 3
-     * @return javax.servlet.FilterChain
+     * @return jakarta.servlet.FilterChain
      */
     @Override
     public FilterChain getChain(ServletRequest request, ServletResponse response, FilterChain originalChain) {

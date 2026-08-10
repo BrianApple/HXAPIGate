@@ -2,10 +2,8 @@ package hx.apigate.util;
 
 import java.nio.charset.Charset;
 
-import org.jboss.netty.util.internal.ByteBufferUtil;
-
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONWriter;
 
 import hx.apigate.databridge.RetMessage;
 import hx.apigate.socket.Constance;
@@ -30,7 +28,7 @@ public class HttpResponseUtil {
         
         DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
    	 
-	   	response.content().writeBytes(JSON.toJSONBytes(new RetMessage().ok(200, retMsg), SerializerFeature.PrettyFormat));
+	   	response.content().writeBytes(JSON.toJSONBytes(new RetMessage().ok(200, retMsg), JSONWriter.Feature.PrettyFormat));
 	   	HttpHeaders heads = response.headers();
 	   	heads.add(HttpHeaderNames.CONTENT_TYPE, new StringBuilder(HttpHeaderValues.APPLICATION_JSON).append("; charset=UTF-8") );
 	   	heads.add(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());
@@ -50,7 +48,7 @@ public class HttpResponseUtil {
     public static void responseMsg4Http(Channel webChannel,FullHttpResponse retResponse) {
     	
     	DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
-    	response.content().writeBytes(JSON.toJSONBytes(new RetMessage().ok(200, JSON.parse(retResponse.content().toString(Charset.forName(Constance.ENCODING)))), SerializerFeature.PrettyFormat));
+    	response.content().writeBytes(JSON.toJSONBytes(new RetMessage().ok(200, JSON.parse(retResponse.content().toString(Charset.forName(Constance.ENCODING)))), JSONWriter.Feature.PrettyFormat));
     	HttpHeaders heads = response.headers();
     	heads.add(HttpHeaderNames.CONTENT_TYPE, new StringBuilder(HttpHeaderValues.APPLICATION_JSON).append("; charset=UTF-8") );
     	heads.add(HttpHeaderNames.CONTENT_LENGTH, response.content().readableBytes());

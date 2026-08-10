@@ -1,8 +1,7 @@
 package hx.apigate.authorization.shiro;
 
 import org.apache.shiro.SecurityUtils;
-import org.apache.shiro.config.IniSecurityManagerFactory;
-import org.apache.shiro.util.Factory;
+import org.apache.shiro.ini.IniSecurityManagerFactory;
 
 import hx.apigate.base.IProcessor;
 /**
@@ -16,7 +15,7 @@ import hx.apigate.base.IProcessor;
 public class ShiroInitProcessor implements IProcessor{
 	@Override
 	public void start() throws Exception {
-		Factory<org.apache.shiro.mgt.SecurityManager> factory=new IniSecurityManagerFactory("classpath:shiroPermission.ini");
+		IniSecurityManagerFactory factory=new IniSecurityManagerFactory("classpath:shiroPermission.ini");
 		org.apache.shiro.mgt.SecurityManager securityManager=factory.getInstance();
 		SecurityUtils.setSecurityManager(securityManager);
 	}

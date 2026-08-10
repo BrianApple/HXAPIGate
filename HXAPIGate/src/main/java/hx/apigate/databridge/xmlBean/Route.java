@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import org.apache.ignite.IgniteSemaphore;
-
 /**
  　 * <p>Description: 路由转发配置</p>
  　 * <p>Copyright: Copyright (c) 2019</p>
@@ -43,7 +41,7 @@ public class Route implements Serializable{
 	 */
 	private List<RouteNode> routeNodes;
 	private AtomicInteger index;//轮寻策略下标值
-	private IgniteSemaphore tps;//吞吐量--全路由限流
+	private int allTps;//吞吐量--全路由限流（原 IgniteSemaphore，已改为数值，限流由 Redis 计数信号量实现）
 
 	//权重相关
 	private int[] nodeWeight ;//初始化后路由下标与routeNodes中下标一一对应
@@ -157,12 +155,12 @@ public class Route implements Serializable{
 		this.protocal = protocal;
 	}
 
-	public IgniteSemaphore getTps() {
-		return tps;
+	public int getAllTps() {
+		return allTps;
 	}
 
-	public void setTps(IgniteSemaphore tps) {
-		this.tps = tps;
+	public void setAllTps(int allTps) {
+		this.allTps = allTps;
 	}
 
 

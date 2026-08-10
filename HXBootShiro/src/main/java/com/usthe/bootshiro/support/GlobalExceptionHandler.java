@@ -1,11 +1,11 @@
 package com.usthe.bootshiro.support;
 
-import com.mysql.jdbc.exceptions.jdbc4.MySQLIntegrityConstraintViolationException;
 import com.usthe.bootshiro.domain.vo.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.core.annotation.Order;
 import org.springframework.dao.DataAccessException;
+import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseStatus;
@@ -35,7 +35,7 @@ public class GlobalExceptionHandler {
         LOGGER.error("数据操作异常:",e);
         final Throwable cause = e.getCause();
         // 之后判断cause类型进一步记录日志处理
-        if (cause instanceof MySQLIntegrityConstraintViolationException ) {
+        if (cause instanceof DuplicateKeyException || e instanceof DuplicateKeyException) {
             return new Message().error(500, "数据冲突操作失败");
         }
         return new Message().error(500, "服务器开小差");

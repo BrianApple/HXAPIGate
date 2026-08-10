@@ -6,6 +6,8 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import org.apache.commons.pool2.impl.GenericObjectPoolConfig;
+
 import hx.apigate.distributedCache.config.DistributedCachingProperties.RedisNodes;
 import redis.clients.jedis.HostAndPort;
 import redis.clients.jedis.JedisCluster;
@@ -20,6 +22,23 @@ import redis.clients.jedis.JedisPoolConfig;
 public class RedisClusterFactory {
 	
 	private JedisCluster jedisCluster;
+	
+	/**
+	 * 将 JedisPoolConfig 适配为 JedisCluster 构造器要求的 GenericObjectPoolConfig
+	 * （jedis 5.x 中 JedisPoolConfig 泛型为 Jedis，构造器要求 GenericObjectPoolConfig<Connection>）
+	 */
+	@SuppressWarnings("unchecked")
+	private GenericObjectPoolConfig<redis.clients.jedis.Connection> adaptPoolConfig(JedisPoolConfig config) {
+		GenericObjectPoolConfig<redis.clients.jedis.Connection> poolConfig = new GenericObjectPoolConfig<>();
+		poolConfig.setMaxTotal(config.getMaxTotal());
+		poolConfig.setMaxIdle(config.getMaxIdle());
+		poolConfig.setMinIdle(config.getMinIdle());
+		poolConfig.setMaxWait(config.getMaxWaitDuration());
+		poolConfig.setTestOnBorrow(config.getTestOnBorrow());
+		poolConfig.setTestOnReturn(config.getTestOnReturn());
+		poolConfig.setTestWhileIdle(config.getTestWhileIdle());
+		return poolConfig;
+	}
 	/**
 	 * 有密码
 	 * @param nodes
@@ -38,7 +57,7 @@ public class RedisClusterFactory {
 						
 						nodesSet.add(new HostAndPort(node.getIp(),node.getPort()));
 					}
-					jedisCluster = new JedisCluster(nodesSet, connectionTimeout, soTimeout, maxAttempts, config);
+					jedisCluster = new JedisCluster(nodesSet, connectionTimeout, soTimeout, maxAttempts, "default", null, adaptPoolConfig(config));
 				}
 			}
 		}
@@ -64,7 +83,7 @@ public class RedisClusterFactory {
 						
 						nodesSet.add(new HostAndPort(node.getIp(),node.getPort()));
 					}
-					jedisCluster = new JedisCluster(nodesSet, connectionTimeout, soTimeout, maxAttempts,password, config);
+					jedisCluster = new JedisCluster(nodesSet, connectionTimeout, soTimeout, maxAttempts, "default", password, adaptPoolConfig(config));
 				}
 			}
 		}

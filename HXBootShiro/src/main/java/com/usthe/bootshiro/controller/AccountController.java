@@ -4,7 +4,7 @@ import com.usthe.bootshiro.domain.bo.AuthUser;
 import com.usthe.bootshiro.domain.vo.Account;
 import com.usthe.bootshiro.domain.vo.JwtAccount;
 import com.usthe.bootshiro.domain.vo.Message;
-import com.usthe.bootshiro.ignite.IgniteAutoConfig;
+import com.usthe.bootshiro.util.JwtSessionStore;
 import com.usthe.bootshiro.service.AccountService;
 import com.usthe.bootshiro.service.UserService;
 import com.usthe.bootshiro.shiro.provider.AccountProvider;
@@ -13,7 +13,7 @@ import com.usthe.bootshiro.support.factory.LogTaskFactory;
 import com.usthe.bootshiro.support.manager.LogExeManager;
 import com.usthe.bootshiro.util.*;
 import io.jsonwebtoken.SignatureAlgorithm;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 
 import org.apache.shiro.authc.SimpleAuthenticationInfo;
 import org.apache.shiro.web.util.WebUtils;
@@ -25,8 +25,8 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
-import javax.servlet.http.HttpServletRequest;
-import javax.servlet.http.HttpServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
 import java.util.Date;
 import java.util.Map;
 import java.util.UUID;
@@ -69,7 +69,7 @@ public class AccountController extends BaseAction {
     @Autowired
     private UserService userService;
     @Autowired
-    private IgniteAutoConfig igniteAutoConfig;
+    private JwtSessionStore jwtSessionStore;
     @Autowired
     private AccountProvider accountProvider;
 
@@ -80,7 +80,7 @@ public class AccountController extends BaseAction {
      * @param response 2
      * @return com.usthe.bootshiro.domain.vo.Message
      */
-    @ApiOperation(value = "用户登录", notes = "POST用户登录签发JWT")
+    @Operation(summary = "用户登录", description = "POST用户登录签发JWT")
     @PostMapping("/login")
     public Message accountLogin(HttpServletRequest request, HttpServletResponse response) {
         Map<String, String> params = RequestResponseUtil.getRequestBodyMap(request);
@@ -106,7 +106,7 @@ public class AccountController extends BaseAction {
         	/**
         	 * 访客账户多端登录
         	 */
-        	jwt =(String) igniteAutoConfig.getJWTSessionData( JWT_SESSION + appId) ;
+        	jwt = jwtSessionStore.get( JWT_SESSION + appId) ;
         	if(jwt != null  && !"".equals(jwt)) {
         		try {
         			//已经登录，延长jwt失效时间即可
@@ -129,7 +129,7 @@ public class AccountController extends BaseAction {
         			ISSUER, refreshPeriodTime >> 1 , roles, null, SignatureAlgorithm.HS512);
         }
         //  {JWT-SESSION-{appID} , jwt}
-        igniteAutoConfig.cacheJWTSessionData(refreshPeriodTime, JWT_SESSION + appId , jwt);
+        jwtSessionStore.set(JWT_SESSION + appId , jwt, refreshPeriodTime);
 //        redisTemplate.opsForValue().set(JWT_SESSION + appId, jwt, refreshPeriodTime, TimeUnit.SECONDS);
         AuthUser authUser = userService.getUserByAppId(appId);
         authUser.setPassword(null);
@@ -148,7 +148,7 @@ public class AccountController extends BaseAction {
      * @param response 2
      * @return com.usthe.bootshiro.domain.vo.Message
      */
-    @ApiOperation(value = "用户注册", notes = "POST用户注册")
+    @Operation(summary = "用户注册", description = "POST用户注册")
     @PostMapping("/register")
     public Message accountRegister(HttpServletRequest request, HttpServletResponse response) {
 

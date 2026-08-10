@@ -30,13 +30,14 @@ import java.util.Map;
 import java.util.Map.Entry;
 
 import org.apache.dubbo.rpc.service.GenericService;
-import org.apache.ignite.IgniteSemaphore;
+import hx.apigate.util.RateLimiter;
+import hx.apigate.util.RedisUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.parser.Feature;
-import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONReader;
+import com.alibaba.fastjson2.JSONWriter;
 
 import hx.apigate.databridge.NodeInfo;
 import hx.apigate.databridge.SemphareException;
@@ -84,12 +85,12 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     			 public void operationComplete(ChannelFuture future) throws Exception {
     				 try {
     					 if (future.isSuccess()) {
-							 CBManager manager= IgniteUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
+							 CBManager manager= RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
 							 manager.getState().postMethodExecute();
     						 toMasterChannel.writeAndFlush(msg);
     					 } else {
     						 try {
-								 CBManager manager= IgniteUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
+								 CBManager manager= RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
 								 manager.getState().ActUponException();
     							 NodeInfo nextNodeInfo = RouteSelectUtil.getRouteByPattern(nodeInfo.getRequestUrl(),null ,patternUri);
     							 logger.error(MixAll.LOG_INFO_PRIFEX+String.format("网关[%s]访问url%s 失败，请求再次转发至路由%s:%s ",gateHost,msg.uri(),nextNodeInfo.getRouteNode().getIp(),String.valueOf(nodeInfo.getRouteNode().getPort())) );
@@ -104,7 +105,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     							 ChannelFuture channelFuture = f.addListener(new ChannelFutureListener() {
     								 public void operationComplete(ChannelFuture future) throws Exception {
     									 try {
-											 CBManager manager= IgniteUtil.getCircleBreakCache().get(nextNodeInfo.getCircleBreakKey());
+											 CBManager manager= RedisUtil.getCircleBreakCache().get(nextNodeInfo.getCircleBreakKey());
     										 if (future.isSuccess()) {
 												 manager.getState().postMethodExecute();
     											 toMasterChannel.writeAndFlush(msg);
@@ -114,30 +115,30 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
     											 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(502, "The path you accessed does not work !"));
     										 }
     									 } finally {
-    										 IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nextNodeInfo.getInterfaceVserion());
-    										 if(semaphore != null) {
-    											 semaphore.release();
+    										 String routeLimitKey = RouteSelectUtil.selectRouteByUri(patternUri,nextNodeInfo.getInterfaceVserion());
+    										 if(routeLimitKey != null) {
+    											 RateLimiter.release(routeLimitKey);
     										 }
-											 nextNodeInfo.getRouteNode().getTps().release();
+											 RateLimiter.release(RouteSelectUtil.nodeLimitKey(nextNodeInfo.getRouteNode(), patternUri));
     									 }
     								 }
     							 });
 							} catch (SemphareException e) {
 								 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(503, e.getMsg()));
 							} catch (CircleBreakException e) {
-								 IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
-								 if(semaphore != null) {
-									 semaphore.release();
+								 String routeLimitKey = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
+								 if(routeLimitKey != null) {
+									 RateLimiter.release(routeLimitKey);
 								 }
 								 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(503, e.getMsg()));
 							 }
     					 }
 					} finally {
-						IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
-						 if(semaphore != null) {
-							 semaphore.release();
+						String routeLimitKey = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
+						 if(routeLimitKey != null) {
+							 RateLimiter.release(routeLimitKey);
 						 }
-						webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode().getTps().release();
+						RateLimiter.release(RouteSelectUtil.nodeLimitKey(webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode(), patternUri));
 					}
     			 }
     		 });
@@ -178,7 +179,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 		    					allRequestParams.put("contentParams", contentParams);
 		    				 }else if(!method.equals(Constance.HTTP_GET_REQUEST) && content != null){
 		    					 //异步post请求
-		    					 Map map = (Map) JSON.parse(content, Feature.AllowUnQuotedFieldNames);
+		    					 Map map = (Map) JSON.parse(content, JSONReader.Feature.AllowUnQuotedFieldNames);
 		    					 allRequestParams.put("contentParams", map);
 		    					
 		    				 }
@@ -204,7 +205,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 		    			 }
 		    			 
 		    			 allRequestParams.put("headers", headers);
-		    			 CBManager manager= IgniteUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
+		    			 CBManager manager= RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
 		    			 try {
 		    				Object retMsg = dubbo.genericInvoke(nodeInfo.getRouteNode().getInterfaceName(), nodeInfo.getMethodName(), new Object[] {allRequestParams});//(nodeInfo.getMethodName(), new String[] {"java.util.Map"}, new Object[] {allRequestParams});
 
@@ -219,11 +220,11 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 							 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(404, "The path you accessed failed to execute !"));
 						}finally {
 							String patternUri = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
-							IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
-							 if(semaphore != null) {
-								 semaphore.release();
+							String routeLimitKey = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
+							 if(routeLimitKey != null) {
+								 RateLimiter.release(routeLimitKey);
 							 }
-							webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode().getTps().release();
+							RateLimiter.release(RouteSelectUtil.nodeLimitKey(webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode(), patternUri));
 						}
 		    		 }else {
 		    			 ReferenceCountUtil.release(bufferContent);
@@ -232,11 +233,11 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 		    				 webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(404, "The path you accessed does not work !"));
 						} finally {
 							String patternUri = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
-							IgniteSemaphore semaphore = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
-							 if(semaphore != null) {
-								 semaphore.release();
+							String routeLimitKey = RouteSelectUtil.selectRouteByUri(patternUri,nodeInfo.getInterfaceVserion());
+							 if(routeLimitKey != null) {
+								 RateLimiter.release(routeLimitKey);
 							 }
-							webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode().getTps().release();
+							RateLimiter.release(RouteSelectUtil.nodeLimitKey(webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode(), patternUri));
 						}
 		    		 }
 				}

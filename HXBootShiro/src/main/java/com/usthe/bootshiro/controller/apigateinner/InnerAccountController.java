@@ -2,7 +2,6 @@ package com.usthe.bootshiro.controller.apigateinner;
 
 import com.usthe.bootshiro.domain.bo.AuthUser;
 import com.usthe.bootshiro.domain.vo.*;
-import com.usthe.bootshiro.ignite.IgniteAutoConfig;
 import com.usthe.bootshiro.service.AccountService;
 import com.usthe.bootshiro.service.UserService;
 import com.usthe.bootshiro.shiro.provider.AccountProvider;
@@ -16,7 +15,7 @@ import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -56,7 +55,7 @@ public class InnerAccountController {
 	private AccountService accountService;
 
 	@Autowired
-	private IgniteAutoConfig igniteAutoConfig;
+	private JwtSessionStore jwtSessionStore;
 
 	@Autowired
 	private UserService userService;
@@ -88,7 +87,7 @@ public class InnerAccountController {
 				/**
 				 * 访客账户多端登录---演示账户特殊处理
 				 */
-				jwt =(String) igniteAutoConfig.getJWTSessionData( JWT_SESSION + appId) ;
+				jwt = jwtSessionStore.get( JWT_SESSION + appId) ;
 				if(jwt != null  && !"".equals(jwt)) {
 					try {
 						//已经登录，延长jwt失效时间即可
@@ -111,7 +110,7 @@ public class InnerAccountController {
 						ISSUER, refreshPeriodTime >> 1 , roles, null, SignatureAlgorithm.HS512);
 			}
 			//  {JWT-SESSION-{appID} , jwt}
-			igniteAutoConfig.cacheJWTSessionData(refreshPeriodTime, JWT_SESSION + appId , jwt);
+			jwtSessionStore.set(JWT_SESSION + appId , jwt, refreshPeriodTime);
 			AuthUser authUser = userService.getUserByAppId(appId);
 			authUser.setPassword(null);
 			authUser.setSalt(null);

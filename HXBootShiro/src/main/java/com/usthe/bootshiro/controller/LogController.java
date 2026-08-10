@@ -5,11 +5,9 @@ import com.github.pagehelper.PageInfo;
 import com.usthe.bootshiro.domain.bo.AuthAccountLog;
 import com.usthe.bootshiro.domain.bo.AuthOperationLog;
 import com.usthe.bootshiro.domain.vo.Message;
-import com.usthe.bootshiro.ignite.IgniteAutoConfig;
 import com.usthe.bootshiro.service.AccountLogService;
 import com.usthe.bootshiro.service.OperationLogService;
-import hx.apigate.databridge.xmlBean.RouteAll;
-import io.swagger.annotations.ApiOperation;
+import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -33,7 +31,7 @@ public class LogController extends BaseAction {
     @Autowired
     OperationLogService operationLogService;
     @SuppressWarnings("unchecked")
-    @ApiOperation(value = "获取日志记录", httpMethod = "GET")
+    @Operation(summary = "获取日志记录", method = "GET")
     @RequestMapping("/accountLog/{currentPage}/{pageSize}")
     public Message getAccountLogList(@PathVariable Integer currentPage, @PathVariable Integer pageSize ) {
         PageHelper.startPage(currentPage, pageSize);
@@ -43,7 +41,7 @@ public class LogController extends BaseAction {
     }
 
     @SuppressWarnings("unchecked")
-    @ApiOperation(value = "获取用户操作api日志列表", httpMethod = "GET")
+    @Operation(summary = "获取用户操作api日志列表", method = "GET")
     @RequestMapping("/operationLog/{currentPage}/{pageSize}")
     public Message getOperationLogList(@PathVariable Integer currentPage, @PathVariable Integer pageSize) {
         PageHelper.startPage(currentPage, pageSize);

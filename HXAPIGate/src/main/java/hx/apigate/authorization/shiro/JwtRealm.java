@@ -5,7 +5,6 @@ import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.SignatureException;
 import io.jsonwebtoken.UnsupportedJwtException;
 
-import org.apache.ignite.IgniteCache;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationInfo;
 import org.apache.shiro.authc.AuthenticationToken;
@@ -18,8 +17,8 @@ import org.apache.shiro.subject.PrincipalCollection;
 import hx.apigate.authorization.Constance;
 import hx.apigate.authorization.shiro.databridge.JwtAccount;
 import hx.apigate.authorization.shiro.databridge.JwtToken;
-import hx.apigate.util.IgniteUtil;
 import hx.apigate.util.JsonWebTokenUtil;
+import hx.apigate.util.RedisUtil;
 
 import java.util.Set;
 
@@ -34,7 +33,7 @@ public class JwtRealm extends AuthorizingRealm {
     private static final String ISSUER  = "UIOTCP_BOOTSHIRO_PRO";
     
     @Override
-    public Class<?> getAuthenticationTokenClass() {
+    public Class<? extends AuthenticationToken> getAuthenticationTokenClass() {
         // 此realm只支持jwtToken
         return JwtToken.class;
     }
@@ -72,8 +71,7 @@ public class JwtRealm extends AuthorizingRealm {
             return null;
         }
         JwtToken jwtToken = (JwtToken)authenticationToken;
-        IgniteCache<String, String> cache = IgniteUtil.getJWTCache();
-        String cachedJwt =cache.get(new StringBuilder(Constance.JWT_SESSION_PREFIX_KEY).append(jwtToken.getUserId()).toString());
+        String cachedJwt = RedisUtil.getJwtSession(new StringBuilder(Constance.JWT_SESSION_PREFIX_KEY).append(jwtToken.getUserId()).toString());
         if(cachedJwt == null) {
         	 throw new AuthenticationException("expiredJwt");
         }

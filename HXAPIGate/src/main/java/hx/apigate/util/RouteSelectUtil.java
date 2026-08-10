@@ -7,8 +7,6 @@ import java.util.Map;
 
 import hx.apigate.circuitBreaker.CBManager;
 import hx.apigate.databridge.CircleBreakException;
-import org.apache.ignite.IgniteSemaphore;
-import org.apache.ignite.binary.BinaryObjectException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -61,18 +59,22 @@ public class RouteSelectUtil {
         return ret;
     }
     /**
-     * 通过uri获取路由（不是节点node）
-     * @param patternUri
-     * @return
+     * 通过 uri 获取全局限流 key（原返回 IgniteSemaphore，现返回限流 key 供 RateLimiter 使用）
+     * @param patternUri uri==method
+     * @param version    api 版本
+     * @return 限流 key（不存在返回 null）
      */
-    public static IgniteSemaphore selectRouteByUri(String patternUri,String version){
+    public static String selectRouteByUri(String patternUri,String version){
         //获取与当前url匹配的route url
-        Map<String, RouteAll>  map = IgniteUtil.getAPIRouteCache().get("ALL_ROUTE");
+        Map<String, RouteAll>  map = RedisUtil.getAllRoute();
         RouteAll routeAll = map.get(patternUri);
+        if(routeAll == null) {
+            return null;
+        }
         int len = routeAll.getRoutes().size();
         for(int i = 0 ; i < len ; i ++) {
             if(version.equals(routeAll.getRoutes().get(i).getVersion())) {
-                return routeAll.getRoutes().get(i).getTps();
+                return patternUri + "==" + version;
             }
         }
         return null;
@@ -86,33 +88,36 @@ public class RouteSelectUtil {
      */
     public static NodeInfo getRouteByPattern(String sourceUrl,String sourceUrlTemp,String pattern) throws SemphareException,CircleBreakException{
         //根据负载策略选择微服务routeNode
-        RouteAll routeAll = getRouteAll4lvs(pattern) ;//IgniteUtil.getAPIRouteCache().get("ALL_ROUTE").get(pattern);
+        RouteAll routeAll = getRouteAll4lvs(pattern) ;//RedisUtil.getAllRoute().get(pattern);
 
         Route route = routeAll.nextRoute();
+        //全局限流 key：pattern + "==" + version（与原 Ignite semaphore key 一致）
+        String routeLimitKey = pattern + "==" + route.getVersion();
         //获取路由信号量
-        if(!route.getTps().removed() && route.getTps().tryAcquire()) {
+        if(RateLimiter.tryAcquire(routeLimitKey, route.getAllTps())) {
             if(HTTP.equals(route.getProtocal())) {
 
                 int routeNum = route.getRouteNodes().size();
                 for(int i = 0 ; i < routeNum ; i ++) {
                     if(RouteSelectUtil.WEIGHT.equals(route.getStratege()) || route.getStratege() == null){
                         RouteNode node = route.nextNodeByWeight();
-                        if(!route.getTps().removed() && node.getTps().tryAcquire()) {
+                        String nodeLimitKey = nodeLimitKey(node, pattern);
+                        if(RateLimiter.tryAcquire(nodeLimitKey, node.getIntTps())) {
                             String circleBreakKey = new StringBuilder(route.getMatchUrl()).append(route.getVersion())
                                     .append(node.getIp()).append(node.getPort()).toString();
                             CBManager manager = null;
-                            if(!IgniteUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
+                            if(!RedisUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
                                 manager = new CBManager(circleBreakKey,node.getIntTps() < 2 ? 1 : (node.getIntTps() > 100 ? 50 : node.getIntTps() >> 1),
                                         node.getIntTps() < 5? 1 : (node.getIntTps() > 100 ? 20 : node.getIntTps() >> 2), 1000);
-                                IgniteUtil.getCircleBreakCache().putIfAbsentAsync(circleBreakKey, manager);
+                                RedisUtil.getCircleBreakCache().putIfAbsent(circleBreakKey, manager);
                             }else {
-                                manager = IgniteUtil.getCircleBreakCache().get(circleBreakKey);
+                                manager = RedisUtil.getCircleBreakCache().get(circleBreakKey);
                             }
                             try {
                                 manager.getState().preMethodExecute();
                             } catch (CircleBreakException e) {
-                                node.getTps().release();
-                                route.getTps().release();
+                                RateLimiter.release(nodeLimitKey);
+                                RateLimiter.release(routeLimitKey);
                                 throw e;
                             }
                             return new NodeInfo(route.getVersion(),route.getProtocal(), node,sourceUrl,route.isNeedAuth(),circleBreakKey);
@@ -122,23 +127,24 @@ public class RouteSelectUtil {
                             int nextIndex = route.getIndex().addAndGet(1) % routeNum;
                             route.getIndex().set(nextIndex);
                             RouteNode node = route.getRouteNodes().get(nextIndex);
-                            System.out.println(sourceUrl+"的node信号量为"+node.getTps().availablePermits() + "; host = " + node.getIp() +":"+ node.getPort());
-                            if(!route.getTps().removed() && node.getTps().tryAcquire()) {
+                            String nodeLimitKey = nodeLimitKey(node, pattern);
+                            System.out.println(sourceUrl+"的node信号量为"+RateLimiter.availablePermits(nodeLimitKey) + "; host = " + node.getIp() +":"+ node.getPort());
+                            if(RateLimiter.tryAcquire(nodeLimitKey, node.getIntTps())) {
                                 String circleBreakKey = new StringBuilder(route.getMatchUrl()).append(route.getVersion())
                                         .append(node.getIp()).append(node.getPort()).toString();
                                 CBManager manager = null;
-                                if(!IgniteUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
+                                if(!RedisUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
                                     manager = new CBManager(circleBreakKey,node.getIntTps() < 2 ? 1 : (node.getIntTps() > 100 ? 50 : node.getIntTps() >> 1),
                                             node.getIntTps() < 5? 1 : (node.getIntTps() > 100 ? 20 : node.getIntTps() >> 2), 1000);
-                                    IgniteUtil.getCircleBreakCache().putIfAbsentAsync(circleBreakKey, manager);
+                                    RedisUtil.getCircleBreakCache().putIfAbsent(circleBreakKey, manager);
                                 }else {
-                                    manager = IgniteUtil.getCircleBreakCache().get(circleBreakKey);
+                                    manager = RedisUtil.getCircleBreakCache().get(circleBreakKey);
                                 }
                                 try {
                                     manager.getState().preMethodExecute();
                                 } catch (CircleBreakException e) {
-                                    node.getTps().release();
-                                    route.getTps().release();
+                                    RateLimiter.release(nodeLimitKey);
+                                    RateLimiter.release(routeLimitKey);
                                     throw e;
                                 }
                                 return new NodeInfo(route.getVersion(),route.getProtocal(), node,sourceUrl,route.isNeedAuth(),circleBreakKey);
@@ -154,22 +160,23 @@ public class RouteSelectUtil {
                         int nextIndex = route.getIndex().addAndGet(1) % size;
                         route.getIndex().set(nextIndex);
                         RouteNode node = route.getRouteNodes().get(nextIndex);
-                        if(!route.getTps().removed() && node.getTps().tryAcquire()) {
+                        String nodeLimitKey = nodeLimitKey(node, pattern);
+                        if(RateLimiter.tryAcquire(nodeLimitKey, node.getIntTps())) {
                             String circleBreakKey = new StringBuilder(route.getMatchUrl()).append(route.getVersion())
                                     .append(node.getInterfaceName()).toString();
                             CBManager manager = null;
-                            if(!IgniteUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
+                            if(!RedisUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
                                 manager = new CBManager(circleBreakKey,node.getIntTps() < 2 ? 1 : (node.getIntTps() > 100 ? 50 : node.getIntTps() >> 1),
                                         node.getIntTps() < 5? 1 : (node.getIntTps() > 100 ? 20 : node.getIntTps() >> 2), 1000);
-                                IgniteUtil.getCircleBreakCache().putIfAbsentAsync(circleBreakKey, manager);
+                                RedisUtil.getCircleBreakCache().putIfAbsent(circleBreakKey, manager);
                             }else {
-                                manager = IgniteUtil.getCircleBreakCache().get(circleBreakKey);
+                                manager = RedisUtil.getCircleBreakCache().get(circleBreakKey);
                             }
                             try {
                                 manager.getState().preMethodExecute();
                             } catch (CircleBreakException e) {
-                                node.getTps().release();
-                                route.getTps().release();
+                                RateLimiter.release(nodeLimitKey);
+                                RateLimiter.release(routeLimitKey);
                                 throw e;
                             }
                             return new NodeInfo(route.getVersion(),route.getProtocal(),urls[1], node,sourceUrl,route.isNeedAuth(),circleBreakKey);
@@ -177,41 +184,62 @@ public class RouteSelectUtil {
                     }
                 }else {
                     RouteNode node = route.getRouteNodes().get(0);
-                    System.out.println(sourceUrl+"的node信号量为"+node.getTps().availablePermits());
-                    if(!route.getTps().removed() && node.getTps().tryAcquire()) {
+                    String nodeLimitKey = nodeLimitKey(node, pattern);
+                    System.out.println(sourceUrl+"的node信号量为"+RateLimiter.availablePermits(nodeLimitKey));
+                    if(RateLimiter.tryAcquire(nodeLimitKey, node.getIntTps())) {
                         String circleBreakKey = new StringBuilder(route.getMatchUrl()).append(route.getVersion())
                                 .append(node.getInterfaceName()).toString();
                         CBManager manager = null;
-                        if(!IgniteUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
+                        if(!RedisUtil.getCircleBreakCache().containsKey(circleBreakKey)) {
                             manager = new CBManager(circleBreakKey,node.getIntTps() < 2 ? 1 : (node.getIntTps() > 100 ? 50 : node.getIntTps() >> 1),
                                     node.getIntTps() < 5? 1 : (node.getIntTps() > 100 ? 20 : node.getIntTps() >> 2), 1000);
-                            IgniteUtil.getCircleBreakCache().putIfAbsentAsync(circleBreakKey, manager);
+                            RedisUtil.getCircleBreakCache().putIfAbsent(circleBreakKey, manager);
                         }else {
-                            manager = IgniteUtil.getCircleBreakCache().get(circleBreakKey);
+                            manager = RedisUtil.getCircleBreakCache().get(circleBreakKey);
                         }
                         try {
                             manager.getState().preMethodExecute();
                         } catch (CircleBreakException e) {
-                            node.getTps().release();
-                            route.getTps().release();
+                            RateLimiter.release(nodeLimitKey);
+                            RateLimiter.release(routeLimitKey);
                             throw e;
                         }
                         return new NodeInfo(route.getVersion(),route.getProtocal(),urls[1],node,sourceUrl,route.isNeedAuth(),circleBreakKey);
                     }
                 }
             }
-            route.getTps().release();
+            RateLimiter.release(routeLimitKey);
             throw new SemphareException(false,"Access to current Node is limited. Please try again later !");
         }
 
         throw new SemphareException(true,"Access to current Route is limited. Please try again later !");
     }
+
+    /**
+     * 节点限流 key（与原 Ignite semaphore key 保持一致）：
+     *  - http:  pattern==={ip}:{port}
+     *  - dubbo: pattern==={interfaceName}=={version}
+     */
+    public static String nodeLimitKey(RouteNode node, String pattern, String version) {
+        if (node.getInterfaceName() != null && !node.getInterfaceName().isEmpty()) {
+            return pattern + "===" + node.getInterfaceName() + "==" + version;
+        }
+        return pattern + "===" + node.getIp() + ":" + node.getPort();
+    }
+
+    /**
+     * 节点限流 key（http 协议快捷方式）
+     */
+    public static String nodeLimitKey(RouteNode node, String pattern) {
+        return nodeLimitKey(node, pattern, "v");
+    }
+
     /**
      * 获取RouteAll用于lvs
      * @return
      */
     public static RouteAll getRouteAll4lvs(String pattern) {
-        Map<String, RouteAll>  map = IgniteUtil.getAPIRouteCache().get("ALL_ROUTE");
+        Map<String, RouteAll>  map = RedisUtil.getAllRoute();
         return map.get(pattern);
     }
 
@@ -223,11 +251,7 @@ public class RouteSelectUtil {
      */
     private static String getMatchedPattern(String sourceUrl, HttpMethod httpMethod){
         Iterator<String> it = null;
-        try {
-            it = IgniteUtil.getAPIRouteCache().get("ALL_ROUTE").keySet().iterator();
-        }catch (BinaryObjectException e) {
-            logger.error(e.getMessage());
-        }
+        it = RedisUtil.getAllRoute().keySet().iterator();
         if(it != null) {
             String pattern = null;
             String temp = null;

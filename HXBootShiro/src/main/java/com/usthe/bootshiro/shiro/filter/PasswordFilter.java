@@ -1,16 +1,13 @@
 package com.usthe.bootshiro.shiro.filter;
 
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.usthe.bootshiro.domain.vo.Message;
-import com.usthe.bootshiro.ignite.Constance;
-import com.usthe.bootshiro.ignite.IgniteAutoConfig;
 import com.usthe.bootshiro.shiro.token.PasswordToken;
 import com.usthe.bootshiro.util.CommonUtil;
 import com.usthe.bootshiro.util.IpUtil;
 import com.usthe.bootshiro.util.RequestResponseUtil;
 
-import org.apache.ignite.IgniteCache;
 import org.apache.shiro.authc.AuthenticationException;
 import org.apache.shiro.authc.AuthenticationToken;
 import org.apache.shiro.subject.Subject;
@@ -20,12 +17,9 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.redis.core.StringRedisTemplate;
 
-import javax.cache.expiry.CreatedExpiryPolicy;
-import javax.cache.expiry.Duration;
-import javax.cache.expiry.ExpiryPolicy;
-import javax.servlet.ServletRequest;
-import javax.servlet.ServletResponse;
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.ServletRequest;
+import jakarta.servlet.ServletResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -41,7 +35,6 @@ public class PasswordFilter extends AccessControlFilter {
     private static final Logger LOGGER = LoggerFactory.getLogger(PasswordFilter.class);
 
     private StringRedisTemplate redisTemplate;
-    private IgniteAutoConfig igniteAutoConfig;
     @Override
     protected boolean isAccessAllowed(ServletRequest request, ServletResponse response, Object mappedValue) {
 
@@ -163,9 +156,5 @@ public class PasswordFilter extends AccessControlFilter {
     public void setRedisTemplate(StringRedisTemplate redisTemplate) {
         this.redisTemplate = redisTemplate;
     }
-
-	public void setIgniteAutoConfig(IgniteAutoConfig igniteAutoConfig) {
-		this.igniteAutoConfig = igniteAutoConfig;
-	}
 
 }

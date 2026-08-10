@@ -1,16 +1,16 @@
 package com.usthe.bootshiro.controller.apigateinner;
 
-import com.alibaba.fastjson.JSON;
+import com.alibaba.fastjson2.JSON;
 import com.github.pagehelper.PageHelper;
 import com.github.pagehelper.PageInfo;
 import com.usthe.bootshiro.domain.bo.AuthResource;
 import com.usthe.bootshiro.domain.vo.ReqWebData;
 import com.usthe.bootshiro.domain.vo.RetData;
-import com.usthe.bootshiro.ignite.Constance;
-import com.usthe.bootshiro.ignite.IgniteAutoConfig;
+import com.usthe.bootshiro.redis.ApiAuthCacheService;
+import com.usthe.bootshiro.redis.RedisConstance;
+import com.usthe.bootshiro.redis.RouteCacheService;
 import com.usthe.bootshiro.service.ResourceService;
 import com.usthe.bootshiro.util.CommonUtil;
-import org.apache.ignite.IgniteCache;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.*;
@@ -23,7 +23,9 @@ public class InnerApiController {
 	@Autowired
 	private ResourceService resourceService;
 	@Autowired
-	IgniteAutoConfig igniteAutoConfig;
+	private RouteCacheService routeCacheService;
+	@Autowired
+	private ApiAuthCacheService apiAuthCacheService;
 
 	/**
 	 * 校验jwt是否已过期--放在这里的目的是为了走shiro鉴权，user默认走password
@@ -245,7 +247,7 @@ public class InnerApiController {
 			if (flag) {
 				if(3 != sourceType && 0 != sourceType){
 					//只缓存APi信息，API分类不缓存
-					igniteAutoConfig.addApiInfo(true,uri,resource.getMethod() ,routeInfoJson);
+					routeCacheService.addApiInfo(true,uri,resource.getMethod() ,routeInfoJson);
 				}
 				return new RetData(200,"add api success");
 			} else {
@@ -303,7 +305,7 @@ public class InnerApiController {
 			Boolean flag = resourceService.modifyMenu(resource);
 			if (flag) {
 				if(3 != sourceType && 0 != sourceType){
-					igniteAutoConfig.addApiInfo(false,uri,resource.getMethod(), routeInfoJson);
+					routeCacheService.addApiInfo(false,uri,resource.getMethod(), routeInfoJson);
 				}
 
 				return new RetData(200,"update api success");
@@ -348,10 +350,9 @@ public class InnerApiController {
 			if (flag) {
 
 				//shiroFilterChainManager.reloadFilterChain(resource.getId());0
-				IgniteCache<String,String> apiAuthCache = igniteAutoConfig.getApiAuthCache();
-				apiAuthCache.remove(Constance.API_RESOURCE_ROLE+uri);
+				apiAuthCacheService.remove(RedisConstance.API_RESOURCE_ROLE+uri);
 				if(3 != resource.getType()  && 0 != resource.getType()){
-					igniteAutoConfig.removeApiInfo(uri,httpMethod,
+					routeCacheService.removeApiInfo(uri,httpMethod,
 							routeInfo.get("api_version") == null ? resource.getVersion() : (String)routeInfo.get("api_version"));
 				}
 				return new RetData(200,"delete api success");

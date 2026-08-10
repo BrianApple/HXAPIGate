@@ -2,7 +2,7 @@ package com.usthe.bootshiro.controller;
 
 import com.usthe.bootshiro.util.RequestResponseUtil;
 
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
 import java.util.Map;
 
 /**

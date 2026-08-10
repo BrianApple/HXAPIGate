@@ -3,18 +3,18 @@ package com.usthe.bootshiro.util;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.usthe.bootshiro.domain.vo.JwtAccount;
 import io.jsonwebtoken.*;
-import io.jsonwebtoken.impl.DefaultHeader;
-import io.jsonwebtoken.impl.DefaultJwsHeader;
-import io.jsonwebtoken.impl.TextCodec;
-import io.jsonwebtoken.impl.compression.DefaultCompressionCodecResolver;
 import io.jsonwebtoken.lang.Assert;
+import io.jsonwebtoken.security.Keys;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.util.CollectionUtils;
 import org.springframework.util.StringUtils;
 
-import javax.xml.bind.DatatypeConverter;
+import javax.crypto.SecretKey;
 import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.*;
 
 /**
@@ -27,10 +27,26 @@ public class JsonWebTokenUtil {
     public static final String SECRET_KEY = "?::4343fdf4fdf6cvf):";
     private static final ObjectMapper MAPPER = new ObjectMapper();
     private static final int COUNT_2 = 2;
-    private static  CompressionCodecResolver codecResolver = new DefaultCompressionCodecResolver();
 
     private JsonWebTokenUtil() {
 
+    }
+
+    /**
+     * 根据密钥字符串生成 HMAC 密钥对象（jjwt 0.12+ 要求 SecretKey）
+     * @param key 密钥字符串
+     * @return javax.crypto.SecretKey
+     */
+    public static SecretKey generateKey(String key) {
+        try {
+            // 将任意长度密钥通过 SHA-512 固定为 512bit，满足 HS512 签名要求（HS256/384 亦兼容）
+            // 注意：原实现用 SHA-256(256bit)，jjwt 0.12+ 对 HS512 校验密钥强度时报 WeakKeyException
+            MessageDigest digest = MessageDigest.getInstance("SHA-512");
+            byte[] hash = digest.digest(key.getBytes(StandardCharsets.UTF_8));
+            return Keys.hmacShaKeyFor(hash);
+        } catch (NoSuchAlgorithmException e) {
+            throw new IllegalStateException("SHA-512 算法不可用", e);
+        }
     }
 
     /**
@@ -47,23 +63,21 @@ public class JsonWebTokenUtil {
     public static String issueJWT(String id,String subject, String issuer, Long period, String roles, String permissions, SignatureAlgorithm algorithm) {
         // 当前时间戳
         Long currentTimeMillis = System.currentTimeMillis();
-        // 秘钥
-        byte[] secreKeyBytes = DatatypeConverter.parseBase64Binary(SECRET_KEY);
         JwtBuilder jwtBuilder = Jwts.builder();
         if (!StringUtils.isEmpty(id)) {
-            jwtBuilder.setId(id);
+            jwtBuilder.id(id);
         }
         if (!StringUtils.isEmpty(subject)) {
-            jwtBuilder.setSubject(subject);
+            jwtBuilder.subject(subject);
         }
         if (!StringUtils.isEmpty(issuer)) {
-            jwtBuilder.setIssuer(issuer);
+            jwtBuilder.issuer(issuer);
         }
         // 设置签发时间
-        jwtBuilder.setIssuedAt(new Date(currentTimeMillis));
+        jwtBuilder.issuedAt(new Date(currentTimeMillis));
         // 设置到期时间
         if (null != period) {
-            jwtBuilder.setExpiration(new Date(currentTimeMillis+period*1000));
+            jwtBuilder.expiration(new Date(currentTimeMillis+period*1000));
         }
         if (!StringUtils.isEmpty(roles)) {
             jwtBuilder.claim("roles",roles);
@@ -71,10 +85,8 @@ public class JsonWebTokenUtil {
         if (!StringUtils.isEmpty(permissions)) {
             jwtBuilder.claim("perms",permissions);
         }
-        // 压缩，可选GZIP
-        jwtBuilder.compressWith(CompressionCodecs.DEFLATE);
-        // 加密设置
-        jwtBuilder.signWith(algorithm,secreKeyBytes);
+        // 加密设置（jjwt 0.12+ 使用 SecretKey 签名）
+        jwtBuilder.signWith(generateKey(SECRET_KEY), algorithm);
 
         return jwtBuilder.compact();
     }
@@ -84,60 +96,14 @@ public class JsonWebTokenUtil {
      */
     public static String parseJwtPayload(String jwt){
         Assert.hasText(jwt, "JWT String argument cannot be null or empty.");
-        String base64UrlEncodedHeader = null;
-        String base64UrlEncodedPayload = null;
-        String base64UrlEncodedDigest = null;
-        int delimiterCount = 0;
-        StringBuilder sb = new StringBuilder(128);
-        for (char c : jwt.toCharArray()) {
-            if (c == '.') {
-                CharSequence tokenSeq = io.jsonwebtoken.lang.Strings.clean(sb);
-                String token = tokenSeq!=null?tokenSeq.toString():null;
-
-                if (delimiterCount == 0) {
-                    base64UrlEncodedHeader = token;
-                } else if (delimiterCount == 1) {
-                    base64UrlEncodedPayload = token;
-                }
-
-                delimiterCount++;
-                sb.setLength(0);
-            } else {
-                sb.append(c);
-            }
-        }
-        if (delimiterCount != COUNT_2) {
-            String msg = "JWT strings must contain exactly 2 period characters. Found: " + delimiterCount;
+        String[] parts = jwt.split("\\.");
+        if (parts.length != 3) {
+            String msg = "JWT strings must contain exactly 2 period characters. Found: " + (parts.length - 1);
             throw new MalformedJwtException(msg);
         }
-        if (sb.length() > 0) {
-            base64UrlEncodedDigest = sb.toString();
-        }
-        if (base64UrlEncodedPayload == null) {
-            throw new MalformedJwtException("JWT string '" + jwt + "' is missing a body/payload.");
-        }
-        // =============== Header =================
-        Header header = null;
-        CompressionCodec compressionCodec = null;
-        if (base64UrlEncodedHeader != null) {
-            String origValue = TextCodec.BASE64URL.decodeToString(base64UrlEncodedHeader);
-            Map<String, Object> m = readValue(origValue);
-            if (base64UrlEncodedDigest != null) {
-                header = new DefaultJwsHeader(m);
-            } else {
-                header = new DefaultHeader(m);
-            }
-            compressionCodec = codecResolver.resolveCompressionCodec(header);
-        }
-        // =============== Body =================
-        String payload;
-        if (compressionCodec != null) {
-            byte[] decompressed = compressionCodec.decompress(TextCodec.BASE64URL.decode(base64UrlEncodedPayload));
-            payload = new String(decompressed, io.jsonwebtoken.lang.Strings.UTF_8);
-        } else {
-            payload = TextCodec.BASE64URL.decodeToString(base64UrlEncodedPayload);
-        }
-        return payload;
+        // Base64 URL 解码 payload（第2段）
+        byte[] payloadBytes = java.util.Base64.getUrlDecoder().decode(parts[1]);
+        return new String(payloadBytes, StandardCharsets.UTF_8);
     }
 
     /**
@@ -146,10 +112,11 @@ public class JsonWebTokenUtil {
      * @param jwt json web token
      */
     public static JwtAccount parseJwt(String jwt, String appKey) throws ExpiredJwtException, UnsupportedJwtException, MalformedJwtException, SignatureException, IllegalArgumentException {
-        Claims claims = Jwts.parser()
-                .setSigningKey(DatatypeConverter.parseBase64Binary(appKey))
-                .parseClaimsJws(jwt)
-                .getBody();
+        Jws<Claims> jws = Jwts.parser()
+                .verifyWith(generateKey(appKey))
+                .build()
+                .parseSignedClaims(jwt);
+        Claims claims = jws.getPayload();
         JwtAccount jwtAccount = new JwtAccount();
         //令牌ID
         jwtAccount.setTokenId(claims.getId());
@@ -160,7 +127,7 @@ public class JsonWebTokenUtil {
         // 签发时间
         jwtAccount.setIssuedAt(claims.getIssuedAt());
         // 接收方
-        jwtAccount.setAudience(claims.getAudience());
+        jwtAccount.setAudience(claims.getAudience() == null ? null : String.join(",", claims.getAudience()));
         // 访问主张-角色
         jwtAccount.setRoles(claims.get("roles", String.class));
         // 访问主张-权限
@@ -185,7 +152,7 @@ public class JsonWebTokenUtil {
     }
 
     /**
-     * 按“,”分割字符串进SET
+     * 按","分割字符串进SET
      */
     @SuppressWarnings("unchecked")
     public static Set<String> split(String str) {
@@ -194,7 +161,7 @@ public class JsonWebTokenUtil {
         if (StringUtils.isEmpty(str)) {
             return set;
         }
-        set.addAll(CollectionUtils.arrayToList(str.split(",")));
+        set.addAll(Arrays.asList(str.split(",")));
         return set;
     }
 

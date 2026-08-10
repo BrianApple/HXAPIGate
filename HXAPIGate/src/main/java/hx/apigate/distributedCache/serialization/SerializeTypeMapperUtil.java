@@ -6,8 +6,6 @@ import java.util.Map;
 
 import javax.script.Invocable;
 
-import jdk.nashorn.api.scripting.NashornScriptEngine;
-
 
 /**
  * 反序列化类匹配工具类
@@ -27,7 +25,6 @@ public class SerializeTypeMapperUtil {
 	
 	static{
 		typeCache.put("Invocable", Invocable.class);
-		typeCache.put("NashornScriptEngine", NashornScriptEngine.class);
 		typeCache.put("GenericService", 
 				org.apache.dubbo.rpc.service.GenericService.class);
 	}

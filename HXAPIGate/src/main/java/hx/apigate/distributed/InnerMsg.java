@@ -22,7 +22,10 @@ public class InnerMsg implements Serializable{
 	private String type;
 	private String uriPattern;
 	private String data;
-	
+
+	public InnerMsg() {
+	}
+
 	public InnerMsg(String type, String data) {
 		super();
 		this.type = type;

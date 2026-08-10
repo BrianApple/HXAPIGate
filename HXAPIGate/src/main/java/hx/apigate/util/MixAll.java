@@ -20,8 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.jar.JarEntry;
 import java.util.jar.JarFile;
 
-import com.alibaba.fastjson.JSON;
-import com.alibaba.fastjson.serializer.SerializerFeature;
+import com.alibaba.fastjson2.JSON;
+import com.alibaba.fastjson2.JSONWriter;
 
 import hx.apigate.databridge.NodeInfo;
 import hx.apigate.databridge.RetMessage;
@@ -365,7 +365,7 @@ public class MixAll {
 	 * @return
 	 */
 	public static byte[] encode(final Object obj) {
-        final String json = JSON.toJSONString(obj, false);;
+        final String json = JSON.toJSONString(obj);
         if (json != null) {
             return json.getBytes(Charset.forName("UTF-8"));
         }
@@ -413,7 +413,7 @@ public class MixAll {
 	 public static DefaultFullHttpResponse getDefaultFullHttpResponse4Error(int status , String msg) {//"The path you accessed does not exist !"
 		DefaultFullHttpResponse response = new DefaultFullHttpResponse(HttpVersion.HTTP_1_1, HttpResponseStatus.OK);
 		 
-		response.content().writeBytes(JSON.toJSONBytes(new RetMessage().error(status, msg), SerializerFeature.EMPTY));
+		response.content().writeBytes(JSON.toJSONBytes(new RetMessage().error(status, msg)));
 		HttpHeaders heads = response.headers();
 		// 返回内容的MIME类型
 		heads.add(HttpHeaderNames.CONTENT_TYPE, contentType + "; charset=UTF-8");

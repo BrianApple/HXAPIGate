@@ -2,8 +2,6 @@ package hx.apigate.databridge.xmlBean;
 
 import java.io.Serializable;
 
-import org.apache.ignite.IgniteSemaphore;
-
 /**
  * <p>Description: 路由节点详情</p>
  　 * <p>Copyright: Copyright (c) 2019</p>
@@ -18,8 +16,7 @@ public class RouteNode implements Serializable{
     private int port;
     private int order;//多个节点时手动给出节点循序 default=0
     private int weight;//权重 default=1
-    private IgniteSemaphore tps;//吞吐量-当前路由限流
-    private int intTps;//吞吐量-当前路由限流
+    private int intTps;//吞吐量-当前路由限流（原 IgniteSemaphore，已改为数值，限流由 Redis 计数信号量实现）
     /**
      * rpc 接口名称,当协议类型未dubbo时  RouteNode标签中通过当前标签声名接口名称
      */
@@ -49,12 +46,6 @@ public class RouteNode implements Serializable{
     }
     public void setWeight(int weight) {
         this.weight = weight;
-    }
-    public IgniteSemaphore getTps() {
-        return tps;
-    }
-    public void setTps(IgniteSemaphore tps) {
-        this.tps = tps;
     }
     public String getInterfaceName() {
         return interfaceName;

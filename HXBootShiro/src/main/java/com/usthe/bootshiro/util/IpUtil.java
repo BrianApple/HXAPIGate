@@ -1,8 +1,7 @@
 package com.usthe.bootshiro.util;
 
-import org.apache.commons.lang.text.StrTokenizer;
-
-import javax.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletRequest;
+import java.util.StringTokenizer;
 import java.util.regex.Pattern;
 
 /**
@@ -55,8 +54,8 @@ public class IpUtil {
         String ip;
         boolean found = false;
         if ((ip = request.getHeader(X_FORWARDED_FOR)) != null) {
-            StrTokenizer tokenizer = new StrTokenizer(ip, ",");
-            while (tokenizer.hasNext()) {
+            StringTokenizer tokenizer = new StringTokenizer(ip, ",");
+            while (tokenizer.hasMoreTokens()) {
                 ip = tokenizer.nextToken().trim();
                 if (isIPv4Valid(ip) && !isIPv4Private(ip)) {
                     found = true;

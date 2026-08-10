@@ -4,7 +4,7 @@ import hx.apigate.circuitBreaker.state.ACBState;
 import hx.apigate.circuitBreaker.state.ClosedState;
 import hx.apigate.circuitBreaker.state.HalfOpenState;
 import hx.apigate.circuitBreaker.state.OpenState;
-import hx.apigate.util.IgniteUtil;
+import hx.apigate.util.RedisUtil;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -107,7 +107,7 @@ public class CBManager {
 	}
 
 	public void load2Cache() {
-		IgniteUtil.getCircleBreakCache().putAsync(sigKey, this);
+		RedisUtil.getCircleBreakCache().put(sigKey, this);
 	}
 
 	public String getSigKey() {

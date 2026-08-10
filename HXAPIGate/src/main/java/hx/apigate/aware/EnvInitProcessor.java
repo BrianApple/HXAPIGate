@@ -49,7 +49,7 @@ public class EnvInitProcessor implements IProcessor{
         Entrance.isCluster = "true".equals(prop.getProperty("application.isCluster"));//是否开启分布式模式
         Entrance.gateNum = Integer.parseInt(prop.getProperty("application.gateNum"));
 		Entrance.nodeName = prop.getProperty("application.name");
-		Entrance.zkAddr = prop.getProperty("registry.address");
+		Entrance.registryAddr = prop.getProperty("registry.address");
 		
 		
 		

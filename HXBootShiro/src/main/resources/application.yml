@@ -1,6 +1,3 @@
-zkAddr: 127.0.0.1:2181,127.0.0.1:2182,127.0.0.1:2183
-#zkAddr: 47.104.100.254:2181,47.104.100.254:2182,47.104.100.254:2183
-
 server:
   port: 18080
 spring:
@@ -13,7 +10,7 @@ spring:
 #      url: jdbc:mysql://localhost:12345/usthe?useUnicode=true&characterEncoding=utf-8&useSSL=false
 #      username: root
 #      password: admin
-      #driver-class-name: com.mysql.jdbc.Driver
+      #driver-class-name: com.mysql.cj.jdbc.Driver
       platform: mysql
       type: com.alibaba.druid.pool.DruidDataSource
       # 下面为连接池的补充设置，应用到上面所有数据源中
@@ -108,52 +105,61 @@ jasypt:
 ---
 # 开发环境配置(配置项只包括环境不同项)
 spring:
-    profiles: dev
+    config:
+      activate:
+        on-profile: dev
     datasource:
-      url: jdbc:mysql://127.0.0.1:3306/hxapigate?useUnicode=true&characterEncoding=utf-8&useSSL=false
-      username: root
-      password: BRIAN
-      driver-class-name: com.mysql.jdbc.Driver
-    redis:
-      # 服务器IP地址
-      host: 127.0.0.1
-      # 连接端口
-      port: 6379
-      # Redis服务器连接密码（默认为空）
-      password:
+      url: jdbc:mysql://127.0.0.1:13306/hxapigate?useUnicode=true&characterEncoding=utf-8&useSSL=false&allowPublicKeyRetrieval=true
+      username: hxapigate
+      password: hxapigate2026
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    data:
+      redis:
+        # 服务器IP地址
+        host: 127.0.0.1
+        # 连接端口
+        port: 6379
+        # Redis服务器连接密码（默认为空）
+        password:
 
 ---
 # 测试环境配置(配置项只包括不同项)
 
 spring:
-    profiles: test
+    config:
+      activate:
+        on-profile: test
     datasource:
       url: jdbc:mysql://xx.xx.xx.xx:3306/hxapigate?useUnicode=true&characterEncoding=utf-8&useSSL=false
       username:
       password:
-      driver-class-name: com.mysql.jdbc.Driver
-    redis:
-      # 服务器IP地址
-      host: 127.0.0.1
-      # 连接端口
-      port: 6379
-      # Redis服务器连接密码（默认为空）
-      password:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    data:
+      redis:
+        # 服务器IP地址
+        host: 127.0.0.1
+        # 连接端口
+        port: 6379
+        # Redis服务器连接密码（默认为空）
+        password:
 
 ---
 # 生产环境配置(配置项只包括不同项)
 
 spring:
-    profiles: prod
+    config:
+      activate:
+        on-profile: prod
     datasource:
       url: jdbc:mysql://xx.xx.xx.xx:3306/hxapigate?useUnicode=true&characterEncoding=utf-8&useSSL=false
       username: root
       password: ENC(vp7cbF0sE/lRsThrcwdiA/WoeG1mIXzy)
-      driver-class-name: com.mysql.jdbc.Driver
-    redis:
-      # 服务器IP地址
-      host: 192.168.0.3
-      # 连接端口
-      port: 6379
-      # Redis服务器连接密码（默认为空）
-      password:
+      driver-class-name: com.mysql.cj.jdbc.Driver
+    data:
+      redis:
+        # 服务器IP地址
+        host: 192.168.0.3
+        # 连接端口
+        port: 6379
+        # Redis服务器连接密码（默认为空）
+        password:

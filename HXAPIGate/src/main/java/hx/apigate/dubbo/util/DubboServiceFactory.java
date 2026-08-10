@@ -36,7 +36,7 @@ public class DubboServiceFactory {
         applicationConfig.setName(Entrance.nodeName); 
         applicationConfig.setQosEnable(false);
         RegistryConfig registryConfig = new RegistryConfig();
-        registryConfig.setAddress(Entrance.zkAddr); 
+        registryConfig.setAddress(Entrance.registryAddr); 
         registryConfig.setRegister(false);
         
         this.application = applicationConfig;

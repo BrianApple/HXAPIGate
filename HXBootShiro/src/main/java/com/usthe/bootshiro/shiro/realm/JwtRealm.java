@@ -28,7 +28,7 @@ public class JwtRealm extends AuthorizingRealm {
     private static final char RIGHT = '}';
 
     @Override
-    public Class<?> getAuthenticationTokenClass() {
+    public Class<? extends AuthenticationToken> getAuthenticationTokenClass() {
         // 此realm只支持jwtToken
         return JwtToken.class;
     }
