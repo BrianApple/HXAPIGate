@@ -20,3 +20,10 @@ target/
 
 # 临时备份文件
 *.bak
+
+# 运行时日志
+*.log
+HXAPIGATE_LOGS/
+SystemOut.log
+SystemErrOut.log
+SystemSqlOut.log
