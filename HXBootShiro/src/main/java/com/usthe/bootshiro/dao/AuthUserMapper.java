@@ -128,4 +128,6 @@ public interface AuthUserMapper {
 	 * @return
 	 */
 	List<String> isExistEmail(AuthUser authUser);
+	/** 用户角色名称（逗号分隔，列表页展示） */
+	String selectUserRoleNames(String appId) throws DataAccessException;
 }

@@ -376,3 +376,40 @@ INSERT INTO `auth_user_role` VALUES (39, 'admin', 100, '2019-10-26 15:20:21', '2
 COMMIT;
 
 SET FOREIGN_KEY_CHECKS = 1;
+-- ============================================================
+-- 应用管理（生成 API 访问 JWT license）
+-- 用于管理平台为第三方应用签发访问网关 API 的 JWT（与用户登录 JWT 同构：
+-- subject=APP_ID、roles=应用角色编码，网关 JwtRealm 直接解析校验）
+-- ============================================================
+
+CREATE TABLE IF NOT EXISTS `auth_app` (
+  `ID` int(32) NOT NULL AUTO_INCREMENT COMMENT '应用ID',
+  `APP_ID` varchar(64) NOT NULL COMMENT '应用唯一标识(调用网关API时作为userId请求头)',
+  `APP_NAME` varchar(64) DEFAULT NULL COMMENT '应用名称',
+  `APP_SECRET` varchar(128) DEFAULT NULL COMMENT '应用密钥(生成license签名用)',
+  `DESCRIPTION` varchar(255) DEFAULT NULL COMMENT '应用描述',
+  `STATUS` int(1) DEFAULT '1' COMMENT '状态 1:启用 0:停用',
+  `CREATE_TIME` datetime DEFAULT NULL COMMENT '创建时间',
+  `UPDATE_TIME` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`ID`),
+  UNIQUE KEY `uk_app_id` (`APP_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用信息表';
+
+CREATE TABLE IF NOT EXISTS `auth_app_role` (
+  `ID` int(32) NOT NULL AUTO_INCREMENT COMMENT '主键ID',
+  `APP_ID` varchar(64) NOT NULL COMMENT '应用标识',
+  `ROLE_ID` int(32) NOT NULL COMMENT '角色ID',
+  `CREATE_TIME` datetime DEFAULT NULL COMMENT '创建时间',
+  `UPDATE_TIME` datetime DEFAULT NULL COMMENT '更新时间',
+  PRIMARY KEY (`ID`),
+  KEY `idx_app_id` (`APP_ID`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COMMENT='应用角色关联表';
+
+-- ============================================================
+-- 用户管理/应用管理 平台内部接口资源（配合前端 用户管理/应用管理 菜单）
+-- 说明：/inner/user/** 在 ShiroFilterChainManager 中按 startsWith("/inner/user")
+--       排除出 jwt 鉴权链（登录接口专用），故用户管理使用 /inner/sysuser 前缀。
+-- ============================================================
+INSERT INTO `auth_resource` VALUES (241, 'inner_sysuser', '用户管理接口', 219, '/inner/sysuser/**', '1.0', 2, 'POST', 0, '{}', NULL, 1, NOW(), NOW());
+INSERT INTO `auth_resource` VALUES (242, 'inner_app', '应用管理接口', 219, '/inner/app/**', '1.0', 2, 'POST', 0, '{}', NULL, 1, NOW(), NOW());
+INSERT INTO `auth_role_resource` (ROLE_ID, RESOURCE_ID, CREATE_TIME, UPDATE_TIME) VALUES (100, 241, NOW(), NOW()), (100, 242, NOW(), NOW());

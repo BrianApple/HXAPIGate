@@ -74,4 +74,27 @@ public interface UserService {
      * @return String 错误信息
      */
     String updatePassword(AuthUser authUser);
+
+    // ==================== 管理平台：用户管理 ====================
+
+    /** 新增用户（自动生成盐 + MD5 密码） */
+    boolean addUser(AuthUser user);
+
+    /** 编辑用户基本参数 */
+    boolean updateUser(AuthUser user);
+
+    /** 删除用户（软删 status=3） */
+    boolean deleteUser(String uid);
+
+    /** 重置密码（生成新盐 + MD5） */
+    boolean resetPassword(String uid, String newPassword);
+
+    /** 覆盖式分配用户角色（先删后插） */
+    boolean authorityUserRoles(String uid, List<Integer> roleIds);
+
+    /** 用户角色ID列表 */
+    List<Integer> getUserRoleIds(String uid);
+
+    /** 用户角色名称（逗号分隔，列表页展示） */
+    String loadAccountRoleNames(String appId);
 }

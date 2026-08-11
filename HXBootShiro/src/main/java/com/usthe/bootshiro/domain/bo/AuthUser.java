@@ -34,6 +34,17 @@ public class AuthUser {
 
     private Byte createWhere;
 
+    /** 角色名称（逗号分隔，非表字段，列表页展示用） */
+    private String roleNames;
+
+    public String getRoleNames() {
+        return roleNames;
+    }
+
+    public void setRoleNames(String roleNames) {
+        this.roleNames = roleNames;
+    }
+
     public String getUid() {
         return uid;
     }

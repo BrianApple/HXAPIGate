@@ -87,4 +87,10 @@
   <delete id="deleteByUniqueKey" parameterType="com.usthe.bootshiro.domain.bo.AuthUserRole">
     delete from auth_user_role  where user_id = #{userId} and role_id = #{roleId}
   </delete>
+  <delete id="deleteByUserId" parameterType="java.lang.String">
+    delete from auth_user_role where user_id = #{uid,jdbcType=VARCHAR}
+  </delete>
+  <select id="selectRoleIdsByUserId" parameterType="java.lang.String" resultType="java.lang.Integer">
+    select role_id from auth_user_role where user_id = #{uid,jdbcType=VARCHAR}
+  </select>
 </mapper>

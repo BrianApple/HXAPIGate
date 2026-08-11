@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd" >
+<mapper namespace="com.usthe.bootshiro.dao.AuthAppMapper">
+    <resultMap id="BaseResultMap" type="com.usthe.bootshiro.domain.bo.AuthApp">
+        <id column="ID" jdbcType="INTEGER" property="id" />
+        <result column="APP_ID" jdbcType="VARCHAR" property="appId" />
+        <result column="APP_NAME" jdbcType="VARCHAR" property="appName" />
+        <result column="APP_SECRET" jdbcType="VARCHAR" property="appSecret" />
+        <result column="DESCRIPTION" jdbcType="VARCHAR" property="description" />
+        <result column="STATUS" jdbcType="TINYINT" property="status" />
+        <result column="CREATE_TIME" jdbcType="TIMESTAMP" property="createTime" />
+        <result column="UPDATE_TIME" jdbcType="TIMESTAMP" property="updateTime" />
+    </resultMap>
+
+    <sql id="Base_Column_List">
+        ID, APP_ID, APP_NAME, APP_SECRET, DESCRIPTION, STATUS, CREATE_TIME, UPDATE_TIME
+    </sql>
+
+    <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List" />
+        from auth_app
+        where ID = #{id,jdbcType=INTEGER}
+    </select>
+
+    <select id="selectByAppId" parameterType="java.lang.String" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List" />
+        from auth_app
+        where APP_ID = #{appId,jdbcType=VARCHAR}
+    </select>
+
+    <select id="selectAppList" resultMap="BaseResultMap">
+        select <include refid="Base_Column_List" />
+        from auth_app
+        order by ID desc
+    </select>
+
+    <delete id="deleteByPrimaryKey" parameterType="java.lang.Integer">
+        delete from auth_app
+        where ID = #{id,jdbcType=INTEGER}
+    </delete>
+
+    <insert id="insert" parameterType="com.usthe.bootshiro.domain.bo.AuthApp" useGeneratedKeys="true" keyProperty="id">
+        insert into auth_app (ID, APP_ID, APP_NAME, APP_SECRET, DESCRIPTION, STATUS, CREATE_TIME, UPDATE_TIME)
+        values (#{id,jdbcType=INTEGER}, #{appId,jdbcType=VARCHAR}, #{appName,jdbcType=VARCHAR},
+                #{appSecret,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT},
+                #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
+    </insert>
+
+    <insert id="insertSelective" parameterType="com.usthe.bootshiro.domain.bo.AuthApp" useGeneratedKeys="true" keyProperty="id">
+        insert into auth_app
+        <trim prefix="(" suffix=")" suffixOverrides=",">
+            <if test="appId != null">APP_ID,</if>
+            <if test="appName != null">APP_NAME,</if>
+            <if test="appSecret != null">APP_SECRET,</if>
+            <if test="description != null">DESCRIPTION,</if>
+            <if test="status != null">STATUS,</if>
+            <if test="createTime != null">CREATE_TIME,</if>
+            <if test="updateTime != null">UPDATE_TIME,</if>
+        </trim>
+        <trim prefix="values (" suffix=")" suffixOverrides=",">
+            <if test="appId != null">#{appId,jdbcType=VARCHAR},</if>
+            <if test="appName != null">#{appName,jdbcType=VARCHAR},</if>
+            <if test="appSecret != null">#{appSecret,jdbcType=VARCHAR},</if>
+            <if test="description != null">#{description,jdbcType=VARCHAR},</if>
+            <if test="status != null">#{status,jdbcType=TINYINT},</if>
+            <if test="createTime != null">#{createTime,jdbcType=TIMESTAMP},</if>
+            <if test="updateTime != null">#{updateTime,jdbcType=TIMESTAMP},</if>
+        </trim>
+    </insert>
+
+    <update id="updateByPrimaryKeySelective" parameterType="com.usthe.bootshiro.domain.bo.AuthApp">
+        update auth_app
+        <set>
+            <if test="appId != null">APP_ID = #{appId,jdbcType=VARCHAR},</if>
+            <if test="appName != null">APP_NAME = #{appName,jdbcType=VARCHAR},</if>
+            <if test="appSecret != null">APP_SECRET = #{appSecret,jdbcType=VARCHAR},</if>
+            <if test="description != null">DESCRIPTION = #{description,jdbcType=VARCHAR},</if>
+            <if test="status != null">STATUS = #{status,jdbcType=TINYINT},</if>
+            <if test="createTime != null">CREATE_TIME = #{createTime,jdbcType=TIMESTAMP},</if>
+            <if test="updateTime != null">UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP},</if>
+        </set>
+        where ID = #{id,jdbcType=INTEGER}
+    </update>
+
+    <update id="updateByPrimaryKey" parameterType="com.usthe.bootshiro.domain.bo.AuthApp">
+        update auth_app
+        set APP_ID = #{appId,jdbcType=VARCHAR},
+            APP_NAME = #{appName,jdbcType=VARCHAR},
+            APP_SECRET = #{appSecret,jdbcType=VARCHAR},
+            DESCRIPTION = #{description,jdbcType=VARCHAR},
+            STATUS = #{status,jdbcType=TINYINT},
+            CREATE_TIME = #{createTime,jdbcType=TIMESTAMP},
+            UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}
+        where ID = #{id,jdbcType=INTEGER}
+    </update>
+</mapper>

@@ -13,7 +13,9 @@ const routes = [
       { path: 'api', component: () => import('../views/ApiList.vue'), meta: { title: 'API管理' } },
       { path: 'log', component: () => import('../views/LogSearch.vue'), meta: { title: '日志查询' } },
       { path: 'role', component: () => import('../views/RoleList.vue'), meta: { title: '角色管理' } },
-      { path: 'roleAuth/:id', component: () => import('../views/RoleAuth.vue'), meta: { title: '角色授权' } }
+      { path: 'roleAuth/:id', component: () => import('../views/RoleAuth.vue'), meta: { title: '角色授权' } },
+      { path: 'user', component: () => import('../views/UserList.vue'), meta: { title: '用户管理' } },
+      { path: 'app', component: () => import('../views/AppList.vue'), meta: { title: '应用管理' } }
     ]
   }
 ]

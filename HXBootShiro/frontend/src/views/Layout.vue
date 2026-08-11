@@ -11,6 +11,8 @@
         <el-menu-item index="/api"><el-icon><Connection /></el-icon><span>API管理</span></el-menu-item>
         <el-menu-item index="/log"><el-icon><Document /></el-icon><span>日志查询</span></el-menu-item>
         <el-menu-item index="/role"><el-icon><UserFilled /></el-icon><span>角色管理</span></el-menu-item>
+        <el-menu-item index="/user"><el-icon><User /></el-icon><span>用户管理</span></el-menu-item>
+        <el-menu-item index="/app"><el-icon><Key /></el-icon><span>应用管理</span></el-menu-item>
       </el-menu>
     </el-aside>
     <el-container>

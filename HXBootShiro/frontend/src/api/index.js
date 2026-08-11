@@ -106,3 +106,23 @@ export const getUserListExtendByRoleId = (str, pageIndex, pageSize) =>
   postForm('/inner/role/getUserListExtendByRoleId', { str, pageIndex, pageSize })
 export const authorityRoleUser = (data) => postForm('/inner/role/authorityRoleUser', { data })
 export const deleteAuthorityRoleUser = (data) => postForm('/inner/role/deleteAuthorityRoleUser', { data })
+
+// ---------- 用户管理 ----------
+export const getUserList = (pageIndex, pageSize) =>
+  postForm('/inner/sysuser/initUserList', { pageIndex, pageSize })
+export const addUser = (data) => postForm('/inner/sysuser/addUser', { data })
+export const updateUser = (data) => postForm('/inner/sysuser/updateUser', { data })
+export const deleteUser = (str) => postForm('/inner/sysuser/deleteUser', { str })
+export const resetPassword = (data) => postForm('/inner/sysuser/resetPassword', { data })
+export const getUserByUid = (str) => postForm('/inner/sysuser/initUserByUid', { str })
+export const authorityUserRoles = (data) => postForm('/inner/sysuser/authorityUserRoles', { data })
+
+// ---------- 应用管理 ----------
+export const getAppList = (pageIndex, pageSize) =>
+  postForm('/inner/app/initAppList', { pageIndex, pageSize })
+export const addApp = (data) => postForm('/inner/app/addApp', { data })
+export const updateApp = (data) => postForm('/inner/app/updateApp', { data })
+export const deleteApp = (str) => postForm('/inner/app/deleteApp', { str })
+export const getAppByAppId = (str) => postForm('/inner/app/initAppByAppId', { str })
+export const generateLicense = (str, data) => postForm('/inner/app/generateLicense', { str, data })
+
