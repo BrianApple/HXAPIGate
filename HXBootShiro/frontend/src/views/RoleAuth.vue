@@ -371,7 +371,14 @@ onMounted(async () => {
 .pending-badge { margin-left: auto; }
 .sub-card { margin-bottom: 8px; }
 .tip { font-size: 12px; color: #909399; margin-left: 8px; }
-.transfer-col { display: flex; flex-direction: column; align-items: center; gap: 12px; }
+.transfer-col {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  align-self: stretch;
+}
 .save-row { display: flex; justify-content: center; margin-top: 12px; }
 </style>
 
