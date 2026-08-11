@@ -1,7 +1,10 @@
 <template>
   <el-container class="layout">
     <el-aside width="210px" class="aside">
-      <div class="logo">HXAPIGate</div>
+      <div class="logo">
+        <img :src="logoUrl" alt="HXAPIGate" class="logo-img" />
+        <span class="logo-text">HXAPIGate</span>
+      </div>
       <el-menu :default-active="$route.path" router background-color="#1f2d3d" text-color="#bfcbd9" active-text-color="#409eff">
         <el-menu-item index="/welcome"><el-icon><HomeFilled /></el-icon><span>首页</span></el-menu-item>
         <el-menu-item index="/apiType"><el-icon><FolderOpened /></el-icon><span>API类型管理</span></el-menu-item>
@@ -37,6 +40,7 @@
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { getUserInfo, clearUserInfo } from '../api'
+import logoUrl from '../assets/hxapi_logo.png'
 
 const router = useRouter()
 const userInfo = getUserInfo()
@@ -55,9 +59,26 @@ function onCommand(cmd) {
 .aside { background: #1f2d3d; }
 .aside .el-menu { border-right: none; }
 .logo {
-  height: 60px; line-height: 60px; text-align: center; color: #fff;
-  font-size: 18px; font-weight: 700; letter-spacing: 2px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
   background: #17222e;
+  padding: 0 10px;
+}
+.logo-img {
+  height: 34px;
+  width: auto;
+  object-fit: contain;
+  display: block;
+}
+.logo-text {
+  color: #fff;
+  font-size: 16px;
+  font-weight: 700;
+  letter-spacing: 1px;
+  white-space: nowrap;
 }
 .header {
   display: flex; align-items: center; justify-content: space-between;

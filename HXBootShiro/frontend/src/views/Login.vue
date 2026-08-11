@@ -10,11 +10,7 @@
 
     <el-card class="login-card">
       <div class="logo-badge">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round">
-          <circle cx="12" cy="12" r="2.2" fill="currentColor" stroke="none"/>
-          <path d="M12 9.8V5.5M12 14.2v4.3M9.8 12H5.5M14.2 12h4.3"/>
-          <path d="M7.6 7.6L4.8 4.8M16.4 7.6l2.8-2.8M7.6 16.4l-2.8 2.8M16.4 16.4l2.8 2.8"/>
-        </svg>
+        <img :src="logoUrl" alt="HXAPIGate" class="logo-img" />
       </div>
       <h2 class="title">HXAPIGate 管理平台</h2>
       <p class="subtitle">统一 API 网关与鉴权管理控制台</p>
@@ -40,6 +36,7 @@ import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
 import { User, Lock } from '@element-plus/icons-vue'
 import { login, setUserInfo } from '../api'
+import logoUrl from '../assets/hxapi_logo.png'
 
 const router = useRouter()
 const form = reactive({ appId: '', password: '' })
@@ -243,20 +240,24 @@ async function onLogin() {
   box-shadow: 0 18px 50px rgba(3, 15, 40, 0.45);
 }
 .logo-badge {
-  width: 54px;
-  height: 54px;
-  margin: 0 auto 14px;
-  border-radius: 14px;
+  width: 92px;
+  height: 92px;
+  margin: 0 auto 12px;
+  border-radius: 18px;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #fff;
-  background: linear-gradient(135deg, #2d6fbf, #1f3b73);
-  box-shadow: 0 8px 20px rgba(45, 111, 191, 0.45);
+  background: #fff;
+  border: 1px solid rgba(22, 48, 92, 0.08);
+  box-shadow: 0 10px 28px rgba(45, 111, 191, 0.28);
+  overflow: hidden;
+  padding: 10px;
 }
-.logo-badge svg {
-  width: 30px;
-  height: 30px;
+.logo-img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 .title {
   text-align: center;

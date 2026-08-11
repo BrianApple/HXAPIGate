@@ -159,8 +159,6 @@ flowchart LR
 mvn -f HXBootShiro/pom.xml package -DskipTests   # 首次需打包
 ./start_bootshiro.sh
 ```
-- 管理平台地址：http://localhost:18080/static/index.html
-- 默认账号：`admin / 123456`
 
 ### 2. 启动网关（HXAPIGate）
 ```bash
@@ -168,6 +166,13 @@ mvn -f HXAPIGate/pom.xml package -DskipTests      # 首次需打包
 ./start_gateway.sh
 ```
 - 网关启动后自动从 Redis 拉取管理端下发的 API 路由与熔断/限流配置
+
+### 3. 本地访问地址
+
+| 服务 | 地址 | 说明 |
+|---|---|---|
+| 管理平台（Web 控制台） | http://localhost:18080/static/index.html | 前端入口带 `/static/` 前缀（Spring 静态资源映射于 `/static/**`），默认账号 `admin / 123456` |
+| API 网关（HTTP 透传入口） | http://localhost:18081 | 网关端口，按 Redis 路由表转发至后端微服务 |
 
 ### 环境变量（可选）
 | 变量 | 说明 |
