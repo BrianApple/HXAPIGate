@@ -12,6 +12,11 @@
         <el-menu-item index="/log"><el-icon><Document /></el-icon><span>日志查询</span></el-menu-item>
         <el-menu-item index="/role"><el-icon><UserFilled /></el-icon><span>角色管理</span></el-menu-item>
         <el-menu-item index="/user"><el-icon><User /></el-icon><span>用户管理</span></el-menu-item>
+        <el-sub-menu index="/auth">
+          <template #title><el-icon><Lock /></el-icon><span>授权管理</span></template>
+          <el-menu-item index="/authRole"><el-icon><Key /></el-icon><span>角色资源授权</span></el-menu-item>
+          <el-menu-item index="/authUser"><el-icon><Link /></el-icon><span>用户角色关联</span></el-menu-item>
+        </el-sub-menu>
         <el-menu-item index="/app"><el-icon><Key /></el-icon><span>应用管理</span></el-menu-item>
       </el-menu>
     </el-aside>

@@ -265,8 +265,11 @@ WebSocket 接口编辑（代理类型选择 WebSocket + 后端节点配置）：
 ### 角色管理
 ![角色管理](HXBootShiro/src/main/resources/static/images/role.png "role.png")
 
-### 接口授权
-以角色为桥梁，分别对用户、API接口进行授权
+### 授权管理
+一级菜单「授权管理」下含两个二级功能，以角色为桥梁分别对 **API 接口** 与 **用户** 进行授权：
+- **角色资源授权**：选择角色 → 双栏穿梭框，将 API 接口（按 URI+请求方式细粒度）授权给该角色
+- **用户角色关联**：选择角色 → 双栏穿梭框，将用户关联到该角色（角色即拥有该用户）
+
 ![接口授权](HXBootShiro/src/main/resources/static/images/auth.png "auth.png")
 
 ### 用户管理
