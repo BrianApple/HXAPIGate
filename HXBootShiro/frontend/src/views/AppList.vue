@@ -16,6 +16,24 @@
           </el-tag>
         </template>
       </el-table-column>
+      <el-table-column label="License 状态" width="230">
+        <template #default="{ row }">
+          <template v-if="row.license">
+            <div class="license-line">
+              <el-tag v-if="Number(row.licenseExpireAt) === 0" type="success">永久有效</el-tag>
+              <el-tag v-else-if="Number(row.licenseExpireAt) < Date.now()" type="danger">已过期</el-tag>
+              <el-tag v-else-if="daysLeft(row.licenseExpireAt) <= 7" type="warning">剩 {{ daysLeft(row.licenseExpireAt) }} 天</el-tag>
+              <el-tag v-else type="primary">剩 {{ daysLeft(row.licenseExpireAt) }} 天</el-tag>
+              <el-button v-if="row.license" link type="primary" size="small" @click="copyLicense(row)">复制</el-button>
+            </div>
+            <div class="license-mask" :title="'点击复制完整 License'">{{ maskLicense(row.license) }}</div>
+            <div class="license-meta" :title="`生成时间：${formatTime(row.licenseGeneratedAt)}`">
+              生成于 {{ formatTime(row.licenseGeneratedAt) }}
+            </div>
+          </template>
+          <el-tag v-else type="info">未生成</el-tag>
+        </template>
+      </el-table-column>
       <el-table-column prop="createTime" label="创建时间" width="170" />
       <el-table-column label="操作" width="240" fixed="right">
         <template #default="{ row }">
@@ -64,14 +82,18 @@
           <el-input :model-value="licenseForm.appId" disabled />
         </el-form-item>
         <el-form-item label="有效期">
-          <el-input-number v-model="licenseForm.expireDays" :min="1" :max="3650" />
-          <span class="unit">天</span>
+          <el-input-number v-model="licenseForm.expireDays" :min="0" :max="3650" />
+          <span class="unit">{{ licenseForm.expireDays === 0 ? '（0 = 永久有效）' : '天' }}</span>
+        </el-form-item>
+        <el-form-item v-if="licenseForm.expireDays === 0" label="安全提醒">
+          <el-alert type="warning" :closable="false" show-icon
+            title="永久 License 存在安全隐患，建议每 90 天重新生成轮换一次（重新生成后旧 License 自动失效）" />
         </el-form-item>
         <el-form-item label="License">
           <el-input v-model="licenseForm.jwt" type="textarea" :rows="6" readonly placeholder="点击下方按钮生成" />
         </el-form-item>
         <el-form-item label="过期时间" v-if="licenseForm.expireAt">
-          <span>{{ formatTime(licenseForm.expireAt) }}</span>
+          <span>{{ licenseForm.permanent ? '永久有效' : formatTime(licenseForm.expireAt) }}</span>
         </el-form-item>
       </el-form>
       <template #footer>
@@ -99,7 +121,7 @@ const generating = ref(false)
 const dialogVisible = ref(false)
 const licenseVisible = ref(false)
 const form = ref({ id: null, appName: '', description: '', status: 1, roleIds: [] })
-const licenseForm = ref({ appId: '', expireDays: 30, jwt: '', expireAt: 0, roles: [] })
+const licenseForm = ref({ appId: '', expireDays: 0, jwt: '', expireAt: 0, roles: [], permanent: false })
 
 async function load(page = pageIndex.value) {
   pageIndex.value = page
@@ -188,7 +210,7 @@ async function onDelete(row) {
 }
 
 function openLicense(row) {
-  licenseForm.value = { appId: row.appId, expireDays: 30, jwt: '', expireAt: 0, roles: [] }
+  licenseForm.value = { appId: row.appId, expireDays: 0, jwt: '', expireAt: 0, roles: [], permanent: false }
   licenseVisible.value = true
 }
 
@@ -200,7 +222,11 @@ async function onGenerate() {
       licenseForm.value.jwt = d.jwt
       licenseForm.value.expireAt = d.expireAt
       licenseForm.value.roles = d.roles || []
-      ElMessage.success(`License 生成成功，有效期 ${d.expireSeconds / 86400} 天`)
+      licenseForm.value.permanent = !!d.permanent
+      ElMessage.success(d.permanent
+        ? '永久 License 已生成并保存至本地缓存，调用网关 API 时携带 userId: appId + Authorization: License'
+        : `License 已生成并保存至本地缓存，有效期 ${d.expireSeconds / 86400} 天`)
+      load()
     } else {
       ElMessage.error('生成失败')
     }
@@ -208,6 +234,35 @@ async function onGenerate() {
     ElMessage.error(e.message)
   } finally {
     generating.value = false
+  }
+}
+
+function daysLeft(expireAt) {
+  return Math.ceil((Number(expireAt) - Date.now()) / 86400000)
+}
+
+// 脱敏显示：JWT 只展示头尾，完整值仅复制时使用
+function maskLicense(jwt) {
+  if (!jwt) return ''
+  if (jwt.length <= 30) return jwt
+  return `${jwt.slice(0, 20)}...${jwt.slice(-12)}`
+}
+
+async function copyLicense(row) {
+  const text = row.license
+  if (!text) return
+  try {
+    await navigator.clipboard.writeText(text)
+    ElMessage.success('License 已复制到剪贴板')
+  } catch (e) {
+    // 剪贴板 API 不可用时回退
+    const ta = document.createElement('textarea')
+    ta.value = text
+    document.body.appendChild(ta)
+    ta.select()
+    document.execCommand('copy')
+    document.body.removeChild(ta)
+    ElMessage.success('License 已复制到剪贴板')
   }
 }
 
@@ -243,4 +298,16 @@ onMounted(() => {
 .toolbar { margin-bottom: 12px; }
 .pager { margin-top: 12px; justify-content: flex-end; }
 .unit { margin-left: 8px; color: #999; }
+.license-line { display: flex; align-items: center; gap: 6px; }
+.license-mask {
+  font-size: 12px;
+  color: #606266;
+  font-family: monospace;
+  margin-top: 2px;
+  cursor: pointer;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.license-meta { font-size: 12px; color: #909399; margin-top: 2px; white-space: nowrap; }
 </style>

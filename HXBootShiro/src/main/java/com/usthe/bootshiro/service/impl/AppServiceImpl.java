@@ -6,9 +6,12 @@ import com.usthe.bootshiro.dao.AuthRoleMapper;
 import com.usthe.bootshiro.domain.bo.AuthApp;
 import com.usthe.bootshiro.domain.bo.AuthAppRole;
 import com.usthe.bootshiro.domain.bo.AuthRole;
+import com.usthe.bootshiro.redis.AppCacheService;
+import com.usthe.bootshiro.redis.RedisConstance;
 import com.usthe.bootshiro.service.AppService;
 import com.usthe.bootshiro.util.CommonUtil;
 import com.usthe.bootshiro.util.JsonWebTokenUtil;
+import com.usthe.bootshiro.util.JwtSessionStore;
 import io.jsonwebtoken.SignatureAlgorithm;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataAccessException;
 import org.springframework.stereotype.Service;
 
+import jakarta.annotation.PostConstruct;
 import java.util.*;
 import java.util.stream.Collectors;
 
@@ -37,6 +41,32 @@ public class AppServiceImpl implements AppService {
     private AuthAppRoleMapper authAppRoleMapper;
     @Autowired
     private AuthRoleMapper authRoleMapper;
+    @Autowired
+    private AppCacheService appCacheService;
+    @Autowired
+    private JwtSessionStore jwtSessionStore;
+
+    /** 永久 license 在 Redis 中的会话保留时长（10 年，覆盖「永久」语义，重新生成即覆盖） */
+    private static final long PERMANENT_SESSION_SECONDS = 315360000L;
+
+    /**
+     * 启动时全量同步存量应用到 Redis HXAPI:APP:INFO，
+     * 保证网关应用状态校验对历史应用立即可用
+     */
+    @PostConstruct
+    public void initAppCache() {
+        try {
+            List<AuthApp> apps = authAppMapper.selectAppList();
+            if (apps != null) {
+                for (AuthApp app : apps) {
+                    appCacheService.put(app.getAppId(), app.getStatus());
+                }
+            }
+            LOGGER.info("应用信息缓存初始化完成: 共 {} 个应用", apps == null ? 0 : apps.size());
+        } catch (Exception e) {
+            LOGGER.error("应用信息缓存初始化失败", e);
+        }
+    }
 
     @Override
     public List<AuthApp> getAppList() throws DataAccessException {
@@ -70,6 +100,8 @@ public class AppServiceImpl implements AppService {
         if (num != 1) {
             return false;
         }
+        // 同步应用状态到 Redis（网关校验应用存在/启用）
+        appCacheService.put(appId, app.getStatus());
         // 绑定角色
         bindRoles(appId, roleIds);
         return true;
@@ -91,6 +123,13 @@ public class AppServiceImpl implements AppService {
         if (num != 1) {
             return false;
         }
+        // 同步应用状态到 Redis；若被停用则立即吊销现有 license 会话
+        Byte newStatus = app.getStatus() != null ? app.getStatus() : exist.getStatus();
+        appCacheService.put(exist.getAppId(), newStatus);
+        if (newStatus != null && newStatus != 1) {
+            jwtSessionStore.remove(RedisConstance.JWT_SESSION_PREFIX + exist.getAppId());
+            LOGGER.info("应用 {} 已停用，license 会话已吊销", exist.getAppId());
+        }
         // 覆盖式重新绑定角色
         bindRoles(exist.getAppId(), roleIds);
         return true;
@@ -104,7 +143,14 @@ public class AppServiceImpl implements AppService {
         }
         // 删除角色关联 + 应用
         authAppRoleMapper.deleteByAppId(exist.getAppId());
-        return authAppMapper.deleteByPrimaryKey(id) == 1;
+        boolean flag = authAppMapper.deleteByPrimaryKey(id) == 1;
+        if (flag) {
+            // 移除应用信息缓存 + 吊销 license 会话（网关立即拒绝该应用）
+            appCacheService.remove(exist.getAppId());
+            jwtSessionStore.remove(RedisConstance.JWT_SESSION_PREFIX + exist.getAppId());
+            LOGGER.info("应用 {} 已删除，license 会话已吊销", exist.getAppId());
+        }
+        return flag;
     }
 
     @Override
@@ -141,17 +187,34 @@ public class AppServiceImpl implements AppService {
         if (roleCodes.isEmpty()) {
             throw new IllegalStateException("应用绑定的角色已失效，无法生成 license");
         }
-        long period = expireSeconds > 0 ? expireSeconds : 86400L; // 默认 1 天
+        // 有效期：expireSeconds<=0 表示永久（JWT 不设 expiration）
+        Long period = expireSeconds > 0 ? expireSeconds : null;
         String roles = String.join(",", roleCodes);
         String jwt = JsonWebTokenUtil.issueJWT(UUID.randomUUID().toString(), appId,
                 ISSUER, period, roles, null, SignatureAlgorithm.HS512);
+        // 落库：当前有效 license 持久化（重新生成后旧 license 因 tokenId 不匹配自动失效）
+        long expireAt = period == null ? 0L : System.currentTimeMillis() + period * 1000;
+        long now = System.currentTimeMillis();
+        AuthApp update = new AuthApp();
+        update.setId(app.getId());
+        update.setLicense(jwt);
+        update.setLicenseExpireAt(expireAt);
+        update.setLicenseGeneratedAt(now);
+        update.setUpdateTime(new Date());
+        authAppMapper.updateByPrimaryKeySelective(update);
+        // 写 JWT 会话到 Redis（网关 JwtRealm 校验 session 存在 + tokenId 匹配）
+        // 永久 license 用 10 年 TTL 兜底；重新生成会覆盖旧会话
+        long ttl = period == null ? PERMANENT_SESSION_SECONDS : period;
+        jwtSessionStore.set(RedisConstance.JWT_SESSION_PREFIX + appId, jwt, ttl);
         Map<String, Object> result = new HashMap<>();
         result.put("jwt", jwt);
         result.put("appId", appId);
         result.put("roles", roleCodes);
-        result.put("expireAt", System.currentTimeMillis() + period * 1000);
-        result.put("expireSeconds", period);
-        LOGGER.info("生成应用 license: appId={}, roles={}, 有效期={}s", appId, roles, period);
+        result.put("expireAt", expireAt);
+        result.put("expireSeconds", period == null ? 0L : period);
+        result.put("permanent", period == null);
+        LOGGER.info("生成应用 license: appId={}, roles={}, 有效期={}(0=永久), 已落库并写入 Redis 会话",
+                appId, roles, period == null ? 0 : period);
         return result;
     }
 

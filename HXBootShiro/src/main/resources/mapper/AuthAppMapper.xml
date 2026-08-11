@@ -8,12 +8,15 @@
         <result column="APP_SECRET" jdbcType="VARCHAR" property="appSecret" />
         <result column="DESCRIPTION" jdbcType="VARCHAR" property="description" />
         <result column="STATUS" jdbcType="TINYINT" property="status" />
+        <result column="LICENSE" jdbcType="VARCHAR" property="license" />
+        <result column="LICENSE_EXPIRE_AT" jdbcType="BIGINT" property="licenseExpireAt" />
+        <result column="LICENSE_GENERATED_AT" jdbcType="BIGINT" property="licenseGeneratedAt" />
         <result column="CREATE_TIME" jdbcType="TIMESTAMP" property="createTime" />
         <result column="UPDATE_TIME" jdbcType="TIMESTAMP" property="updateTime" />
     </resultMap>
 
     <sql id="Base_Column_List">
-        ID, APP_ID, APP_NAME, APP_SECRET, DESCRIPTION, STATUS, CREATE_TIME, UPDATE_TIME
+        ID, APP_ID, APP_NAME, APP_SECRET, DESCRIPTION, STATUS, LICENSE, LICENSE_EXPIRE_AT, LICENSE_GENERATED_AT, CREATE_TIME, UPDATE_TIME
     </sql>
 
     <select id="selectByPrimaryKey" parameterType="java.lang.Integer" resultMap="BaseResultMap">
@@ -40,9 +43,10 @@
     </delete>
 
     <insert id="insert" parameterType="com.usthe.bootshiro.domain.bo.AuthApp" useGeneratedKeys="true" keyProperty="id">
-        insert into auth_app (ID, APP_ID, APP_NAME, APP_SECRET, DESCRIPTION, STATUS, CREATE_TIME, UPDATE_TIME)
+        insert into auth_app (ID, APP_ID, APP_NAME, APP_SECRET, DESCRIPTION, STATUS, LICENSE, LICENSE_EXPIRE_AT, LICENSE_GENERATED_AT, CREATE_TIME, UPDATE_TIME)
         values (#{id,jdbcType=INTEGER}, #{appId,jdbcType=VARCHAR}, #{appName,jdbcType=VARCHAR},
                 #{appSecret,jdbcType=VARCHAR}, #{description,jdbcType=VARCHAR}, #{status,jdbcType=TINYINT},
+                #{license,jdbcType=VARCHAR}, #{licenseExpireAt,jdbcType=BIGINT}, #{licenseGeneratedAt,jdbcType=BIGINT},
                 #{createTime,jdbcType=TIMESTAMP}, #{updateTime,jdbcType=TIMESTAMP})
     </insert>
 
@@ -54,6 +58,9 @@
             <if test="appSecret != null">APP_SECRET,</if>
             <if test="description != null">DESCRIPTION,</if>
             <if test="status != null">STATUS,</if>
+            <if test="license != null">LICENSE,</if>
+            <if test="licenseExpireAt != null">LICENSE_EXPIRE_AT,</if>
+            <if test="licenseGeneratedAt != null">LICENSE_GENERATED_AT,</if>
             <if test="createTime != null">CREATE_TIME,</if>
             <if test="updateTime != null">UPDATE_TIME,</if>
         </trim>
@@ -63,6 +70,9 @@
             <if test="appSecret != null">#{appSecret,jdbcType=VARCHAR},</if>
             <if test="description != null">#{description,jdbcType=VARCHAR},</if>
             <if test="status != null">#{status,jdbcType=TINYINT},</if>
+            <if test="license != null">#{license,jdbcType=VARCHAR},</if>
+            <if test="licenseExpireAt != null">#{licenseExpireAt,jdbcType=BIGINT},</if>
+            <if test="licenseGeneratedAt != null">#{licenseGeneratedAt,jdbcType=BIGINT},</if>
             <if test="createTime != null">#{createTime,jdbcType=TIMESTAMP},</if>
             <if test="updateTime != null">#{updateTime,jdbcType=TIMESTAMP},</if>
         </trim>
@@ -76,6 +86,9 @@
             <if test="appSecret != null">APP_SECRET = #{appSecret,jdbcType=VARCHAR},</if>
             <if test="description != null">DESCRIPTION = #{description,jdbcType=VARCHAR},</if>
             <if test="status != null">STATUS = #{status,jdbcType=TINYINT},</if>
+            <if test="license != null">LICENSE = #{license,jdbcType=VARCHAR},</if>
+            <if test="licenseExpireAt != null">LICENSE_EXPIRE_AT = #{licenseExpireAt,jdbcType=BIGINT},</if>
+            <if test="licenseGeneratedAt != null">LICENSE_GENERATED_AT = #{licenseGeneratedAt,jdbcType=BIGINT},</if>
             <if test="createTime != null">CREATE_TIME = #{createTime,jdbcType=TIMESTAMP},</if>
             <if test="updateTime != null">UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP},</if>
         </set>
@@ -89,6 +102,9 @@
             APP_SECRET = #{appSecret,jdbcType=VARCHAR},
             DESCRIPTION = #{description,jdbcType=VARCHAR},
             STATUS = #{status,jdbcType=TINYINT},
+            LICENSE = #{license,jdbcType=VARCHAR},
+            LICENSE_EXPIRE_AT = #{licenseExpireAt,jdbcType=BIGINT},
+            LICENSE_GENERATED_AT = #{licenseGeneratedAt,jdbcType=BIGINT},
             CREATE_TIME = #{createTime,jdbcType=TIMESTAMP},
             UPDATE_TIME = #{updateTime,jdbcType=TIMESTAMP}
         where ID = #{id,jdbcType=INTEGER}

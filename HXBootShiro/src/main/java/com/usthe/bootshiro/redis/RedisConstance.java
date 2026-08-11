@@ -54,4 +54,10 @@ public class RedisConstance {
      * 限流信号量 key 前缀
      */
     public static final String LIMIT_PREFIX = "HXAPI:LIMIT:";
+
+    /**
+     * 应用信息缓存（Hash：field=appId，value=status）。平台增删改同步写入，
+     * 网关 JwtRealm 校验应用 license 时直读（不存在=应用已删除，status!=1=应用已停用）
+     */
+    public static final String APP_INFO_CACHE = "HXAPI:APP:INFO";
 }

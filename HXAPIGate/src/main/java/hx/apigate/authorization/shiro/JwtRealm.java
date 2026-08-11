@@ -102,6 +102,19 @@ public class JwtRealm extends AuthorizingRealm {
             throw new AuthenticationException("您的账户已在其它地方登录，您已被强制离线！");
         }
         
+        // 应用 license 校验：subject 为 app_ 前缀的第三方应用标识时，
+        // 需校验应用存在且启用（Redis HXAPI:APP:INFO 由平台同步维护）
+        String appId = jwtAccount.getAppId();
+        if (appId != null && appId.startsWith("app_")) {
+            String status = RedisUtil.getAppStatus(appId);
+            if (status == null) {
+                throw new AuthenticationException("应用不存在或已被删除，license 无效！");
+            }
+            if (!"1".equals(status.trim())) {
+                throw new AuthenticationException("应用已停用，license 已被吊销！");
+            }
+        }
+        
         return new SimpleAuthenticationInfo(jwtAccount,jwt,this.getName());
     }
     

@@ -17,6 +17,12 @@ public class AuthApp {
     private String description;
     /** 状态 1:启用 0:停用 */
     private Byte status;
+    /** 当前有效 License(JWT)，未生成时为 null */
+    private String license;
+    /** License 过期时间戳(0=永久) */
+    private Long licenseExpireAt;
+    /** License 最近生成时间戳 */
+    private Long licenseGeneratedAt;
     private Date createTime;
     private Date updateTime;
 
@@ -32,6 +38,12 @@ public class AuthApp {
     public void setDescription(String description) { this.description = description; }
     public Byte getStatus() { return status; }
     public void setStatus(Byte status) { this.status = status; }
+    public String getLicense() { return license; }
+    public void setLicense(String license) { this.license = license; }
+    public Long getLicenseExpireAt() { return licenseExpireAt; }
+    public void setLicenseExpireAt(Long licenseExpireAt) { this.licenseExpireAt = licenseExpireAt; }
+    public Long getLicenseGeneratedAt() { return licenseGeneratedAt; }
+    public void setLicenseGeneratedAt(Long licenseGeneratedAt) { this.licenseGeneratedAt = licenseGeneratedAt; }
     public Date getCreateTime() { return createTime; }
     public void setCreateTime(Date createTime) { this.createTime = createTime; }
     public Date getUpdateTime() { return updateTime; }

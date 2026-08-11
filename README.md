@@ -282,8 +282,10 @@ WebSocket 接口编辑（代理类型选择 WebSocket + 后端节点配置）：
 为第三方应用/服务签发访问网关 API 的 **JWT License**（与用户登录 JWT 同构：HS512 + 网关同一密钥签名，roles=应用绑定的角色编码），应用调用网关 API 时携带请求头 `userId: APP_ID` + `Authorization: <License>` 即可通过网关 JwtRealm 鉴权
 
 - 新增应用：自动生成 `app_id`（app_ 前缀 + 随机串）与密钥，可绑定角色（决定可访问的 API 范围）
-- 生成 License：选择有效期（天）→ 一键生成 JWT → 复制给应用方
-- 停用/删除应用后其 License 立即失效（应用状态校验 + 角色关联清理）
+- 生成 License：有效期可选 **0=永久（默认）** 或指定天数；生成后**落库持久化**并写入 Redis 会话缓存（JWT-SESSION:appId），列表页**脱敏显示**（仅头尾）+ 一键复制完整 License
+- 安全提醒：永久 License 生成时提示「建议每 90 天重新生成轮换一次」（重新生成后旧 License 因 tokenId 变更自动失效）
+- 网关全链路校验：验签 → Redis 会话存在 + tokenId 匹配 → **应用状态校验**（HXAPI:APP:INFO：应用已删/已停用一律拒绝）
+- 吊销机制：停用/删除应用立即删除 Redis 会话与应用缓存，存量 License 即刻失效
 
 ### 目前网关已实现功能
 1. 授权、鉴权管理（JWT 密钥支持环境变量外置注入）

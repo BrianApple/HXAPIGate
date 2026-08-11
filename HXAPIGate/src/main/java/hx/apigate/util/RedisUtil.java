@@ -37,6 +37,9 @@ public class RedisUtil {
     /** 鉴权规则 Hash key（与平台侧 ApiAuthCacheService 保持一致） */
     public static final String APIAUTH_CACHE_KEY = "HXAPI:AUTH";
 
+    /** 应用信息 Hash key（与平台侧 AppCacheService 保持一致：field=appId, value=status） */
+    public static final String APP_INFO_CACHE_KEY = "HXAPI:APP:INFO";
+
     /** 路由变更通知频道 */
     public static final String ROUTE_CHANNEL = "HXAPI:CHANNEL:ROUTE";
 
@@ -159,6 +162,19 @@ public class RedisUtil {
             return cacheProcessor().getString(key);
         } catch (Exception e) {
             LOGGER.warn("读取 JWT 会话失败: {}", e.getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * 读取应用状态（平台 AppCacheService 写入，field=appId）
+     * @return 状态字符串 "1"=启用 "0"=停用；应用不存在返回 null
+     */
+    public static String getAppStatus(String appId) {
+        try {
+            return cacheProcessor().getHashString(APP_INFO_CACHE_KEY, appId);
+        } catch (Exception e) {
+            LOGGER.warn("读取应用状态失败: {}", e.getMessage());
             return null;
         }
     }
