@@ -52,13 +52,10 @@
 
 <script setup>
 import { ref, onMounted, onBeforeUnmount } from 'vue'
-import * as echarts from 'echarts/core'
-import { PieChart } from 'echarts/charts'
-import { TooltipComponent, LegendComponent } from 'echarts/components'
-import { CanvasRenderer } from 'echarts/renderers'
+import * as echarts from 'echarts'
+// 完整版 echarts：内置全部图表/组件/渲染器注册，避免按需引入在打包后被拆成
+// 多个 chunk 导致 extensionRegisters 表不一致（registerChartView is not a function）
 import { getApiTypes, getRoleList, getApiList } from '../api'
-
-echarts.use([PieChart, TooltipComponent, LegendComponent, CanvasRenderer])
 
 const typeCount = ref('-')
 const apiCount = ref('-')
