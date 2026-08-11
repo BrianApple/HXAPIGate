@@ -31,6 +31,11 @@ public class UserServiceImpl implements UserService {
     }
 
     @Override
+    public List<AuthUser> getUserList() throws DataAccessException {
+        return userMapper.selectUserList();
+    }
+
+    @Override
     public List<AuthUser> getUserListByRoleId(Integer roleId) throws DataAccessException {
         return userMapper.selectUserListByRoleId(roleId);
     }
@@ -63,5 +68,11 @@ public class UserServiceImpl implements UserService {
     public List<AuthUser> getNotAuthorityUserListByRoleId(Integer roleId) throws DataAccessException {
 
         return userMapper.selectUserListExtendByRoleId(roleId);
+    }
+
+    @Override
+    public String updatePassword(AuthUser authUser) {
+        userMapper.updateByPrimaryKeySelective(authUser);
+        return "success";
     }
 }

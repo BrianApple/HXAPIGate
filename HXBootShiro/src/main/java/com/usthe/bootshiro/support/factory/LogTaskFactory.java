@@ -39,6 +39,34 @@ public class LogTaskFactory {
         };
     }
 
+    public static TimerTask exitLog(String userId, String ip, Short succeed, String message) {
+        return new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    AuthAccountLog accountLog = LogFactory.createAccountLog(userId, "用户退出日志", ip, succeed, message);
+                    accountLogMapper.insertSelective(accountLog);
+                } catch (Exception e) {
+                    LOGGER.error("写入用户退出日志异常", e.getCause().getMessage());
+                }
+            }
+        };
+    }
+
+    public static TimerTask registerLog(String userId, String ip, Short succeed, String message) {
+        return new TimerTask() {
+            @Override
+            public void run() {
+                try {
+                    AuthAccountLog accountLog = LogFactory.createAccountLog(userId, "用户注册日志", ip, succeed, message);
+                    accountLogMapper.insertSelective(accountLog);
+                } catch (Exception e) {
+                    LOGGER.error("写入用户注册日志异常", e.getCause().getMessage());
+                }
+            }
+        };
+    }
+
     public static TimerTask bussinssLog(String userId, String api, String method, Short succeed, String message) {
         return new TimerTask() {
             @Override

@@ -1,0 +1,160 @@
+package com.usthe.bootshiro.controller;
+
+import com.github.pagehelper.PageHelper;
+import com.github.pagehelper.PageInfo;
+import com.usthe.bootshiro.domain.bo.AuthUser;
+import com.usthe.bootshiro.domain.vo.Account;
+import com.usthe.bootshiro.domain.vo.Message;
+import com.usthe.bootshiro.service.UserService;
+import com.usthe.bootshiro.shiro.provider.AccountProvider;
+import com.usthe.bootshiro.support.factory.LogTaskFactory;
+import com.usthe.bootshiro.support.manager.LogExeManager;
+import com.usthe.bootshiro.util.IpUtil;
+import com.usthe.bootshiro.util.JsonWebTokenUtil;
+import com.usthe.bootshiro.util.JwtSessionStore;
+import com.usthe.bootshiro.util.Md5Util;
+import com.usthe.bootshiro.util.RequestResponseUtil;
+
+import io.swagger.v3.oas.annotations.Operation;
+import org.apache.shiro.SecurityUtils;
+import org.apache.shiro.web.util.WebUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
+import org.springframework.util.StringUtils;
+import org.springframework.web.bind.annotation.*;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.concurrent.atomic.AtomicInteger;
+
+/**
+ *   用户相关操作（第三方对外接口：给第三方系统用户使用，鉴权由网关侧完成）
+ * @author tomsun28
+ * @date 21:05 2018/3/17
+ */
+@RestController
+@RequestMapping("/user")
+public class UserController extends BaseAction {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(UserController.class);
+    @Autowired
+    private UserService userService;
+
+    @Autowired
+    private StringRedisTemplate redisTemplate;
+    @Autowired
+    private JwtSessionStore jwtSessionStore;
+    
+    @Autowired
+    private AccountProvider accountProvider;
+    /**
+     * 用户密码修改
+     * @param request
+     * @param response
+     * @return
+     */
+    @Operation(summary = "密码修改", description = "PUT用户密码修改")
+    @PutMapping("/accountupdate")
+    public Message accountUpdate(HttpServletRequest request, HttpServletResponse response) {
+    	Map<String, String> params = RequestResponseUtil.getRequestBodyMap(request);
+    	String userId = request.getHeader("userId");//用户名
+    	String password = params.get("password");//原密码
+    	String npassword = params.get("npassword");//新密码
+    	Account account = accountProvider.loadAccount(userId);
+    	
+    	if (account != null) {
+            // 用盐对密码进行MD5加密
+            if(Md5Util.md5(password+account.getSalt()).equals(account.getPassword()) ) {
+            	//原密码正确
+            	npassword = Md5Util.md5(npassword+account.getSalt());
+            	AuthUser user = new AuthUser();
+            	user.setPassword(npassword);
+            	user.setUid(userId);
+            	userService.updatePassword(user);
+            }else {
+            	return new Message().ok(400, "password error");
+            }
+        }
+    	
+//    	LogExeManager.getInstance().executeLogTask(LogTaskFactory.loginLog(appId, IpUtil.getIpFromRequest(WebUtils.toHttp(request)), (short) 1, "密码修改成功"));
+    	
+    	return new Message().ok(200, "update success");
+    }
+
+    /**
+     * 获取对应用户角色（契约：POST /user/role/{appId}，匹配网关路由 /user/role/*==POST）
+     */
+    @Operation(summary = "获取对应用户角色", description = "POST根据用户的appId获取对应用户的角色")
+    @PostMapping("/role/{appId}")
+    public Message getUserRoleList(@PathVariable String appId) {
+        String roles = userService.loadAccountRole(appId);
+        Set<String> roleSet = JsonWebTokenUtil.split(roles);
+        LOGGER.debug(roleSet.toString());
+    	return new Message().ok(200,"return roles success").addData("roles",roleSet);
+    	
+    }
+
+
+    @SuppressWarnings("unchecked")
+    @Operation(summary = "获取用户列表", description = "GET获取所有注册用户的信息列表")
+    @GetMapping("/list/{start}/{limit}")
+    public Message getUserList(@PathVariable Integer start, @PathVariable Integer limit) {
+
+        PageHelper.startPage(start,limit);
+        List<AuthUser> authUsers = userService.getUserList();
+        authUsers.forEach(user->user.setPassword(null));
+        PageInfo pageInfo = new PageInfo(authUsers);
+        return new Message().ok(200,"return user list success").addData("pageInfo",pageInfo);
+    }
+
+    @Operation(summary = "给用户授权添加角色", method = "POST")
+    @PostMapping("/authority/role")
+    public Message authorityUserRole(HttpServletRequest request) {
+        Map<String,String> map = getRequestBody(request);
+        String uid = map.get("uid");
+        int roleId = Integer.parseInt(((Object)map.get("roleId")).toString());
+        boolean flag = userService.authorityUserRole(uid,roleId);
+        return flag ? new Message().ok(200,"authority success") : new Message().error(400,"authority error");
+    }
+
+    /**
+     * 删除已经授权的用户角色（契约：DELETE /user/authority/role，参数走 body，匹配网关路由 /user/authority/role==DELETE）
+     */
+    @Operation(summary = "删除已经授权的用户角色", method = "DELETE")
+    @DeleteMapping("/authority/role")
+    public Message deleteAuthorityUserRole(HttpServletRequest request) {
+        Map<String,String> map = getRequestBody(request);
+        String uid = map.get("uid");
+        int roleId = Integer.parseInt(((Object)map.get("roleId")).toString());
+        return userService.deleteAuthorityUserRole(uid,roleId) ? new Message().ok(200,"delete success") : new Message().error(400,"delete fail");
+    }
+
+
+    @Operation(summary = "用户登出", method = "POST")
+    @PostMapping("/exit")
+    public Message accountExit(HttpServletRequest request) {
+        SecurityUtils.getSubject().logout();
+        // 与 accountupdate 一致：直接读原生 header（getRequestHeader 经 XSS wrapper 包装后读不到 userId）
+        String userId = request.getHeader("userId");
+        if (StringUtils.isEmpty(userId)) {
+            return new Message().error(400, "用户未登录无法登出");
+        }
+        Object jwt = jwtSessionStore.get("JWT-SESSION:"+userId);
+//        String jwt = redisTemplate.opsForValue().get("JWT-SESSION-"+userId);
+        if (StringUtils.isEmpty(jwt)) {
+            return new Message().error(400, "用户未登录无法登出");
+        }
+        jwtSessionStore.remove("JWT-SESSION:"+userId);
+//        redisTemplate.opsForValue().getOperations().delete("JWT-SESSION-"+userId);
+        LogExeManager.getInstance().executeLogTask(LogTaskFactory.exitLog(userId,request.getRemoteAddr(),(short)1,""));
+
+        return new Message().ok(200, "用户退出成功");
+    }
+
+
+}

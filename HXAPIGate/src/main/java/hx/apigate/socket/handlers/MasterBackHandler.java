@@ -47,10 +47,12 @@ public class MasterBackHandler extends SimpleChannelInboundHandler<HttpObject> {
 
 	/** 非透传模式聚合上限（16MB，防内存膨胀；原 HttpObjectAggregator 为 1MB） */
 	private static final int MAX_AGGREGATE_LENGTH = 16 * 1024 * 1024;
-	/** hop-by-hop 头，透传时必须剔除（由 Netty 按连接语义重新处理） */
+	/** hop-by-hop 头，透传时必须剔除（由 Netty 按连接语义重新处理）。
+	 *  注意：transfer-encoding 不能剔除——透传模式依赖它让 Netty HttpObjectEncoder 输出正确的 chunked 帧，
+	 *  否则响应变成"无 Content-Length、无 chunked、无 close"三无响应，客户端永远等不到响应结束（挂起超时）。 */
 	private static final Set<String> HOP_BY_HOP_HEADERS = new HashSet<>(Arrays.asList(
 			"connection", "keep-alive", "proxy-authenticate", "proxy-authorization",
-			"te", "trailer", "transfer-encoding", "upgrade"));
+			"te", "trailer", "upgrade"));
 
 	/**
 	 * web端channel
@@ -91,6 +93,12 @@ public class MasterBackHandler extends SimpleChannelInboundHandler<HttpObject> {
     		// 透传：复制状态码 + 业务头（剔除 hop-by-hop），原样写给 web 端
     		DefaultHttpResponse out = new DefaultHttpResponse(resp.protocolVersion(), resp.status());
     		copyTransparentHeaders(resp.headers(), out.headers());
+    		// 兜底：后端响应既无 Content-Length 也无 chunked 时（极端情况），
+    		// 强制 Connection: close，让客户端以连接关闭判断响应结束，避免无限挂起
+    		if (!resp.headers().contains(HttpHeaderNames.CONTENT_LENGTH)
+    				&& !HttpHeaderValues.CHUNKED.contentEqualsIgnoreCase(resp.headers().get(HttpHeaderNames.TRANSFER_ENCODING))) {
+    			out.headers().set(HttpHeaderNames.CONNECTION, HttpHeaderValues.CLOSE);
+    		}
     		inboundChannel.writeAndFlush(out);
     		headersSent = true;
     		// 响应链路可查：透传模式打印状态码（body 流式逐 chunk 转发，见 handleContent）
