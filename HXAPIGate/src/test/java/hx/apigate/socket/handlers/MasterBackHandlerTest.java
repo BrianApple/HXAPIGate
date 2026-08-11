@@ -17,7 +17,6 @@ import org.junit.Test;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -49,7 +48,8 @@ public class MasterBackHandlerTest {
         assertEquals(HttpResponseStatus.OK, outHead.status());
         assertEquals("text/event-stream", outHead.headers().get(HttpHeaderNames.CONTENT_TYPE));
         assertEquals("sess-123", outHead.headers().get("Mcp-Session-Id"));
-        assertNull("hop-by-hop 头 Transfer-Encoding 应剔除", outHead.headers().get(HttpHeaderNames.TRANSFER_ENCODING));
+        assertEquals("transfer-encoding 需保留（透传依赖 chunked 帧界定响应结束，剔除会导致客户端挂起）",
+                "chunked", outHead.headers().get(HttpHeaderNames.TRANSFER_ENCODING));
 
         // 两个事件 chunk + 结束
         backend.writeInbound(new DefaultHttpContent(Unpooled.copiedBuffer("data: hello\n\n", CharsetUtil.UTF_8)));

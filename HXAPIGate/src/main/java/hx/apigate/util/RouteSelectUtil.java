@@ -30,7 +30,6 @@ public class RouteSelectUtil {
     private static Logger logger = LoggerFactory.getLogger(RouteSelectUtil.class);
     public static String HTTP  = "http";
     public static String DUBBO  = "dubbo";
-    public static String TCP  = "tcp";
     public static String MCP  = "mcp";
     public static String WEBSOCKET  = "websocket";
 
@@ -127,7 +126,7 @@ public class RouteSelectUtil {
         String routeLimitKey = pattern + "==" + route.getVersion();
         //获取路由信号量
         if(RateLimiter.tryAcquire(routeLimitKey, route.getAllTps())) {
-            if(HTTP.equals(route.getProtocal()) || TCP.equals(route.getProtocal()) || MCP.equals(route.getProtocal()) || WEBSOCKET.equals(route.getProtocal())) {
+            if(HTTP.equals(route.getProtocal()) || MCP.equals(route.getProtocal()) || WEBSOCKET.equals(route.getProtocal())) {
 
                 int routeNum = route.getRouteNodes().size();
                 for(int i = 0 ; i < routeNum ; i ++) {

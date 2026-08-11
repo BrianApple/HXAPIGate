@@ -110,7 +110,7 @@ public class InnerApiController {
 				String routInfoStr = (String) temData.remove("routeInfo");
 				if(routInfoStr != null && !"".equals(routInfoStr)) {
 					Map routInfoMap = (Map) JSON.parse(routInfoStr);
-					if("http".equals(routInfoMap.get("pType")) || "tcp".equals(routInfoMap.get("pType")) || "mcp".equals(routInfoMap.get("pType")) || "websocket".equals(routInfoMap.get("pType"))) {
+					if("http".equals(routInfoMap.get("pType")) || "mcp".equals(routInfoMap.get("pType")) || "websocket".equals(routInfoMap.get("pType"))) {
 						int routeNum = (routInfoMap.size() - 6) /5 ;
 						routInfoMap.put("routeNum", routeNum);//后台辅助计算route的数量
 					}else if("dubbo".equals(routInfoMap.get("pType"))) {

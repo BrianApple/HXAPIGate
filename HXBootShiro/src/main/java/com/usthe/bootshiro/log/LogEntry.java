@@ -9,7 +9,7 @@ public class LogEntry {
     private String thread;    // 线程名
     private String level;     // TRACE/DEBUG/INFO/WARN/ERROR
     private String traceId;   // 请求溯源 ID（无则空）
-    private String proto;     // 协议标识 http/mcp/tcp/websocket/dubbo（无则空）
+    private String proto;     // 协议标识 http/mcp/websocket/dubbo（无则空）
     private String frameId;   // 帧号（长连接消息级标识 <traceId>-F<序号>；无则空）
     private String logger;    // logger 名称
     private String message;   // 日志消息

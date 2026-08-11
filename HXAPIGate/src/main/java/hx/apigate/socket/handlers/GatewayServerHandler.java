@@ -112,7 +112,7 @@ public class GatewayServerHandler extends SimpleChannelInboundHandler<FullHttpRe
 				}
 				if(ret != null && ret.length == 2 && ret[1] instanceof NodeInfo){
 					NodeInfo node = (NodeInfo)ret[1];
-					// 协议标识写入 MDC：http / mcp / tcp / websocket / dubbo
+					// 协议标识写入 MDC：http / mcp / websocket / dubbo
 					TraceUtil.putProto(node.getProtocalTemp());
 					// 透传模式：默认开启（HTTP 代理原样转发状态码/headers/body，支持 MCP/SSE 流式）
 					// 显式 X-HXAPI-Transparent: false 可回退旧行为（RetMessage 统一包装）

@@ -147,7 +147,22 @@ flowchart LR
 
 **使用方式：** 管理平台 → 接口管理 → 新增API，代理类型选择 `WebSocket`，填写请求路径（如 `/ws/echo`）与后端节点（如 `127.0.0.1:18085`），保存后网关自动生效；客户端直接连接 `ws://网关地址:18081/ws/echo` 即可。
 
-## 本地启动
+### 文件上传/下载代理
+
+HXAPIGate 支持 HTTP 文件上传接口代理：客户端以 `multipart/form-data` 请求网关，网关将完整的 multipart 报文（含 boundary 与文件二进制内容）**原样透传**给后端 REST 服务，后端可正常解析 `@RequestPart`/`MultipartFile`；后端返回的文件流（`application/octet-stream` 或任意二进制）同样原样回传。
+
+| 能力 | 说明 |
+|---|---|
+| multipart 无损透传 | Content-Type/boundary、文件二进制、表单字段全部原样到达后端（已实测 15MB 大文件） |
+| 文件下载响应 | 后端二进制响应经透传模式原样回传（Content-Length/chunked 均保留） |
+| 大小限制可配 | 环境变量 `HXAPI_MAX_CONTENT_LENGTH`（或 JVM 参数 `-Dmax.content.length`，默认 16MB，单位字节），超限返回 HTTP 413 + JSON 错误说明 `{"code":413,"msg":"request body too large, max xxx bytes"}` |
+| 网关能力复用 | 上传/下载走标准路由链：鉴权（JWT 头校验，不解析 body）/ 限流 / 熔断 / 负载均衡 |
+
+**使用方式：** 管理平台新增 HTTP 协议接口，后端指向支持文件上传的 REST 服务；客户端直接 `POST http://网关:18081/上传接口`，body 用标准 `multipart/form-data`（`curl -F "file=@..."` 即可）。
+
+> 说明：网关为聚合式代理（请求体在内存中组装后转发），默认 16MB 上限按「小/中文件」场景设计；超大文件（GB 级）建议走对象存储直传或分片上传。
+
+### 本地启动
 
 ### 环境依赖
 - **JDK 21**（网关与管理端均要求）
@@ -206,7 +221,7 @@ mvn -f HXAPIGate/pom.xml package -DskipTests      # 首次需打包
 ```
 
 - **traceId**：网关在请求入口自动生成 16 位十六进制 ID；调用方也可通过请求头 `X-Trace-Id` 传入自定义 ID（跨服务链路联查），网关/管理端均通过响应头 `X-Trace-Id` 原样回传
-- **proto**：标识该请求命中的代理协议（`http` / `mcp` / `tcp` / `websocket` / `dubbo`），长连接（WS/TCP）按连接级标记，贯穿握手/转发/断开全生命周期
+- **proto**：标识该请求命中的代理协议（`http` / `mcp` / `websocket` / `dubbo`），长连接（WS）按连接级标记，贯穿握手/转发/断开全生命周期
 - 实现方式：slf4j MDC（`%X{traceId}` / `%X{proto}`），HTTP 请求在 `GatewayServerHandler` 入口注入、异步转发回调中恢复、结束清理，杜绝线程复用串号
 - 配套代码：网关 `TraceUtil` + `TraceIdOutboundHandler`、管理端 `TraceIdFilter`
 
@@ -258,7 +273,7 @@ WebSocket 接口编辑（代理类型选择 WebSocket + 后端节点配置）：
 1. 授权、鉴权管理（JWT 密钥支持环境变量外置注入）
 2. 路由配置（支持熔断参数 UI 可视化配置：失败阈值/成功阈值/超时毫秒）
 3. 路由负载（轮询和赋权值）
-4. HTTP、dubbo、MCP、TCP、WebSocket 多协议代理（WebSocket 支持双向透传/后端推送/断开传播/可配置空闲超时）
+4. HTTP、dubbo、MCP、WebSocket 多协议代理（WebSocket 支持双向透传/后端推送/断开传播/可配置空闲超时）
 5. 接口分布式限流（Redis 计数信号量）
 6. 金丝雀发布
 7. 接口熔断（状态机管理，配置值优先于 TPS 自动推导）

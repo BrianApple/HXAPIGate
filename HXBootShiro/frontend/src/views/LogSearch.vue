@@ -11,7 +11,7 @@
         </el-form-item>
         <el-form-item label="协议">
           <el-select v-model="query.proto" placeholder="全部" clearable style="width: 130px">
-            <el-option v-for="p in ['http', 'mcp', 'tcp', 'websocket', 'dubbo']" :key="p" :label="p" :value="p" />
+            <el-option v-for="p in ['http', 'mcp', 'websocket', 'dubbo']" :key="p" :label="p" :value="p" />
           </el-select>
         </el-form-item>
         <el-form-item label="级别">
@@ -230,7 +230,7 @@ function levelType(level) {
 }
 
 function protoType(proto) {
-  return proto === 'websocket' ? 'primary' : proto === 'mcp' ? 'warning' : proto === 'tcp' ? 'danger' : ''
+  return proto === 'websocket' ? 'primary' : proto === 'mcp' ? 'warning' : ''
 }
 
 search(1)

@@ -12,7 +12,7 @@ import org.slf4j.MDC;
  * 使用约定：
  * <ul>
  *   <li>HTTP 短请求：GatewayServerHandler 入口生成/复用 traceId → 各处理阶段 put/clear（无帧号）</li>
- *   <li>TCP / WebSocket 长连接：连接建立时 put（连接级 traceId），每帧消息分配 frameId
+ *   <li>WebSocket 长连接：连接建立时 put（连接级 traceId），每帧消息分配 frameId
  *       （格式：&lt;连接traceId&gt;-F&lt;序号&gt;，如 abc123-F0001），支持单帧链路追踪</li>
  *   <li>Dubbo 调用：请求级 traceId，每次调用生成帧号</li>
  *   <li>调用方可通过请求头 X-Trace-Id 传入自定义 traceId（跨服务链路溯源）</li>
@@ -22,7 +22,7 @@ public class TraceUtil {
 
     /** MDC key：请求链路唯一标识 */
     public static final String TRACE_ID = "traceId";
-    /** MDC key：代理协议（http / mcp / tcp / websocket / dubbo） */
+    /** MDC key：代理协议（http / mcp / websocket / dubbo） */
     public static final String PROTO = "proto";
     /** MDC key：帧号（长连接消息级标识，格式 &lt;traceId&gt;-F&lt;序号&gt;；无帧号时为 --） */
     public static final String FRAME_ID = "frameId";

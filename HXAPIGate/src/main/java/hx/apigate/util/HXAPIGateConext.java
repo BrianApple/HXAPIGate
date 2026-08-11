@@ -19,8 +19,9 @@ import java.util.concurrent.TimeUnit;
  */
 public class HXAPIGateConext {
 	public static int PORT = 18081;//HXAPIGate默认端口为18081
-	/** 请求体聚合上限（默认 16MB）：MCP 工具调用参数可能较大，原 1MB 会截断 */
-	public static int MAX_CONTENT_LENGTH = 16 * 1024 * 1024;
+	/** 请求体聚合上限（默认 16MB，可用环境变量 HXAPI_MAX_CONTENT_LENGTH 或 JVM 参数 -Dmax.content.length 覆盖，单位字节）：
+	 *  网关对 multipart 文件上传/大请求体全量聚合后转发，超限返回 413。 */
+	public static int MAX_CONTENT_LENGTH = loadMaxContentLength();
 	/** WebSocket 代理空闲超时（秒）：连接空闲超过该时长自动断开，默认 60，可用环境变量 HXAPI_WS_IDLE_TIMEOUT 或 -Dws.idle.timeout 覆盖 */
 	public static int WS_IDLE_TIMEOUT_SECONDS = loadWsIdleTimeout();
 	public static int TPS = 2000;//网关全局限流
@@ -38,6 +39,18 @@ public class HXAPIGateConext {
 			}
 		}, 10, TimeUnit.SECONDS);
 
+	}
+
+	private static int loadMaxContentLength() {
+		String env = System.getenv("HXAPI_MAX_CONTENT_LENGTH");
+		if (env != null && !env.isBlank()) {
+			return Integer.parseInt(env.trim());
+		}
+		String prop = System.getProperty("max.content.length");
+		if (prop != null && !prop.isBlank()) {
+			return Integer.parseInt(prop.trim());
+		}
+		return 16 * 1024 * 1024;
 	}
 
 	private static int loadWsIdleTimeout() {

@@ -48,7 +48,7 @@ public class MixAll {
 	public static final AttributeKey<String> ATTRIBUTEKEY_URL = AttributeKey.valueOf("requestUrl");
 	/** 请求溯源 ID（traceId）：HTTP 请求在 GatewayServerHandler 入口生成，随 channel 传递到转发/日志环节 */
 	public static final AttributeKey<String> ATTRIBUTEKEY_TRACE_ID = AttributeKey.valueOf("traceId");
-	/** 连接内帧计数器（AtomicLong）：长连接（websocket/tcp/dubbo）每帧消息递增，生成帧号 frameId（<traceId>-F<序号>） */
+	/** 连接内帧计数器（AtomicLong）：长连接（websocket/dubbo）每帧消息递增，生成帧号 frameId（<traceId>-F<序号>） */
 	public static final AttributeKey<AtomicLong> ATTRIBUTEKEY_FRAME_SEQ = AttributeKey.valueOf("frameSeq");
 	/** 最近一次请求帧号（String）：后端响应帧沿用该帧号，实现请求-响应对同帧号（一帧=一次业务往返） */
 	public static final AttributeKey<String> ATTRIBUTEKEY_LAST_FRAME_ID = AttributeKey.valueOf("lastFrameId");
@@ -97,7 +97,7 @@ public class MixAll {
 		return sb.toString().trim() + (len > 64 ? "...(" + len + "B)" : " (" + len + "B)");
 	}
 
-	/** ByteBuf 内容描述：UTF-8 文本（超 200 字符截断）或 hex 预览（超 64 字节截断），用于 TCP 帧日志 */
+	/** ByteBuf 内容描述：UTF-8 文本（超 200 字符截断）或 hex 预览（超 64 字节截断），用于帧日志 */
 	public static String describeBytes(io.netty.buffer.ByteBuf buf) {
 		if (buf == null) {
 			return "";

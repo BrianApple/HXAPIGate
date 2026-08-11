@@ -45,7 +45,6 @@ import hx.apigate.databridge.xmlBean.RouteNode;
 import hx.apigate.dubbo.util.DubboServiceFactory;
 import hx.apigate.hxqueue.HXUnlockedMQ;
 import hx.apigate.socket.BackendHandlerInitializer;
-import hx.apigate.socket.TcpBackendHandlerInitializer;
 import hx.apigate.socket.WebSocketBackendInitializer;
 import hx.apigate.socket.Constance;
 import io.netty.handler.codec.http.websocketx.WebSocketFrame;
@@ -102,7 +101,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 				 if (future.isSuccess()) {
 					 CBManager manager= RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey());
 					 manager.getState().postMethodExecute();
-					 // HTTP 请求帧：打印方法/URI/请求体内容（与 TCP/WebSocket/Dubbo 帧日志同风格，链路可查具体数据）
+					 // HTTP 请求帧：打印方法/URI/请求体内容（与 WebSocket/Dubbo 帧日志同风格，链路可查具体数据）
 					 logger.info("HTTP请求[{}] {} {} -> 后端 {}:{}, 内容: {}", traceId, msg.method().name(), msg.uri(), nodeInfo.getRouteNode().getIp(), nodeInfo.getRouteNode().getPort(), MixAll.describeBytes(msg.content()));
 					 toMasterChannel.writeAndFlush(msg);
 				 } else {
@@ -163,48 +162,7 @@ public class TranceDataHandler extends SimpleChannelInboundHandler<FullHttpReque
 					}
     			 }
     		 });
-    	 }else if(RouteSelectUtil.TCP.equals(nodeInfo.getProtocalTemp())) {
-    	 	final String patternUri = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
-    	 	final ByteBuf body = msg.content().retainedDuplicate();
-    	 	Bootstrap b = new Bootstrap();
-    	 	b.option(ChannelOption.SO_KEEPALIVE, false)
-    	 	 .option(ChannelOption.CONNECT_TIMEOUT_MILLIS, 5000)
-    	 	 .group(webChannel.eventLoop())
-    	 	 .channel(NioSocketChannel.class)
-    	 	 .handler(new TcpBackendHandlerInitializer(webChannel));
-    	 	ChannelFuture f = b.connect(nodeInfo.getRouteNode().getIp(), nodeInfo.getRouteNode().getPort());
-    	 	f.addListener(new ChannelFutureListener() {
-    	 		public void operationComplete(ChannelFuture future) throws Exception {
-    	 			TraceUtil.putTraceId(webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get());
-    	 			TraceUtil.putProto(nodeInfo.getProtocalTemp());
-    	 			try {
-				if (future.isSuccess()) {
-					RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey()).getState().postMethodExecute();
-				// TCP 请求帧：分配帧号并记录（后端响应帧沿用，一帧=一次请求-响应往返）
-				String connTraceId = webChannel.attr(MixAll.ATTRIBUTEKEY_TRACE_ID).get();
-				String frameId = TraceUtil.putNextFrameId(connTraceId, MixAll.getOrCreateFrameSeq(webChannel));
-				webChannel.attr(MixAll.ATTRIBUTEKEY_LAST_FRAME_ID).set(frameId);
-				logger.info("TCP请求帧[{}] 内容: {} -> 后端 {}:{}", frameId, MixAll.describeBytes(body), nodeInfo.getRouteNode().getIp(), nodeInfo.getRouteNode().getPort());
-					future.channel().writeAndFlush(body);
-				} else {
-    	 					body.release();
-    	 					RedisUtil.getCircleBreakCache().get(nodeInfo.getCircleBreakKey()).getState().ActUponException();
-    	 					webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(502, "The path you accessed does not work !"));
-    	 				}
-    	 			} catch (Exception e) {
-    	 				body.release();
-    	 				webChannel.writeAndFlush(MixAll.getDefaultFullHttpResponse4Error(502, "The path you accessed does not work !"));
-    	 			} finally {
-    	 				String routeLimitKey = RouteSelectUtil.selectRouteByUri(patternUri, nodeInfo.getInterfaceVserion());
-    	 				if(routeLimitKey != null) {
-    	 					RateLimiter.release(routeLimitKey);
-    	 				}
-    	 				RateLimiter.release(RouteSelectUtil.nodeLimitKey(webChannel.attr(MixAll.ATTRIBUTEKEY_ROUTE_NODE).get().getRouteNode(), patternUri));
-    	 			TraceUtil.clear();
-    	 			}
-    	 		}
-    	 	});
-   	 }else if(RouteSelectUtil.WEBSOCKET.equals(nodeInfo.getProtocalTemp())) {
+    	 }else if(RouteSelectUtil.WEBSOCKET.equals(nodeInfo.getProtocalTemp())) {
    		 // WebSocket 透传：前端标准 WS ⇄ 后端标准 WS 服务（帧原样透传，TEXT/BINARY 均支持）
    		 final String patternUri = webChannel.attr(MixAll.ATTRIBUTEKEY_URL).get();
    		 // 取前端请求路径（去掉 query）作为后端 WS 连接路径
