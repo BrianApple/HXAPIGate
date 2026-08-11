@@ -43,10 +43,12 @@ export async function postForm(url, { str, pageIndex, pageSize, data, extra = {}
     headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
   })
   const ret = resp.data
+  // 过滤器拦截时返回 {meta:{msg,code}} 结构（无 retSig），需兼容提取真实错误信息
   if (ret && ret.retSig === 200) {
     return ret.httpRet
   }
-  throw new Error((ret && (ret.httpRet || ret.msg)) || '请求失败')
+  const metaMsg = ret && ret.meta && ret.meta.msg
+  throw new Error((ret && (ret.httpRet || ret.msg || metaMsg)) || '请求失败')
 }
 
 // ---------- 登录 ----------
