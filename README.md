@@ -166,8 +166,23 @@ HXAPIGate 支持 HTTP 文件上传接口代理：客户端以 `multipart/form-da
 
 ### 环境依赖
 - **JDK 21**（网关与管理端均要求）
-- **MySQL**（默认 127.0.0.1:13306，库名 `hxapigate`，脚本 `HXBootShiro/hxapigatev2.0.sql`）
+- **MySQL**（默认 127.0.0.1:13306，库名 `hxapigate`，初始化脚本 `HXBootShiro/hxapigate.sql`）
 - **Redis**（默认 127.0.0.1:6379，路由缓存与分布式限流）
+
+### 0. 初始化数据库（首次必做）
+```bash
+# 创建库表并导入测试数据（兼容 MySQL 5.7 / 8.0）
+mysql -uroot -p < HXBootShiro/hxapigate.sql
+```
+脚本包含：建库（`hxapigate`）、9 张表结构、核心测试数据（3 个用户 / 4 个角色 / 20 条 API 资源 / 1 个应用）。
+
+| 测试账号 | 密码 | 角色 |
+|---|---|---|
+| `admin` | `admin123` | 管理员角色 |
+| `testuser` | `123456` | 用户角色 |
+| `user02` | `123456` | 用户角色 |
+
+> ⚠️ 脚本会 DROP 已存在的同名表后重建，**仅限首次初始化/开发环境**，勿在生产库执行。
 
 ### 1. 启动管理端（HXBootShiro）
 ```bash
