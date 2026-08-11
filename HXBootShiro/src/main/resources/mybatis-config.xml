@@ -12,4 +12,13 @@
         <!--开启驼峰命名转换 Table(create_time) -> Entity(createTime)-->
         <setting name="mapUnderscoreToCamelCase" value="true"/>
     </settings>
+    <!-- PageHelper 分页插件：必须在此注册 PageInterceptor，否则 PageHelper.startPage() 不生效（SQL 不加 LIMIT/COUNT） -->
+    <plugins>
+        <plugin interceptor="com.github.pagehelper.PageInterceptor">
+            <property name="helperDialect" value="mysql"/>
+            <property name="reasonable" value="true"/>
+            <property name="supportMethodsArguments" value="true"/>
+            <property name="params" value="count=countSql"/>
+        </plugin>
+    </plugins>
 </configuration>

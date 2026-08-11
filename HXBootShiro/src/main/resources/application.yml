@@ -82,6 +82,8 @@ mybatis:
   type-aliases-package: com.usthe.bootshiro.domain.bo
   # mapper xml 文件地址
   mapper-locations: classpath:mapper/*.xml
+  # mybatis 全局配置文件（注册 PageHelper 分页插件等）
+  config-location: classpath:mybatis-config.xml
   # 检查 mybatis 配置是否存在，一般命名为 mybatis-config.xml
   check-config-location: true
   # 执行模式。默认是 SIMPLE
