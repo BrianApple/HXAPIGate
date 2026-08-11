@@ -228,8 +228,12 @@ async function onSave() {
 const emit = defineEmits(['saved'])
 onMounted(async () => {
   try {
-    const data = await getApiTypes()
-    types.value = Array.isArray(data) ? data : []
+    // 下拉框需包含全部 type=3 类型（根类型110 + 子类型103/219），
+    // initApiType: str=true 返回根类型(parent_id=-1)，str=false 返回子类型
+    const [roots, subs] = await Promise.all([getApiTypes('true'), getApiTypes('false')])
+    const map = new Map()
+    ;[...(Array.isArray(roots) ? roots : []), ...(Array.isArray(subs) ? subs : [])].forEach(t => map.set(t.id, t))
+    types.value = [...map.values()]
   } catch {}
 })
 defineExpose({ open })

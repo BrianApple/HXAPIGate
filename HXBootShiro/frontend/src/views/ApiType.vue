@@ -55,7 +55,7 @@
 <script setup>
 import { ref, onMounted } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
-import { getApiTypes, getApiList, addApiResource, updateApiResource, deleteApiResource } from '../api'
+import { getApiTypes, addApiResource, updateApiResource, deleteApiResource } from '../api'
 
 const rootTypes = ref([])
 const types = ref([])
@@ -78,17 +78,13 @@ async function loadRootTypes() {
   }
 }
 
-// 当前父类型下的子类型列表
+// 当前父类型下的子类型列表（initApiType str=false 返回全部子类型，按父类型过滤展示）
 async function load() {
   if (parentId.value === null) return
   loading.value = true
   try {
-    const data = await getApiList(String(parentId.value), '1', '100')
-    if (data && data.list) {
-      types.value = data.list.filter(t => Number(t.type) === 3)
-    } else {
-      types.value = []
-    }
+    const data = await getApiTypes('false')
+    types.value = (Array.isArray(data) ? data : []).filter(t => !parentId.value || Number(t.parentId) === Number(parentId.value))
   } catch (e) {
     ElMessage.error(e.message)
   } finally {

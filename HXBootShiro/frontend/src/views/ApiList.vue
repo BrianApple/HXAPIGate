@@ -115,8 +115,11 @@ async function onDelete(row) {
 
 onMounted(async () => {
   try {
-    const data = await getApiTypes()
-    types.value = Array.isArray(data) ? data : []
+    // 过滤下拉框需包含全部 type=3 类型（根类型110 + 子类型103/219）
+    const [roots, subs] = await Promise.all([getApiTypes('true'), getApiTypes('false')])
+    const map = new Map()
+    ;[...(Array.isArray(roots) ? roots : []), ...(Array.isArray(subs) ? subs : [])].forEach(t => map.set(t.id, t))
+    types.value = [...map.values()]
   } catch {}
   load(1)
 })

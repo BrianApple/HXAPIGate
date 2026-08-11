@@ -240,7 +240,7 @@
 
     <select id="selectApiListByTeamId" parameterType="java.lang.Integer" resultMap="BaseResultMap">
         select a.* from auth_resource a
-        where a.parent_id = #{teamId,jdbcType=INTEGER} and a.type in (0,2,3)
+        where a.parent_id = #{teamId,jdbcType=INTEGER} and a.type in (0,1,2)
     </select>
 
     <!--根据资源URI和设备版本信息+接口所属类别组合查询-->
