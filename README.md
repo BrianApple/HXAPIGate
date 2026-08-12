@@ -1,334 +1,95 @@
-## 简介
-### 更新说明
-- 当前：
-    1. 新增 WebSocket 双向透传代理：管理端协议类型新增 `WebSocket`（节点配置型，含负载均衡/TPS/熔断），网关自动识别 `Upgrade: websocket` 握手并按 WS 方法匹配路由，支持双向帧转发、后端推送、断开传播与可配置空闲超时（`HXAPI_WS_IDLE_TIMEOUT`，默认 60s）
-    2. 安全加固：JWT 签名密钥外置化（环境变量 `HXAPI_JWT_SECRET` 注入，管理端与网关共用）、数据库口令环境变量化
-    3. 死代码清理：移除 5 个无调用接口（/account/login、/inner/api/islogin、/inner/api/initApiList、/inner/api/initApiByItemIdAndRID、/inner/role/getMenusByRoleId 等）及对应 Service/Mapper 层
-    4. 前端 Vue3 + Element Plus 全面改造（登录页粒子动画、API 两级类型、角色授权双栏等）
-    5. JDK21 + Shiro 3.0 + jjwt 0.12 升级，移除 Ignite 依赖
-    6. 增加接口熔断功能，同时对新增接口的路由信息增加安全限制保障服务运行安全等
+# HXAPIGate（浩心 API 网关）—— 零侵入式高性能 API 网关
 
-### 概念
-HXAPIGate（中文名：浩心API网关）——如果觉得可以请star本项目。
-HXAPIGate基于Netty+Shiro开发的一款高性能API网关，对基于REST服务的细粒度API资源的权限管理平台，支持http,dubbo等多协议微服务接口代理。**——本软件著作权归原作者所有**
-![输入图片说明](https://images.gitee.com/uploads/images/2019/1112/152324_e14eb0c7_1038477.png "屏幕截图.png")
+> 基于 **Netty + Shiro** 开发的高性能零侵入式 API 网关（被代理微服务**不需要添加任何代码或注解**），适用于 REST 微服务的 **API 资源细粒度授权管理**，支持 HTTP / Dubbo / MCP / WebSocket 多协议代理。
 
-### 软件特色
+[![文档站](https://img.shields.io/badge/📚%20文档站-BrianApple.github.io-38bdf8)](https://BrianApple.github.io/docs/hxapigate/intro)
+[![Gitee Stars](https://img.shields.io/badge/dynamic/json?label=Gitee%20Stars&query=stargazers_count&url=https%3A%2F%2Fgitee.com%2Fapi%2Fv5%2Frepos%2Fwillbeahero%2FHXAPIGate&color=red)](https://gitee.com/willbeahero/HXAPIGate)
 
-目前多数授权管理平台都只单单对api路径资源本身授权，而不能做到更细粒度的权限控制，HXAPIGate通过组合bootshiroPro实现了对“api资源+请求方式”的授权模式。
-如：
-新增如下四个接口
+![HXAPIGate](https://images.gitee.com/uploads/images/2019/1112/152324_e14eb0c7_1038477.png)
 
-| 接口路径 | 请求方式 |
-|--|--|
-|“/user/list”| GET |
-|“/user/list”| POST |
-|“/user/list”| DELETE |
-|“/user/list”| PUT |
+---
 
-传统授权模式下，这四个接口会被当做一个接口（因为接口路径一致）授权给第三方，**而通过HXAPIGate可分别对每个资源进行授权，当仅仅授权“/user/list”+“GET”给第三方平台时，被授权放无法访问同一资源的POST、DELETE、PUT请求当时的接口！**
-
-
-### MECHA--机甲
-
-浩心网关是微服务思想结合mecha 思想落地的产物。如下图所示，描述微服务与浩心网关的关系，内部浅绿色区域为业务相关微服务区，浩心网关所在区域为外部分布式特性区域，
-由图可知，微服务不需要考虑任何分布式特性，更不需要在服务的生命周期中引入与业务功能不相关的任何第三方分
-布式组件特性（典型如spring cloud全家桶），当一个业务微服务单元发布之后，浩心网关会直接赋予该服务所有分
-布式组件特性。当然大家如果了解过service mesh，就会发现与其有神似之处，未来将浩心网关打造成一款工业级sidecar,
-也是我希望的能够达到的目标之一。
-
-![输入图片说明](https://images.gitee.com/uploads/images/2020/0904/211047_342c4125_1038477.png "HXAPIGate.png")
-
-
-### 为什么不选择springCloud or dubbo
-- 不选择springcloud的原因很简单，除非贵公司项目全是新上马的项目，没有任何历史遗留问题——就算果真如此，在某些情况下也不建议使用springCloud（springCloud的学习成本等因素）--不选择
-springCloud的原因就是因为考虑到很多公司遗留的一些历史问题，无法改用springCloud,但是如果在无法改用dubbo或者springCloud却想在不更改或者极少更改的情况下实现微服务的分布式限流、服务熔断等
-分布式服务特性，那么恭喜您，HXAPIGate的目的正是如此。
-- 不选择dubbo的原因，首先HXAPIGate其实是兼容了dubbo协议的，用户侧目前统一为HTTP协议，因此虽然API网关本身不对外提供dubbo服务对外服务，但是可以代理dubbo微服务，同时也可以实现对dubbo的分布式限流。
-
-
-## 项目文档
-项目文档请参加项目的Wiki，里面会介绍项目的使用方法已经路由的配置方法等信息。如果觉得项目不错，别忘了给个star！谢谢！
-
-
-### 授权认证时序图
-![授权流程](HXBootShiro/src/main/resources/static/images/img.png "授权流程.jpg")
-
-### 性能
-2000并发事务压测报告（jdk1.8，jvm堆内存512M）
-![API网关2000并发压测图（jvm=512M）](https://images.gitee.com/uploads/images/2019/1112/113504_8b9b126e_1038477.png "API网关2000并发压测图（jvm=512M）.png")
-
-### 网关部署结构
-HXAPIGate支持集群部署，支持被代理接口的分布式限流、负载等。分布式部署时网关节点通过 Redis 进行分布式限流与配置同步，管理平台（HXBootShiro）负责 API 路由与鉴权规则的统一管理（已移除对 Ignite 的依赖）。
-![输入图片说明](HXBootShiro/src/main/resources/static/images/HXAPIGate3D.png)
-
-### MCP 协议转换网关架构
-
-HXAPIGate 内置 MCP（Model Context Protocol）支持，提供两种接入模式：
-
-- **模式①：MCP 透传**——协议类型选择 `MCP`，网关将 MCP 客户端的 JSON-RPC 请求**原样转发**给后端标准 MCP Server，网关仅承担鉴权/限流/熔断/负载均衡（后端必须自己实现 MCP 协议）。
-- **模式②：HTTP 接口映射为 MCP**——协议类型保持 `HTTP` 并勾选「暴露为MCP工具」，网关内置 `/mcp` 端点将 MCP JSON-RPC **协议转换**为 HTTP 请求（路径参数→URL、其余参数 POST 拼 JSON body / GET 拼 query），后端普通 REST 接口**零改造**即可被 MCP 客户端发现与调用。
-
-```mermaid
-flowchart LR
-    subgraph Client["🤖 MCP 客户端（Claude Desktop / Cursor / 任意 MCP SDK）"]
-        C["HTTP + JSON-RPC<br/>initialize / tools/list / tools/call"]
-    end
-
-    subgraph GW["HXAPIGate 网关（Netty :18081）"]
-        direction TB
-        A["路由匹配 + 鉴权链<br/>JWT 校验 / 限流 / 熔断 / 负载均衡"]
-        M1["/mcp 内置端点<br/>McpGatewayHandler<br/>（JSON-RPC 分发 + 协议转换）"]
-        M2["MCP 透传路由<br/>（protocal = mcp，原样转发）"]
-    end
-
-    subgraph REST["后端 REST 接口（零改造）"]
-        R1["POST /api/users"]
-        R2["GET /api/users/{id}"]
-    end
-
-    subgraph MS["后端标准 MCP Server"]
-        S1["tools/list / tools/call"]
-        S2["SSE 流式工具"]
-    end
-
-    C --> A
-    A --> M1 & M2
-    M1 -->|"模式② 协议转换<br/>McpInvoker 参数自动映射"| R1 & R2
-    M2 -->|"模式① 原样透传<br/>（流式 SSE 完整透传）"| S1 & S2
-```
-
-| 维度 | 模式①：MCP 透传 | 模式②：HTTP 接口映射为 MCP |
-|---|---|---|
-| 路由协议类型 | `MCP` | `HTTP` + 「暴露为MCP工具」开关 |
-| 后端要求 | 本身就是标准 MCP Server（MCP SDK 实现） | 普通 REST 接口，零改造 |
-| 网关动作 | 原样转发（不解析协议） | 协议转换：MCP JSON-RPC ⇄ HTTP |
-| 工具清单来源 | 后端自行管理 | 网关从 Redis 路由自动生成 tools/list |
-| 典型场景 | 已有 MCP Server 统一收口到网关 | 存量 REST API 资产暴露给 AI 客户端 |
-
-### WebSocket 双向透传代理
-
-HXAPIGate 支持 WebSocket 协议代理：管理端协议类型选择 `WebSocket` 并配置后端节点（IP:端口 + 权重/TPS），网关识别客户端 `Upgrade: websocket` 握手后，与后端建立 WebSocket 连接并双向透传数据帧。
-
-```mermaid
-flowchart LR
-    subgraph C["🧑‍💻 客户端"]
-        W1["WebSocket 客户端<br/>wss://gateway:18081/ws/echo"]
-    end
-
-    subgraph GW2["HXAPIGate 网关（Netty :18081）"]
-        direction TB
-        H1["GatewayServerHandler<br/>识别 Upgrade: websocket<br/>按 WS 方法匹配路由"]
-        F1["WebSocketFrontendHandler<br/>（前端帧转发 + 空闲超时）"]
-        B1["WebSocketBackendHandler<br/>（后端握手完成 → 触发前端升级<br/>帧转发 + 引用释放）"]
-        I1["WebSocketBackendInitializer<br/>（后端 WS 客户端握手）"]
-    end
-
-    subgraph BE["后端服务"]
-        E1["业务 WS 服务<br/>（echo / 推送 / 聊天等）"]
-    end
-
-    C -->|"HTTP Upgrade 请求"| H1
-    H1 -->|"路由匹配（WS 方法）"| F1
-    F1 <-->|"双向帧透传"| B1
-    B1 --> I1
-    I1 -->|"后端 WS 握手"| E1
-```
-
-**特性：**
+## ✨ 核心功能
 
 | 能力 | 说明 |
 |---|---|
-| 双向帧透传 | 客户端 ⇄ 网关 ⇄ 后端全双工转发（文本/二进制帧原样透传） |
-| 后端主动推送 | 后端 WebSocket 主动下发的消息可经网关透传到达客户端 |
-| 断开传播 | 任一端断开，网关自动关闭另一端连接（引用计数释放，无泄漏） |
-| 空闲超时 | 可配置：环境变量 `HXAPI_WS_IDLE_TIMEOUT`（或 JVM 参数 `-Dws.idle.timeout`，默认 60s），超时无消息自动断开双向连接 |
-| 网关能力复用 | 走标准路由链：鉴权 / 限流 / 熔断 / 负载均衡（ROUND_ROBIN / RANDOM / WEIGHTED / TPS_LIMIT） |
+| **细粒度授权** | 「**API 资源 + 请求方式**」组合授权：同一路径 `/user/list` 的 GET/POST/DELETE/PUT 可分别授权，仅授权 GET 时无法访问其他方式 |
+| **多协议代理** | HTTP / Dubbo / **MCP** / **WebSocket** 四种协议代理（MCP 支持透传与 HTTP 映射两种模式） |
+| **MCP 协议转换** | 模式①：MCP 原样透传；模式②：普通 REST 接口**零改造**暴露为 MCP 工具，供 AI 客户端（Claude Desktop/Cursor 等）调用 |
+| **WebSocket 双向透传** | 双向帧透传、后端主动推送、断开传播、可配置空闲超时（`HXAPI_WS_IDLE_TIMEOUT`，默认 60s） |
+| **文件上传/下载代理** | multipart 报文无损透传（实测 15MB），大小限制可配（`HXAPI_MAX_CONTENT_LENGTH`，默认 16MB） |
+| **分布式治理** | Redis 分布式限流（计数信号量）、接口熔断（状态机，配置值优先 TPS 自动推导）、负载均衡（轮询/随机/权重/TPS）、金丝雀发布 |
+| **安全体系** | JWT 认证（密钥环境变量外置）、Shiro 授权、应用 JWT License（90 天轮换建议、吊销即时失效） |
+| **日志溯源** | 全链路 traceId（`X-Trace-Id` 头可传自定义 ID）+ 协议标识，管理平台日志可视化检索 |
 
-**使用方式：** 管理平台 → 接口管理 → 新增API，代理类型选择 `WebSocket`，填写请求路径（如 `/ws/echo`）与后端节点（如 `127.0.0.1:18085`），保存后网关自动生效；客户端直接连接 `ws://网关地址:18081/ws/echo` 即可。
+## 🎯 项目价值
 
-### 文件上传/下载代理
+- **真正的零侵入**：被代理微服务无需添加任何代码/注解/依赖，发布后网关即赋予分布式特性（对比 Spring Cloud 全家桶 / Dubbo 的高改造成本）
+- **MECHA 机甲思想**：把分布式能力（限流/熔断/负载/鉴权）从业务服务中剥离到网关侧，微服务只关心业务
+- **存量系统友好**：历史遗留系统无需改造即可获得分布式能力，是 SpringCloud/Dubbo 的轻量替代
+- **性能**：2000 并发事务压测通过（jdk1.8，堆内存 512M）
+- **生产级功能**：接口熔断 UI 可视化配置、日志 90 天滚动保留、网关核心单元测试（14 用例全通过）
 
-HXAPIGate 支持 HTTP 文件上传接口代理：客户端以 `multipart/form-data` 请求网关，网关将完整的 multipart 报文（含 boundary 与文件二进制内容）**原样透传**给后端 REST 服务，后端可正常解析 `@RequestPart`/`MultipartFile`；后端返回的文件流（`application/octet-stream` 或任意二进制）同样原样回传。
+## 📸 截图
 
-| 能力 | 说明 |
+| 登录页 | 接口管理 |
 |---|---|
-| multipart 无损透传 | Content-Type/boundary、文件二进制、表单字段全部原样到达后端（已实测 15MB 大文件） |
-| 文件下载响应 | 后端二进制响应经透传模式原样回传（Content-Length/chunked 均保留） |
-| 大小限制可配 | 环境变量 `HXAPI_MAX_CONTENT_LENGTH`（或 JVM 参数 `-Dmax.content.length`，默认 16MB，单位字节），超限返回 HTTP 413 + JSON 错误说明 `{"code":413,"msg":"request body too large, max xxx bytes"}` |
-| 网关能力复用 | 上传/下载走标准路由链：鉴权（JWT 头校验，不解析 body）/ 限流 / 熔断 / 负载均衡 |
+| ![登录](HXBootShiro/src/main/resources/static/images/login.png) | ![接口管理](HXBootShiro/src/main/resources/static/images/api.png) |
 
-**使用方式：** 管理平台新增 HTTP 协议接口，后端指向支持文件上传的 REST 服务；客户端直接 `POST http://网关:18081/上传接口`，body 用标准 `multipart/form-data`（`curl -F "file=@..."` 即可）。
+| 日志查询（链路追踪） | 授权管理（角色资源授权） |
+|---|---|
+| ![日志查询](HXBootShiro/src/main/resources/static/images/log-search.png) | ![授权管理](HXBootShiro/src/main/resources/static/images/auth.png) |
 
-> 说明：网关为聚合式代理（请求体在内存中组装后转发），默认 16MB 上限按「小/中文件」场景设计；超大文件（GB 级）建议走对象存储直传或分片上传。
+## 🚀 快速开始
 
-### 本地启动
-
-### 环境依赖
-- **JDK 21**（网关与管理端均要求）
-- **MySQL**（默认 127.0.0.1:13306，库名 `hxapigate`，初始化脚本 `HXBootShiro/hxapigate.sql`）
-- **Redis**（默认 127.0.0.1:6379，路由缓存与分布式限流）
-
-### 0. 初始化数据库（首次必做）
 ```bash
-# 创建库表并导入测试数据（兼容 MySQL 5.7 / 8.0）
+# 环境：JDK 21、MySQL（默认 127.0.0.1:13306，库 hxapigate）、Redis（默认 127.0.0.1:6379）
+
+# 0. 初始化数据库（首次必做，含测试数据）
 mysql -uroot -p < HXBootShiro/hxapigate.sql
-```
-脚本包含：建库（`hxapigate`）、9 张表结构、核心测试数据（3 个用户 / 4 个角色 / 20 条 API 资源 / 1 个应用）。
 
-| 测试账号 | 密码 | 角色 |
-|---|---|---|
-| `admin` | `admin123` | 管理员角色 |
-| `testuser` | `123456` | 用户角色 |
-| `user02` | `123456` | 用户角色 |
-
-> ⚠️ 脚本会 DROP 已存在的同名表后重建，**仅限首次初始化/开发环境**，勿在生产库执行。
-
-### 1. 启动管理端（HXBootShiro）
-```bash
-mvn -f HXBootShiro/pom.xml package -DskipTests   # 首次需打包
+# 1. 启动管理端（HXBootShiro）
+mvn -f HXBootShiro/pom.xml package -DskipTests
 ./start_bootshiro.sh
-```
 
-### 2. 启动网关（HXAPIGate）
-```bash
-mvn -f HXAPIGate/pom.xml package -DskipTests      # 首次需打包
+# 2. 启动网关（HXAPIGate，启动后自动从 Redis 拉取路由配置）
+mvn -f HXAPIGate/pom.xml package -DskipTests
 ./start_gateway.sh
 ```
-- 网关启动后自动从 Redis 拉取管理端下发的 API 路由与熔断/限流配置
 
-### 3. 本地访问地址
-
-| 服务 | 地址 | 说明 |
-|---|---|---|
-| 管理平台（Web 控制台） | http://localhost:18080/static/index.html | 前端入口带 `/static/` 前缀（Spring 静态资源映射于 `/static/**`），默认账号 `admin / 123456` |
-| API 网关（HTTP 透传入口） | http://localhost:18081 | 网关端口，按 Redis 路由表转发至后端微服务 |
-
-### 环境变量（可选）
-| 变量 | 说明 |
+| 服务 | 地址 |
 |---|---|
-| `HXAPI_JWT_SECRET` | JWT 签名密钥，**生产环境务必设置强随机值**，管理端与网关必须一致；本地开发可写入 `~/.hxapigate_jwt_secret` |
-| `HXAPI_DB_USERNAME` / `HXAPI_DB_PASSWORD` | 数据库凭据（默认取 application.yml dev 配置） |
+| 管理平台（Web 控制台） | http://localhost:18080/static/index.html |
+| API 网关（透传入口） | http://localhost:18081 |
 
-### 日志管理（slf4j + logback）
+测试账号：`admin / admin123`（另有 testuser、user02，见文档）
 
-网关与管理端统一使用 **slf4j + logback** 记录日志，按天 + 大小滚动，**历史日志最多保留 90 天**（超期自动清理）：
+## 📚 详细文档（文档站）
 
-| 模块 | 日志目录 | 文件 | 说明 |
-|---|---|---|---|
-| 网关 HXAPIGate | `HXAPIGate/logs/HXAPIGate/` | `sys.log` | INFO 及以上全量日志（单文件最大 50MB） |
-| 网关 HXAPIGate | `HXAPIGate/logs/HXAPIGate/` | `sys-error.log` | 仅 ERROR 错误日志 |
-| 管理端 HXBootShiro | `HXBootShiro/logs/HXBootShiro/` | `SystemOut.log` | INFO/WARN 运行日志（ERROR 不重复记录） |
-| 管理端 HXBootShiro | `HXBootShiro/logs/HXBootShiro/` | `SystemErrOut.log` | 仅 ERROR 错误日志 |
-| 管理端 HXBootShiro | `HXBootShiro/logs/HXBootShiro/` | `SystemSqlOut.log` | MyBatis SQL 调试日志（prod/test 环境） |
+完整教程已迁移至文档站，**后续文档更新以文档站为核心**：
 
-- 归档规则：`<文件名>-yyyy-MM-dd.%i.log`，单文件超过 50MB 触发滚动，历史保留 90 天
-- 管理端 dev 环境同样落盘（`--spring.profiles.active=dev` 也写文件）；prod/test 额外输出 SQL 日志
-- 配置文件：网关 `HXAPIGate/src/main/resources/logback.xml`、管理端 `HXBootShiro/src/main/resources/logback-spring.xml`
+| 文档 | 链接 |
+|---|---|
+| 产品介绍 | https://BrianApple.github.io/docs/hxapigate/intro |
+| 快速开始 | https://BrianApple.github.io/docs/hxapigate/quickstart |
+| 授权认证 | https://BrianApple.github.io/docs/hxapigate/auth |
+| 配置说明 | https://BrianApple.github.io/docs/hxapigate/config |
+| 高级特性（MCP/WebSocket/文件代理/熔断限流） | https://BrianApple.github.io/docs/hxapigate/features |
 
-### 日志溯源（traceId + 协议标识）
+## 📌 项目进度
 
-所有日志行统一携带 **traceId（请求溯源 ID）** 与 **proto（代理协议）** 两个标识字段，格式示例：
+- API 接口管理基本开发完成，后续主要扩展代理协议与网关功能
+- 已完成一轮安全加固与质量优化：JWT 密钥/数据库口令环境变量化、死代码清理、网关核心单测、熔断配置 UI 全链路打通
 
-```
-2026-08-10 22:34:25.319 [nioEventLoopGroup-3-1] INFO  [wstest-final] [websocket] hx.apigate.socket.handlers.TranceDataHandler : 226 - WebSocket 代理后端连接成功: ...
-2026-08-10 22:34:25.345 [nioEventLoopGroup-3-1] INFO  [mytest-001] [http] hx.apigate.socket.handlers.GatewayServerHandler : 89 - ...
-```
+## 🔗 生态与链接
 
-- **traceId**：网关在请求入口自动生成 16 位十六进制 ID；调用方也可通过请求头 `X-Trace-Id` 传入自定义 ID（跨服务链路联查），网关/管理端均通过响应头 `X-Trace-Id` 原样回传
-- **proto**：标识该请求命中的代理协议（`http` / `mcp` / `websocket` / `dubbo`），长连接（WS）按连接级标记，贯穿握手/转发/断开全生命周期
-- 实现方式：slf4j MDC（`%X{traceId}` / `%X{proto}`），HTTP 请求在 `GatewayServerHandler` 入口注入、异步转发回调中恢复、结束清理，杜绝线程复用串号
-- 配套代码：网关 `TraceUtil` + `TraceIdOutboundHandler`、管理端 `TraceIdFilter`
+- **物联网关**：IOTGate —— https://gitee.com/willbeahero/IOTGate
+- **GitHub 镜像**：https://github.com/BrianApple/HXAPIGate
+- **开源文档站**：https://BrianApple.github.io （全部产品教程）
+- **相关博文**：
+  - [HXAPIGate系列——快速入门](https://blog.csdn.net/sinat_28771747/article/details/126610401)
+  - [《netty整合shiro,报There is no session with id [xxxxxx]问题定位及解决》](https://blog.csdn.net/sinat_28771747/article/details/105245229)
 
-## 操作演示
+## 🙏 感谢
 
-### 登录（用户名密码为：admin/123456）
-![登录页](HXBootShiro/src/main/resources/static/images/login.png "login.png")
-
-### 首页
-![首页](HXBootShiro/src/main/resources/static/images/index.png "index.png")
-
-### 接口类型管理
-接口类型管理==项目管理，是一类API接口的集合，支持两级结构（父类型 + 子类型）
-
-![类型管理](HXBootShiro/src/main/resources/static/images/type.png "type.png")
-
-### 接口管理
-管理API接口，对API接口的基本信息（路由、负载策略、协议类型等等）进行管理
-![接口管理](HXBootShiro/src/main/resources/static/images/api.png "api.png")
-
-新增接口功能截图：
-![新增接口](HXBootShiro/src/main/resources/static/images/addApi.png "addApi.png")
-
-### 日志查询（请求链路追踪）
-参考主流网关（APISIX/ShenYu）日志页：支持按 **TraceId / 协议 / 级别 / 关键词 / 时间范围** 多条件搜索网关与管理端日志，点击「链路」查看单个请求的完整处理路径（时间线视图，按时间升序贯穿网关转发 + 管理端调用）
-
-![日志查询](HXBootShiro/src/main/resources/static/images/log-search.png "log-search.png")
-
-按 TraceId 检索（示例：websocket 请求的 2 条链路日志）：
-![日志查询-按TraceId检索](HXBootShiro/src/main/resources/static/images/log-search-trace.png "log-search-trace.png")
-
-请求完整链路（时间线：连接建立 → 握手成功，含级别/协议/来源标注）：
-![请求链路](HXBootShiro/src/main/resources/static/images/log-trace-drawer.png "log-trace-drawer.png")
-
-WebSocket 协议接口（接口列表协议标签）：
-![WebSocket 接口列表](HXBootShiro/src/main/resources/static/images/api-list-ws.png "api-list-ws.png")
-
-WebSocket 接口编辑（代理类型选择 WebSocket + 后端节点配置）：
-![WebSocket 接口编辑](HXBootShiro/src/main/resources/static/images/ws-edit-protocol.png "ws-edit-protocol.png")
-
-### 角色管理
-![角色管理](HXBootShiro/src/main/resources/static/images/role.png "role.png")
-
-### 授权管理
-一级菜单「授权管理」下含两个二级功能，以角色为桥梁分别对 **API 接口** 与 **用户** 进行授权：
-- **角色资源授权**：选择角色 → 双栏穿梭框，将 API 接口（按 URI+请求方式细粒度）授权给该角色
-- **用户角色关联**：选择角色 → 双栏穿梭框，将用户关联到该角色（角色即拥有该用户）
-
-![接口授权](HXBootShiro/src/main/resources/static/images/auth.png "auth.png")
-
-### 用户管理
-管理平台登录用户（账号/姓名/手机/邮箱/性别/状态），新增用户时可直接分配角色（与角色管理打通，决定其可访问的 API），支持重置密码与软删除（内置 admin 不可删）
-- 新增用户：账号 + 初始密码 + 基本参数 + 角色多选
-- 编辑用户：基本参数 + 状态（正常/锁定）+ 覆盖式角色分配
-- 重置密码：为新用户/忘记密码用户重新设置密码
-
-### 应用管理（生成 API 访问 JWT License）
-为第三方应用/服务签发访问网关 API 的 **JWT License**（与用户登录 JWT 同构：HS512 + 网关同一密钥签名，roles=应用绑定的角色编码），应用调用网关 API 时携带请求头 `userId: APP_ID` + `Authorization: <License>` 即可通过网关 JwtRealm 鉴权
-
-- 新增应用：自动生成 `app_id`（app_ 前缀 + 随机串）与密钥，可绑定角色（决定可访问的 API 范围）
-- 生成 License：有效期可选 **0=永久（默认）** 或指定天数；生成后**落库持久化**并写入 Redis 会话缓存（JWT-SESSION:appId），列表页**脱敏显示**（仅头尾）+ 一键复制完整 License
-- 安全提醒：永久 License 生成时提示「建议每 90 天重新生成轮换一次」（重新生成后旧 License 因 tokenId 变更自动失效）
-- 网关全链路校验：验签 → Redis 会话存在 + tokenId 匹配 → **应用状态校验**（HXAPI:APP:INFO：应用已删/已停用一律拒绝）
-- 吊销机制：停用/删除应用立即删除 Redis 会话与应用缓存，存量 License 即刻失效
-
-### 目前网关已实现功能
-1. 授权、鉴权管理（JWT 密钥支持环境变量外置注入）
-2. 路由配置（支持熔断参数 UI 可视化配置：失败阈值/成功阈值/超时毫秒）
-3. 路由负载（轮询和赋权值）
-4. HTTP、dubbo、MCP、WebSocket 多协议代理（WebSocket 支持双向透传/后端推送/断开传播/可配置空闲超时）
-5. 接口分布式限流（Redis 计数信号量）
-6. 金丝雀发布
-7. 接口熔断（状态机管理，配置值优先于 TPS 自动推导）
-8. 管理平台首页统计（ECharts 类型分布/接口状态图表）
-9. 网关核心单元测试（限流/负载均衡/熔断状态机）
-
-### 项目进度
-目前HXAPIGate网关对API接口的管理已经基本开发完成，后续主要对API接口支持代理的协议以及网关bug进行扩展和完善
-同时将对管理平台的功能进行扩展，提供更加丰富多元的管理功能
-
-已完成一轮安全加固与质量优化：JWT 密钥与数据库口令环境变量化、死代码清理（−423 行）、网关核心单测补充（14 用例全通过）、API 熔断配置 UI 全链路打通、首页统计可视化升级。
-
-### 相关博文
-
-- [HXAPIGate系列——HXAPIGate快速入门](https://blog.csdn.net/sinat_28771747/article/details/126610401?spm=1001.2014.3001.5501)
-- [《netty整合shiro,报There is no session with id [xxxxxx]问题定位及解决》](https://blog.csdn.net/sinat_28771747/article/details/105245229)
-
-## 感谢
-- Netty 项目及作者，项目地址：    https://github.com/netty/netty
-- ignite 项目及作者，项目地址：   https://github.com/apache/ignite
-- shiro 项目及作者，项目地址：    https://github.com/apache/shiro
-- dubbo 项目及作者，项目地址：    https://github.com/apache/dubbo
-- bootshiro 项目及作者，项目地址：https://gitee.com/tomsun28/bootshiro 
-
-
+Netty、Shiro、Dubbo、Ignite、bootshiro 等开源项目及其作者。
